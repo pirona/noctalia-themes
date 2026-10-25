@@ -11,6 +11,7 @@ import tomllib
 from datetime import datetime
 from pathlib import Path
 
+import options
 import palette
 
 log = logging.getLogger("noctalia-themes")
@@ -26,6 +27,8 @@ DATA = _home("NOCTALIA_THEMES_HOME", "XDG_DATA_HOME", ".local/share") / "noctali
 BACKUPS = DATA / "backups"
 FRAGMENT = CONFIG / "zz-theme.toml"
 CURRENT = DATA / "current"
+# Loaded after zz-theme.toml (alphabetical), so the app preferences win over the theme.
+OPTIONS = CONFIG / "zzz-theme-options.toml"
 # Tables the theme owns entirely: their state overrides are dropped as a whole.
 OWNED_TABLES = ("desktop_widgets",)
 
@@ -129,6 +132,8 @@ def detect_output():
     """Connector the widgets go to: override, else niri's focused output, else the first wlr output."""
     if os.environ.get("NOCTALIA_THEMES_OUTPUT"):
         return os.environ["NOCTALIA_THEMES_OUTPUT"]
+    if options.load()["output"]:
+        return options.load()["output"]
     for cmd, pick in ((["niri", "msg", "--json", "focused-output"], lambda o: o["name"]),
                       (["wlr-randr", "--json"], lambda o: next(x["name"] for x in o if x.get("enabled")))):
         try:
@@ -162,11 +167,77 @@ def changes_since_apply():
         before = _flatten(tomllib.loads(written.read_text()))
         now = _flatten(tomllib.loads(STATE.read_text()))
         theme = _flatten(tomllib.loads(FRAGMENT.read_text())) if FRAGMENT.exists() else {}
+        theme |= _flatten(tomllib.loads(OPTIONS.read_text())) if OPTIONS.exists() else {}
     except (OSError, tomllib.TOMLDecodeError):
         return [UNREADABLE]  # warn rather than block the way back
     changed = {k for k in before.keys() | now.keys() if before.get(k) != now.get(k)}
     # A theme value echoed back into state by Noctalia is not a user change.
     return sorted(k for k in changed if not k.startswith(NOISE_PREFIXES) and now.get(k) != theme.get(k, object()))
+
+
+def list_outputs():
+    """Connected output names, for the screen picker. Empty if neither niri nor wlr-randr answers."""
+    for cmd, names in ((["niri", "msg", "--json", "outputs"], lambda o: sorted(o)),
+                       (["wlr-randr", "--json"], lambda o: [x["name"] for x in o if x.get("enabled")])):
+        try:
+            return names(json.loads(subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=True).stdout))
+        except (OSError, subprocess.SubprocessError, ValueError, LookupError, TypeError):
+            continue
+    return []
+
+
+def wallpapers(theme_dir):
+    """Wallpapers of a theme, from its installed copy when there is one (stable path for Noctalia)."""
+    installed = DATA / "themes" / Path(theme_dir).name / "wallpapers"
+    folder = installed if installed.is_dir() else Path(theme_dir) / "wallpapers"
+    return sorted(p for p in folder.glob("*") if p.suffix.lower() in (".webp", ".png", ".jpg", ".jpeg", ".avif"))
+
+
+def set_wallpaper(path):
+    """Set the wallpaper through Noctalia's IPC (it persists the choice in settings.toml itself)."""
+    subprocess.run(["noctalia", "msg", "wallpaper-set", str(path)], check=True, capture_output=True, timeout=10)
+    log.info("wallpaper set to %s", path)
+
+
+def write_options(fragment=None, reload=True):
+    """Write the preferences fragment for the active theme (or remove it when it changes nothing).
+
+    `fragment` is the theme fragment the options apply to; by default the installed one.
+    """
+    if fragment is None:
+        if not current() or not FRAGMENT.exists():
+            return
+        fragment = tomllib.loads(FRAGMENT.read_text())
+    text = options.dump(options.overrides(fragment, options.load()))
+    if not text.strip():
+        OPTIONS.unlink(missing_ok=True)
+    else:
+        tomllib.loads(text)
+        tmp = DATA / "options.tmp.toml"
+        tmp.write_text("# Written by the Noctalia Themes app: preferences layered over the theme.\n" + text)
+        _atomic_copy(tmp, OPTIONS)
+        tmp.unlink()
+    if reload:
+        _reload()
+
+
+def overridden_by_state():
+    """Preference keys that settings.toml overrides anyway (it is loaded last and wins)."""
+    if not OPTIONS.exists() or not STATE.exists():
+        return []
+    try:
+        mine = _flatten(tomllib.loads(OPTIONS.read_text()))
+        state = _flatten(tomllib.loads(STATE.read_text()))
+    except (OSError, tomllib.TOMLDecodeError):
+        return []
+    return sorted(k for k in mine if k in state and state[k] != mine[k])
+
+
+def excess_backups(keep):
+    """Oldest backups beyond `keep`, never the one of the active theme (its only way back)."""
+    ids = [b["id"] for b in list_backups() if b["id"] != current()]
+    room = max(keep - (1 if current() else 0), 0)
+    return ids[:max(len(ids) - room, 0)]
 
 
 def delete_backup(backup_id):
@@ -227,10 +298,11 @@ def refresh(theme_dir):
         raise ValueError(f"« {meta['name']} » n'est pas le thème actif : utilise apply.")
     output = detect_output() if "@OUTPUT@" in (theme_dir / "noctalia.toml").read_text() else None
     text = _render(theme_dir, output)
-    tomllib.loads(text)
+    fragment = tomllib.loads(text)
     tmp = DATA / "fragment.refresh.toml"
     tmp.write_text(text)
     _atomic_copy(theme_dir / "palette.json", CONFIG / "palettes" / f"{meta['palette']}.json")
+    write_options(fragment, reload=False)  # options first: Noctalia never sees new fragment + stale options
     _atomic_copy(tmp, FRAGMENT)
     tmp.unlink()
     log.info("refreshed theme %s", meta["name"])
@@ -249,7 +321,7 @@ def apply(theme_dir, label=None):
     bdir.mkdir(parents=True)
 
     palette_dst = CONFIG / "palettes" / f"{meta['palette']}.json"
-    targets = [palette_dst, FRAGMENT]
+    targets = [palette_dst, FRAGMENT, OPTIONS]
     manifest = {"theme": meta["name"], "date": stamp, "label": label or f"Avant « {meta['name']} »",
                 "state_existed": STATE.exists(), "files": {}}
     # Snapshot first, before anything is written.
@@ -269,6 +341,7 @@ def apply(theme_dir, label=None):
         stripped = strip_overrides(STATE.read_text(), fragment) if STATE.exists() else None
         palette_dst.parent.mkdir(parents=True, exist_ok=True)
         _atomic_copy(theme_dir / "palette.json", palette_dst)
+        write_options(fragment, reload=False)
         (bdir / "fragment.toml").write_text(fragment_text)
         _atomic_copy(bdir / "fragment.toml", FRAGMENT)
         if stripped is not None:
@@ -295,6 +368,8 @@ def rollback(backup_id):
             _atomic_copy(bdir / saved, p)
         elif p.exists():
             p.unlink()  # created by the theme, not there before
+    if str(OPTIONS) not in manifest["files"]:
+        OPTIONS.unlink(missing_ok=True)  # backups made before preferences existed don't list it
     if manifest["state_existed"]:
         _atomic_copy(bdir / "settings.toml", STATE)
     CURRENT.unlink(missing_ok=True)  # every backup is a theme-free state

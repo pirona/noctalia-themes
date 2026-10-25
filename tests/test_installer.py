@@ -10,12 +10,13 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SANDBOX = Path(tempfile.mkdtemp(prefix="noctalia-themes-test-"))
-for var in ("NOCTALIA_CONFIG_HOME", "NOCTALIA_STATE_HOME", "NOCTALIA_THEMES_HOME"):
+for var in ("NOCTALIA_CONFIG_HOME", "NOCTALIA_STATE_HOME", "NOCTALIA_THEMES_HOME", "NOCTALIA_THEMES_CONFIG"):
     os.environ[var] = str(SANDBOX / var)
 os.environ["NOCTALIA_THEMES_OUTPUT"] = "CRT-1985"
 os.environ["PATH"] = ""  # no noctalia binary: config-reload becomes a no-op
 sys.path.insert(0, str(ROOT / "app"))
 import installer  # noqa: E402
+import options  # noqa: E402
 
 STATE_SAMPLE = '''config_version = 15
 
@@ -188,6 +189,46 @@ def test_refresh_keeps_user_changes():
     installer.rollback(bid)
 
 
+def test_preferences_fragment():
+    options.save({**options.DEFAULTS, "hidden_widgets": ["vw-dialog"], "clock_seconds": True, "theme_mode": "light"})
+    bid = installer.apply(ROOT / "themes/vaporwave")
+    opts = tomllib.loads(installer.OPTIONS.read_text())
+    assert "vw-dialog" not in opts["desktop_widgets"]["widget_order"]
+    assert opts["desktop_widgets"]["widget"]["vw-clock"]["settings"]["format"] == "{:%H:%M:%S}"
+    installer.STATE.write_text(installer.STATE.read_text() + '\n[theme]\nmode = "auto"\n'
+                               if "[theme]" not in installer.STATE.read_text()
+                               else installer.STATE.read_text().replace("[theme]", '[theme]\nmode = "auto"', 1))
+    assert "theme.mode" in installer.overridden_by_state()
+    options.save(dict(options.DEFAULTS))
+    installer.write_options()
+    assert not installer.OPTIONS.exists()  # nothing to override: no file
+    options.save({**options.DEFAULTS, "clock_12h": True})
+    installer.write_options()
+    installer.rollback(bid)
+    assert not installer.OPTIONS.exists()
+    options.save(dict(options.DEFAULTS))
+
+
+def test_echoed_preference_is_not_a_user_change():
+    options.save({**options.DEFAULTS, "theme_mode": "light"})
+    bid = installer.apply(ROOT / "themes/vaporwave")
+    echoed = installer.STATE.read_text().replace("[theme]", '[theme]\nmode = "light"', 1)
+    installer.STATE.write_text(echoed)  # Noctalia writing the preference back
+    assert "theme.mode" not in installer.changes_since_apply()
+    installer.rollback(bid)
+    options.save(dict(options.DEFAULTS))
+
+
+def test_excess_backups_spare_active():
+    for _ in range(4):
+        installer.apply(ROOT / "themes/vaporwave")
+    active = installer.current()
+    doomed = installer.excess_backups(2)
+    assert active not in doomed
+    assert len([b for b in installer.list_backups() if b["id"] not in doomed]) == 2
+    installer.rollback(active)
+
+
 def test_real_settings_parse():
     real = Path.home() / ".local/state/noctalia/settings.toml"
     if real.exists():
@@ -207,5 +248,8 @@ if __name__ == "__main__":
     test_output_cannot_inject()
     test_changes_since_apply()
     test_refresh_keeps_user_changes()
+    test_preferences_fragment()
+    test_echoed_preference_is_not_a_user_change()
+    test_excess_backups_spare_active()
     test_real_settings_parse()
     print("OK", SANDBOX)

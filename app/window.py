@@ -2,6 +2,7 @@
 """Main window: themes to apply, one-click removal, backup history."""
 import json
 import logging
+import random
 from datetime import datetime
 from pathlib import Path
 
@@ -10,7 +11,9 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 import installer  # noqa: E402
-from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
+import options  # noqa: E402
+from gi.repository import Adw, Gdk, GdkPixbuf, Gio, GLib, Gtk  # noqa: E402
+from preferences import Preferences  # noqa: E402
 
 THEMES_ROOT = Path(__file__).resolve().parent.parent / "themes"
 SWATCH_ROLES = ("mSurface", "mPrimary", "mSecondary", "mTertiary", "mOnSurface")
@@ -54,6 +57,20 @@ def _preview(theme):
     return frame
 
 
+_THUMBS = {}
+
+
+def _thumbnail(path, width=192, height=108):
+    """Small texture for the gallery, cached per path and rebuilt only when the file changes."""
+    mtime = path.stat().st_mtime
+    cached = _THUMBS.get(path)
+    if not cached or cached[0] != mtime:
+        pix = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(path), width, height, True)
+        _ok, data = pix.save_to_bufferv("png", [], [])  # small PNG round-trip: avoids deprecated pixbuf textures
+        cached = _THUMBS[path] = (mtime, Gdk.Texture.new_from_bytes(GLib.Bytes.new(data)))
+    return cached[1]
+
+
 def _row(title, subtitle):
     row = Adw.ActionRow(title=title, subtitle=subtitle, use_markup=False)
     row.set_subtitle_lines(2)
@@ -65,6 +82,7 @@ class Window(Adw.ApplicationWindow):
         super().__init__(application=app, title="Thèmes Noctalia", default_width=600, default_height=680)
 
         menu = Gio.Menu()
+        menu.append("Préférences", "app.preferences")
         menu.append("Ouvrir le dossier des sauvegardes", "app.open-backups")
         menu.append("À propos", "app.about")
         menu.append("Quitter", "app.quit")
@@ -97,18 +115,59 @@ class Window(Adw.ApplicationWindow):
         active = installer.current_theme()
         self.banner.set_title(f"« {active['theme']} » est appliqué" if active else "")
         self.banner.set_revealed(active is not None)
-        self.content.append(self._themes_group(active))
+        themes = installer.list_themes(THEMES_ROOT)
+        self.content.append(self._themes_group(active, themes))
+        theme = next((t for t in themes if active and t["name"] == active["theme"]), None)
+        walls = installer.wallpapers(theme["dir"]) if theme else []
+        if walls:
+            self.content.append(self._gallery_group(walls))
         self.content.append(self._backups_group(active))
 
-    def _themes_group(self, active):
+    def open_preferences(self):
+        themes, active = installer.list_themes(THEMES_ROOT), installer.current_theme()
+        theme = next((t for t in themes if active and t["name"] == active["theme"]), themes[0] if themes else None)
+        Preferences(self, theme).present(self)
+
+    def _gallery_group(self, walls):
+        group = Adw.PreferencesGroup(title="Fonds d'écran",
+                                     description="Clic sur une vignette : fond posé tout de suite.")
+        shuffle = Gtk.Button(icon_name="media-playlist-shuffle-symbolic", tooltip_text="Un fond au hasard",
+                             valign=Gtk.Align.CENTER, css_classes=["flat"])
+        shuffle.connect("clicked", lambda *_: self._set_wallpaper(random.choice(walls)))
+        group.set_header_suffix(shuffle)
+        flow = Gtk.FlowBox(selection_mode=Gtk.SelectionMode.NONE, max_children_per_line=3, min_children_per_line=2,
+                           column_spacing=8, row_spacing=8, homogeneous=True)
+        for path in walls:
+            try:
+                pic = Gtk.Picture(paintable=_thumbnail(path), content_fit=Gtk.ContentFit.COVER, can_shrink=True)
+            except GLib.Error:
+                continue  # unreadable file: skip it rather than break the window
+            pic.set_size_request(160, 90)
+            name = path.stem.removeprefix("wall_").replace("-", " ")
+            btn = Gtk.Button(child=pic, tooltip_text=name, css_classes=["flat", "card"])
+            btn.set_overflow(Gtk.Overflow.HIDDEN)
+            btn.connect("clicked", lambda _b, p=path: self._set_wallpaper(p))
+            flow.append(btn)
+        group.add(flow)
+        return group
+
+    def _set_wallpaper(self, path):
+        self._run(lambda: installer.set_wallpaper(path), f"Fond : {path.stem.removeprefix('wall_')}")
+
+    def _themes_group(self, active, themes):
         group = Adw.PreferencesGroup(title="Thèmes")
-        themes = installer.list_themes(THEMES_ROOT)
         if not themes:
             group.add(_row("Aucun thème trouvé", str(THEMES_ROOT)))
         for theme in themes:
             row = _row(theme["name"], theme.get("description", ""))
             row.add_prefix(_preview(theme))
             if active and active["theme"] == theme["name"]:
+                update = Gtk.Button(icon_name="view-refresh-symbolic", valign=Gtk.Align.CENTER, css_classes=["flat"],
+                                    tooltip_text="Mettre à jour (stickers, palette, widgets) "
+                                                 "sans toucher à tes réglages")
+                update.connect("clicked", lambda _b, t=theme: self._run(lambda: installer.refresh(t["dir"]),
+                                                                       f"« {t['name']} » mis à jour"))
+                row.add_suffix(update)
                 badge = Gtk.Label(label="Actif", valign=Gtk.Align.CENTER, css_classes=["success", "caption-heading"])
                 row.add_suffix(badge)
             else:
@@ -183,14 +242,17 @@ class Window(Adw.ApplicationWindow):
         return f"\n\nRéglages modifiés depuis l'application du thème, qui seront perdus :\n{shown}{more}"
 
     def _confirm_apply(self, theme):
+        if not options.load()["confirm_apply"] and not installer.changes_since_apply():
+            return self._do_apply(theme)  # still undoable from the toast
         self._ask(f"Appliquer « {theme['name']} » ?",
                   "Ta configuration actuelle est sauvegardée d'abord.\n"
                   "Les réglages modifiés dans Noctalia pendant que le thème est actif "
                   "seront perdus quand tu le retireras." + self._lost_warning(),
-                  "Appliquer", Adw.ResponseAppearance.SUGGESTED,
-                  lambda: self._run(lambda: installer.apply(theme["dir"]), f"« {theme['name']} » appliqué",
-                                    undo=lambda stamp: self._run(lambda: installer.rollback(stamp),
-                                                                 "Configuration d'origine restaurée")))
+                  "Appliquer", Adw.ResponseAppearance.SUGGESTED, lambda: self._do_apply(theme))
+
+    def _do_apply(self, theme):
+        self._run(lambda: installer.apply(theme["dir"]), f"« {theme['name']} » appliqué",
+                  undo=lambda stamp: self._run(lambda: installer.rollback(stamp), "Configuration d'origine restaurée"))
 
     def _remove(self):
         def remove():

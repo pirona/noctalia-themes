@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Noctalia Themes: apply decorative themes to Noctalia v5, with snapshot rollback."""
 import logging
+import logging.handlers
 import sys
 
 import gi
@@ -21,14 +22,25 @@ class App(Adw.Application):
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
         for name, cb, accels in (("quit", lambda *_: self.quit(), ["<primary>q"]),
                                  ("about", self._about, []),
+                                 ("preferences", lambda *_: self._window().open_preferences(), ["<primary>comma"]),
                                  ("open-backups", self._open_backups, [])):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", cb)
             self.add_action(action)
             self.set_accels_for_action(f"app.{name}", accels)
 
+    def do_startup(self):
+        Adw.Application.do_startup(self)
+        # Under bare "hicolor" (no GNOME session) many symbolic icons are missing: use Adwaita for this app only.
+        settings = Gtk.Settings.get_default()
+        if settings.get_property("gtk-icon-theme-name") == "hicolor":
+            settings.set_property("gtk-icon-theme-name", "Adwaita")
+
+    def _window(self):
+        return self.get_active_window() or Window(self)
+
     def do_activate(self):
-        (self.get_active_window() or Window(self)).present()
+        self._window().present()
 
     def _about(self, *_):
         Adw.AboutDialog(application_name="Thèmes Noctalia", application_icon="preferences-desktop-theme",
@@ -43,5 +55,10 @@ class App(Adw.Application):
 
 
 if __name__ == "__main__":
+    installer.DATA.mkdir(parents=True, exist_ok=True)
+    # Audit trail of applies/rollbacks, shown in Preferences > Diagnostic.
+    file_log = logging.handlers.RotatingFileHandler(installer.DATA / "app.log", maxBytes=200_000, backupCount=1)
+    file_log.setFormatter(logging.Formatter("%(asctime)s %(levelname)s %(message)s", "%Y-%m-%d %H:%M:%S"))
     logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
+    logging.getLogger().addHandler(file_log)
     sys.exit(App().run(sys.argv))
