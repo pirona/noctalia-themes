@@ -50,3 +50,17 @@ Créations originales générées localement avec ComfyUI (workflow `tools/workf
 - rendu source : `10-moon-hall_s20111218_00001_.png`
 
 > A huge pale full moon rests on the floor of a vast, empty, dimly lit hall at night, slightly right of center, glowing with soft silvery light that pools around it on a smooth, continuous teal floor. Its cratered surface is rendered calmly and precisely. The hall is reduced to large seamless planes: a deep lavender back wall, a softly curved ceiling, a single slender palm tree in a round white planter standing to the right of the moon. Nothing else. Economy of means, large smooth surfaces, soft curves. Smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading, the impossible scale treated as perfectly ordinary, calm uncanny liminal mood, quiet dark space in the upper left, uncluttered foreground.
+
+## wall_indoor-rain.webp
+
+- graine : `20111219` — pas : 24 — taille générée : 1920x1088 — ComfyUI 0.42.1
+- rendu source : `11-indoor-rain_s20111219_00001_.png`
+
+> A gentle rain falls inside a vast, empty, rounded hall with seamless pale pink walls, fine silver streaks descending from a single large circular opening in the smooth ceiling, through which the sky is perfectly clear, sunny and pastel blue with one small white cloud. On the continuous polished lavender floor, a few calm round puddles reflect the bright sky. A single potted palm in a round white planter stands near the right side, dripping softly. Nothing else. Economy of means, large smooth planes, soft curves. Smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading, the impossible weather treated as perfectly ordinary, calm uncanny liminal mood, quiet open space in the upper left, uncluttered foreground.
+
+## wall_sphere-room.webp
+
+- graine : `20111216` — pas : 24 — taille générée : 1920x1088 — ComfyUI 0.42.1
+- rendu source : `08b-sphere-room_s20111216_00001_.png`
+
+> A huge, perfectly smooth pearl-pink sphere rests silently on the floor of a vast, empty room whose seamless pale lavender walls curve softly into the floor and ceiling with no corners, slightly right of center. A single tall arched opening in the back wall shows a calm turquoise sea and a peach dusk sky. The sphere reflects the opening as a soft distorted highlight and casts one long, gentle shadow across the continuous polished floor. Nothing else in the room. Economy of means, large smooth planes, soft curves, enormous scale and absolute stillness. Smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading, the impossible object treated as perfectly ordinary, calm uncanny liminal mood, generous quiet space in the upper left, uncluttered foreground.
