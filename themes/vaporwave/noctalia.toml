@@ -16,7 +16,7 @@ edge_smoothness = 0.15
 
 [desktop_widgets]
 enabled = true
-widget_order = ["vw-clock", "vw-katakana", "vw-rings", "vw-dialog"]
+widget_order = ["vw-clock", "vw-katakana", "vw-player-frame", "vw-player", "vw-dialog"]  # later = on top
 
 # Heavy weight, top-left: the clock anchors the frame.
 [desktop_widgets.widget.vw-clock]
@@ -53,22 +53,43 @@ color = "secondary"
 shadow = true
 background = false
 
-# The point, bottom-left: audio rings as counterweight to the clock.
-[desktop_widgets.widget.vw-rings]
-type = "fancy_audio_visualizer"
+# Counterweight bottom-left: a fake Win95 CD player window around Noctalia's media player
+# (metadata + cover only, no audio capture: stays in sync even over AirPlay).
+[desktop_widgets.widget.vw-player-frame]
+type = "sticker"
 output = "@OUTPUT@"
 cx = 230.0
 cy = 670.0
-box_width = 300.0
-box_height = 300.0
+box_width = 340.0
+box_height = 150.0
 rotation = 0.0
 
-[desktop_widgets.widget.vw-rings.settings]
-visualization_mode = "bars_rings"
-primary_color = "primary"
-secondary_color = "secondary"
-bloom_intensity = 0.8
-fade_when_idle = false
+[desktop_widgets.widget.vw-player-frame.settings]
+image_path = "@THEME_DIR@/stickers/player_frame.png"
+opacity = 1.0
+background = false
+
+# Sits in the frame's transparent hole: 12 px below the frame center (title bar offset).
+[desktop_widgets.widget.vw-player]
+type = "media_player"
+output = "@OUTPUT@"
+cx = 230.0
+cy = 682.0
+box_width = 324.0
+box_height = 110.0
+rotation = 0.0
+
+[desktop_widgets.widget.vw-player.settings]
+layout = "horizontal"
+album_art_background = true
+album_art_blur = 32
+audio_visualizer = false
+hide_when_no_media = false
+background = true
+background_color = "surface"
+background_opacity = 1.0
+background_radius = 0.0
+color = "on_surface"
 
 # Tension, bottom-right: a slightly tilted fake dialog.
 [desktop_widgets.widget.vw-dialog]
@@ -81,6 +102,6 @@ box_height = 170.0
 rotation = -0.07
 
 [desktop_widgets.widget.vw-dialog.settings]
-image_path = "@THEME_DIR@/stickers/dialog.png"
+image_path = "@THEME_DIR@/stickers/dialog-loading.png"
 opacity = 1.0
 background = false

@@ -8,6 +8,8 @@ from PIL import Image, ImageDraw, ImageFont
 HERE = Path(__file__).parent
 CJK = "/usr/share/fonts/google-noto-sans-cjk-vf-fonts/NotoSansCJK-VF.ttc"
 S = 2  # 2x for crisp rendering at fractional scale
+PINK, CYAN = (255, 113, 206), (1, 205, 254)
+TITLE_H = 26  # title bar bottom, in logical px
 
 
 def font(size, bold=False):
@@ -16,40 +18,66 @@ def font(size, bold=False):
     return f
 
 
-def bevel(d, box, raised=True):
+def blend(t):
+    """Pink-to-cyan gradient color at t in [0, 1]."""
+    return tuple(int(a + (b - a) * t) for a, b in zip(PINK, CYAN, strict=True))
+
+
+def bevel(d, box, raised=True, fill="#C0C0C0"):
     x0, y0, x1, y1 = box
     hi, lo = ("#FFFFFF", "#404040") if raised else ("#404040", "#FFFFFF")
-    d.rectangle(box, fill="#C0C0C0")
+    if fill:
+        d.rectangle(box, fill=fill)
     d.line([(x0, y1), (x0, y0), (x1, y0)], fill=hi, width=S * 2)
     d.line([(x0, y1), (x1, y1), (x1, y0)], fill=lo, width=S * 2)
 
 
-def dialog():
-    w, h = 380 * S, 170 * S
-    im = Image.new("RGBA", (w, h))
+def window(w, h, title):
+    """Win95-style frame with a pink-to-cyan title bar and a centered close button."""
+    im = Image.new("RGBA", (w * S, h * S))
     d = ImageDraw.Draw(im)
-    bevel(d, (0, 0, w - 1, h - 1))
-    # title bar: pink to cyan instead of the stock navy
-    for x in range(4 * S, w - 4 * S):
-        t = x / w
-        c = tuple(int(a + (b - a) * t) for a, b in zip((255, 113, 206), (1, 205, 254), strict=True))
-        d.line([(x, 4 * S), (x, 26 * S)], fill=c)
-    d.text((10 * S, 6 * S), "ＡＥＳＴＨＥＴＩＣＳ．ＥＸＥ", font=font(13, True), fill="#FFFFFF")
-    bevel(d, (w - 24 * S, 7 * S, w - 8 * S, 23 * S))
-    d.text((w - 20 * S, 4 * S), "×", font=font(14, True), fill="#000000")
-    # info icon
-    d.ellipse((16 * S, 42 * S, 52 * S, 78 * S), fill="#01CDFE", outline="#000000", width=S)
-    d.text((29 * S, 44 * S), "i", font=font(22, True), fill="#FFFFFF")
-    d.text((66 * S, 40 * S), "Voulez-vous vraiment être nostalgique\nd'une époque que vous n'avez pas vécue ?",
-           font=font(12), fill="#000000", spacing=6 * S)
-    for i, label in enumerate(("Oui", "はい")):
-        x = w // 2 - 110 * S + i * 120 * S
-        bevel(d, (x, 120 * S, x + 100 * S, 150 * S))
-        tw = d.textlength(label, font=font(12))
-        d.text((x + 50 * S - tw / 2, 125 * S), label, font=font(12), fill="#000000")
-    im.save(HERE / "dialog.png")
+    bevel(d, (0, 0, w * S - 1, h * S - 1))
+    for x in range(4 * S, (w - 4) * S):
+        d.line([(x, 4 * S), (x, TITLE_H * S)], fill=blend(x / (w * S)))
+    d.text((10 * S, 15 * S), title, font=font(13, True), fill="#FFFFFF", anchor="lm")
+    bx0, by0, bx1, by1 = (w - 24) * S, 7 * S, (w - 8) * S, 23 * S
+    bevel(d, (bx0, by0, bx1, by1))
+    cx, cy, r = (bx0 + bx1) // 2, (by0 + by1) // 2, 4 * S  # cross drawn, not typed: exact centering
+    d.line([(cx - r, cy - r), (cx + r, cy + r)], fill="#000000", width=2 * S)
+    d.line([(cx - r, cy + r), (cx + r, cy - r)], fill="#000000", width=2 * S)
+    return im, d
+
+
+def dialog():
+    w, h = 380, 170
+    im, d = window(w, h, "ＡＥＳＴＨＥＴＩＣＳ．ＥＸＥ")
+    d.text((20 * S, 46 * S), "あの夏の午後を読み込んでいます…", font=font(14), fill="#000000")
+    # progress bar stuck at 99 %
+    x0, y0, x1, y1 = 20 * S, 76 * S, (w - 20) * S, 96 * S
+    bevel(d, (x0, y0, x1, y1), raised=False, fill="#FFFFFF")
+    block, gap, end = 10 * S, 3 * S, x0 + int((x1 - x0 - 6 * S) * 0.99)
+    x = x0 + 3 * S
+    while x + block <= end:
+        d.rectangle((x, y0 + 4 * S, x + block, y1 - 4 * S), fill=blend((x - x0) / (x1 - x0)))
+        x += block + gap
+    d.text((20 * S, 104 * S), "残り時間：永遠", font=font(12), fill="#000000")
+    bx = w // 2 - 50
+    bevel(d, (bx * S, 128 * S, (bx + 100) * S, 156 * S))
+    d.text(((bx + 50) * S, 142 * S), "キャンセル", font=font(12), fill="#000000", anchor="mm")
+    im.save(HERE / "dialog-loading.png")
+
+
+def player_frame():
+    """Window chrome around Noctalia's media_player widget: the content area is transparent."""
+    w, h = 340, 150
+    im, d = window(w, h, "♪ ＣＤプレーヤー")
+    d.rectangle((6 * S, (TITLE_H + 4) * S, (w - 6) * S, (h - 6) * S), fill=(0, 0, 0, 0))
+    bevel(d, (6 * S, (TITLE_H + 4) * S, (w - 6) * S, (h - 6) * S), raised=False, fill=None)
+    im.save(HERE / "player_frame.png")
 
 
 if __name__ == "__main__":
     dialog()
-    assert Image.open(HERE / "dialog.png").size == (380 * S, 170 * S)
+    player_frame()
+    assert Image.open(HERE / "dialog-loading.png").size == (380 * S, 170 * S)
+    assert Image.open(HERE / "player_frame.png").getpixel((170 * S, 90 * S))[3] == 0  # hole is transparent

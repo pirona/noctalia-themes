@@ -176,6 +176,18 @@ def test_changes_since_apply():
     assert bid not in [b["id"] for b in installer.list_backups()]
 
 
+def test_refresh_keeps_user_changes():
+    bid = installer.apply(ROOT / "themes/vaporwave")
+    user = installer.STATE.read_text() + '\n[wallpaper.monitors.eDP-1]\npath = "/tmp/mon-fond-a-moi.webp"\n'
+    installer.STATE.write_text(user)
+    installer.FRAGMENT.write_text("# vieux fragment périmé\n")
+    installer.refresh(ROOT / "themes/vaporwave")
+    assert installer.STATE.read_text() == user  # state untouched
+    assert "vw-player" in installer.FRAGMENT.read_text()
+    assert installer.current() == bid
+    installer.rollback(bid)
+
+
 def test_real_settings_parse():
     real = Path.home() / ".local/state/noctalia/settings.toml"
     if real.exists():
@@ -194,5 +206,6 @@ if __name__ == "__main__":
     test_output_is_substituted()
     test_output_cannot_inject()
     test_changes_since_apply()
+    test_refresh_keeps_user_changes()
     test_real_settings_parse()
     print("OK", SANDBOX)

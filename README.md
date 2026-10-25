@@ -66,6 +66,8 @@ niri uniquement). Sans `preview.webp`, l'appli affiche des bandes aux couleurs d
 python3 app/installer.py apply themes/vaporwave   # affiche l'id de la sauvegarde
 python3 app/installer.py list                     # sauvegardes disponibles
 python3 app/installer.py rollback <id>            # retour à l'état de cette sauvegarde
+python3 app/installer.py refresh themes/vaporwave # met à jour le thème actif sur place (stickers, palette, widgets)
+                                                  # sans toucher à settings.toml : tes réglages modifiés depuis sont gardés
 ```
 
 ## Développement
@@ -94,3 +96,6 @@ actions, raccourcis), `app/palette.py` (validation). Logs sur la sortie d'erreur
 - `theme.pure_black_dark = true` remplace les surfaces sombres de la palette par du noir.
 - Fond d'écran GIF : seule la première image s'affiche, pas d'animation (testé sur 5.3.0).
 - Les widgets de bureau ont un fond par défaut : `background = false` pour du texte seul.
+- Les stickers sont mis en cache par chemin : pour remplacer une image, lui donner un **nouveau nom de fichier**.
+- Le lecteur média (`media_player`) n'affiche la pochette que si le lecteur la publie en MPRIS (Chromium ne le fait pas).
+- Le visualiseur audio lit le son avant la sortie : en AirPlay (~1,6 s de tampon), il est en avance sur ce qu'on entend.

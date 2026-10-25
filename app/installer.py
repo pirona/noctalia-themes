@@ -203,6 +203,40 @@ def validate(theme_dir):
         raise ValueError("\n".join(errors))
 
 
+def _render(theme_dir, output):
+    """Copy the theme to its installed place and return its fragment with placeholders filled."""
+    installed = DATA / "themes" / theme_dir.name
+    if installed.exists():
+        shutil.rmtree(installed)
+    shutil.copytree(theme_dir, installed, ignore=shutil.ignore_patterns("SOURCES.md", "*.py", "__pycache__"))
+    text = (theme_dir / "noctalia.toml").read_text().replace("@THEME_DIR@", _toml_escape(installed))
+    return text.replace("@OUTPUT@", _toml_escape(output)) if output else text
+
+
+def refresh(theme_dir):
+    """Update the active theme's files in place (stickers, palette, fragment).
+
+    The user's settings.toml and the backups are left untouched, so settings changed
+    since the theme was applied survive; keys they override keep winning over the theme.
+    """
+    theme_dir = Path(theme_dir).resolve()
+    validate(theme_dir)
+    meta = tomllib.loads((theme_dir / "theme.toml").read_text())
+    active = current_theme()
+    if not active or active["theme"] != meta["name"]:
+        raise ValueError(f"« {meta['name']} » n'est pas le thème actif : utilise apply.")
+    output = detect_output() if "@OUTPUT@" in (theme_dir / "noctalia.toml").read_text() else None
+    text = _render(theme_dir, output)
+    tomllib.loads(text)
+    tmp = DATA / "fragment.refresh.toml"
+    tmp.write_text(text)
+    _atomic_copy(theme_dir / "palette.json", CONFIG / "palettes" / f"{meta['palette']}.json")
+    _atomic_copy(tmp, FRAGMENT)
+    tmp.unlink()
+    log.info("refreshed theme %s", meta["name"])
+    _reload()
+
+
 def apply(theme_dir, label=None):
     theme_dir = Path(theme_dir).resolve()
     validate(theme_dir)
@@ -214,7 +248,6 @@ def apply(theme_dir, label=None):
     bdir = BACKUPS / stamp
     bdir.mkdir(parents=True)
 
-    installed = DATA / "themes" / theme_dir.name
     palette_dst = CONFIG / "palettes" / f"{meta['palette']}.json"
     targets = [palette_dst, FRAGMENT]
     manifest = {"theme": meta["name"], "date": stamp, "label": label or f"Avant « {meta['name']} »",
@@ -231,12 +264,7 @@ def apply(theme_dir, label=None):
     (bdir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
 
     try:
-        if installed.exists():
-            shutil.rmtree(installed)
-        shutil.copytree(theme_dir, installed, ignore=shutil.ignore_patterns("SOURCES.md", "*.py", "__pycache__"))
-        fragment_text = (theme_dir / "noctalia.toml").read_text().replace("@THEME_DIR@", _toml_escape(installed))
-        if output:
-            fragment_text = fragment_text.replace("@OUTPUT@", _toml_escape(output))
+        fragment_text = _render(theme_dir, output)
         fragment = tomllib.loads(fragment_text)
         stripped = strip_overrides(STATE.read_text(), fragment) if STATE.exists() else None
         palette_dst.parent.mkdir(parents=True, exist_ok=True)
@@ -278,6 +306,9 @@ if __name__ == "__main__":
     cmd = sys.argv[1:2] or ["list"]
     if cmd == ["apply"]:
         print(apply(sys.argv[2]))
+    elif cmd == ["refresh"]:
+        refresh(sys.argv[2])
+        print("refreshed", sys.argv[2])
     elif cmd == ["rollback"]:
         rollback(sys.argv[2])
         print("restored", sys.argv[2])
