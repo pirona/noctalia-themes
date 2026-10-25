@@ -1,0 +1,15 @@
+{
+  "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": "FLUX2\\flux2_dev_fp8mixed.safetensors", "weight_dtype": "default"}},
+  "clip": {"class_type": "CLIPLoader", "inputs": {"clip_name": "mistral_3_small_flux2_fp8.safetensors", "type": "flux2", "device": "default"}},
+  "vae": {"class_type": "VAELoader", "inputs": {"vae_name": "flux2-vae.safetensors"}},
+  "prompt": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["clip", 0], "text": ""}},
+  "guidance": {"class_type": "FluxGuidance", "inputs": {"conditioning": ["prompt", 0], "guidance": 2.0}},
+  "guider": {"class_type": "BasicGuider", "inputs": {"model": ["unet", 0], "conditioning": ["guidance", 0]}},
+  "sampler": {"class_type": "KSamplerSelect", "inputs": {"sampler_name": "euler"}},
+  "sched": {"class_type": "Flux2Scheduler", "inputs": {"steps": 24, "width": 1920, "height": 1088}},
+  "latent": {"class_type": "EmptyFlux2LatentImage", "inputs": {"width": 1920, "height": 1088, "batch_size": 1}},
+  "noise": {"class_type": "RandomNoise", "inputs": {"noise_seed": 0}},
+  "sample": {"class_type": "SamplerCustomAdvanced", "inputs": {"noise": ["noise", 0], "guider": ["guider", 0], "sampler": ["sampler", 0], "sigmas": ["sched", 0], "latent_image": ["latent", 0]}},
+  "decode": {"class_type": "VAEDecode", "inputs": {"samples": ["sample", 0], "vae": ["vae", 0]}},
+  "save": {"class_type": "SaveImage", "inputs": {"images": ["decode", 0], "filename_prefix": "noctalia-vaporwave/vw"}}
+}
