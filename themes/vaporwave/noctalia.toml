@@ -1,0 +1,86 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Noctalia config fragment, installed as ~/.config/noctalia/zz-theme.toml.
+# @THEME_DIR@ is replaced by the installed theme path. Coordinates are logical (1536x864 on eDP-1); rotation is in radians.
+
+[theme]
+source = "custom"
+custom_palette = "vaporwave"
+mode = "dark"
+shell_mode = "dark"   # "auto" would otherwise keep the bar light
+pure_black_dark = false  # keep the indigo night surfaces
+
+[wallpaper]
+transition = ["pixel", "melt", "stripes", "wipe"]
+transition_duration = 1800
+edge_smoothness = 0.15
+
+[desktop_widgets]
+enabled = true
+widget_order = ["vw-clock", "vw-katakana", "vw-rings", "vw-dialog"]
+
+# Heavy weight, top-left: the clock anchors the frame.
+[desktop_widgets.widget.vw-clock]
+type = "clock"
+output = "eDP-1"
+cx = 280.0
+cy = 190.0
+box_width = 440.0
+box_height = 150.0
+rotation = 0.0
+
+[desktop_widgets.widget.vw-clock.settings]
+clock_style = "digital"
+format = "{:%H:%M}"
+font_family = "Noto Sans CJK JP"
+color = "primary"
+shadow = true
+background = false
+
+# Vertical line on the right edge: katakana for "vaporwave".
+[desktop_widgets.widget.vw-katakana]
+type = "label"
+output = "eDP-1"
+cx = 1480.0
+cy = 470.0
+box_width = 560.0
+box_height = 64.0
+rotation = 1.5708
+
+[desktop_widgets.widget.vw-katakana.settings]
+title = "ヴェイパーウェイヴ"
+description = "ＡＥＳＴＨＥＴＩＣＳ　２０２６"
+color = "secondary"
+shadow = true
+background = false
+
+# The point, bottom-left: audio rings as counterweight to the clock.
+[desktop_widgets.widget.vw-rings]
+type = "fancy_audio_visualizer"
+output = "eDP-1"
+cx = 230.0
+cy = 670.0
+box_width = 300.0
+box_height = 300.0
+rotation = 0.0
+
+[desktop_widgets.widget.vw-rings.settings]
+visualization_mode = "bars_rings"
+primary_color = "primary"
+secondary_color = "secondary"
+bloom_intensity = 0.8
+fade_when_idle = false
+
+# Tension, bottom-right: a slightly tilted fake dialog.
+[desktop_widgets.widget.vw-dialog]
+type = "sticker"
+output = "eDP-1"
+cx = 1190.0
+cy = 650.0
+box_width = 380.0
+box_height = 170.0
+rotation = -0.07
+
+[desktop_widgets.widget.vw-dialog.settings]
+image_path = "@THEME_DIR@/stickers/dialog.png"
+opacity = 1.0
+background = false

@@ -1,0 +1,6 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name = "Vaporwave"
+description = "Néons rose, cyan et violet, dialogue nostalgique et anneaux audio. Hommage à l'univers vaporwave, créations originales."
+author = "Antoine Piron"
+palette = "vaporwave"        # palette.json is installed as palettes/<palette>.json
+preview = "preview.webp"
