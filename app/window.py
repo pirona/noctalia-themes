@@ -10,7 +10,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 import installer  # noqa: E402
-from gi.repository import Adw, Gio, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, GLib, Gtk  # noqa: E402
 
 THEMES_ROOT = Path(__file__).resolve().parent.parent / "themes"
 SWATCH_ROLES = ("mSurface", "mPrimary", "mSecondary", "mTertiary", "mOnSurface")
@@ -39,13 +39,16 @@ def _swatches(palette_file):
 
 def _preview(theme):
     path = theme["dir"] / theme.get("preview", "preview.webp")
+    widget = None
     if path.exists():
-        pic = Gtk.Picture.new_for_filename(str(path))
-        pic.set_content_fit(Gtk.ContentFit.COVER)
-        pic.set_size_request(96, 54)
-        widget = pic
-    else:
-        widget = _swatches(theme["dir"] / "palette.json")
+        try:
+            # Synchronous load (async left it blank); Clamp caps the picture's natural width.
+            pic = Gtk.Picture(paintable=Gdk.Texture.new_from_filename(str(path)),
+                              content_fit=Gtk.ContentFit.COVER, can_shrink=True)
+            widget = Adw.Clamp(child=pic, maximum_size=96, tightening_threshold=96)
+        except GLib.Error:
+            log.warning("preview unreadable, using palette swatches: %s", path)
+    widget = widget or _swatches(theme["dir"] / "palette.json")
     frame = Gtk.Frame(child=widget, valign=Gtk.Align.CENTER)
     frame.set_overflow(Gtk.Overflow.HIDDEN)
     return frame
@@ -95,7 +98,7 @@ class Window(Adw.ApplicationWindow):
         self.banner.set_title(f"« {active['theme']} » est appliqué" if active else "")
         self.banner.set_revealed(active is not None)
         self.content.append(self._themes_group(active))
-        self.content.append(self._backups_group())
+        self.content.append(self._backups_group(active))
 
     def _themes_group(self, active):
         group = Adw.PreferencesGroup(title="Thèmes")
@@ -115,7 +118,7 @@ class Window(Adw.ApplicationWindow):
             group.add(row)
         return group
 
-    def _backups_group(self):
+    def _backups_group(self, active):
         group = Adw.PreferencesGroup(
             title="Sauvegardes",
             description="Chaque application enregistre d'abord ta configuration Noctalia. "
@@ -128,6 +131,13 @@ class Window(Adw.ApplicationWindow):
             btn = Gtk.Button(label="Restaurer", valign=Gtk.Align.CENTER, css_classes=["flat"])
             btn.connect("clicked", lambda _b, b=b: self._confirm_restore(b))
             row.add_suffix(btn)
+            trash = Gtk.Button(icon_name="user-trash-symbolic", valign=Gtk.Align.CENTER, css_classes=["flat"],
+                               tooltip_text="Supprimer cette sauvegarde")
+            if active and b["id"] == active["id"]:
+                trash.set_sensitive(False)
+                trash.set_tooltip_text("Seul retour possible pour le thème actif : retire le thème d'abord")
+            trash.connect("clicked", lambda _b, b=b: self._confirm_delete(b))
+            row.add_suffix(trash)
             group.add(row)
         return group
 
@@ -162,22 +172,47 @@ class Window(Adw.ApplicationWindow):
         self.toasts.add_toast(toast)
         self.refresh()
 
+    @staticmethod
+    def _lost_warning():
+        """Warn when leaving the active theme would drop settings changed since it was applied."""
+        changed = installer.changes_since_apply()
+        if not changed:
+            return ""
+        shown = "\n".join(f"• {k}" for k in changed[:8])
+        more = f"\n… et {len(changed) - 8} autres" if len(changed) > 8 else ""
+        return f"\n\nRéglages modifiés depuis l'application du thème, qui seront perdus :\n{shown}{more}"
+
     def _confirm_apply(self, theme):
         self._ask(f"Appliquer « {theme['name']} » ?",
                   "Ta configuration actuelle est sauvegardée d'abord.\n"
                   "Les réglages modifiés dans Noctalia pendant que le thème est actif "
-                  "seront perdus quand tu le retireras.",
+                  "seront perdus quand tu le retireras." + self._lost_warning(),
                   "Appliquer", Adw.ResponseAppearance.SUGGESTED,
                   lambda: self._run(lambda: installer.apply(theme["dir"]), f"« {theme['name']} » appliqué",
                                     undo=lambda stamp: self._run(lambda: installer.rollback(stamp),
                                                                  "Configuration d'origine restaurée")))
 
     def _remove(self):
-        self._run(lambda: installer.rollback(installer.current()), "Thème retiré, configuration d'origine restaurée")
+        def remove():
+            self._run(lambda: installer.rollback(installer.current()),
+                      "Thème retiré, configuration d'origine restaurée")
+
+        warning = self._lost_warning()
+        if not warning:
+            return remove()  # nothing to lose: one click, no dialog
+        self._ask("Retirer le thème ?", "Ta configuration d'origine va être restaurée." + warning,
+                  "Retirer quand même", Adw.ResponseAppearance.DESTRUCTIVE, remove)
 
     def _confirm_restore(self, backup):
         self._ask(f"Restaurer la sauvegarde du {_when(backup['date'])} ?",
-                  "La configuration actuelle de Noctalia sera remplacée par celle de cette date.",
+                  "La configuration actuelle de Noctalia sera remplacée par celle de cette date."
+                  + self._lost_warning(),
                   "Restaurer", Adw.ResponseAppearance.DESTRUCTIVE,
                   lambda: self._run(lambda: installer.rollback(backup["id"]), "Sauvegarde restaurée"))
+
+    def _confirm_delete(self, backup):
+        self._ask(f"Supprimer la sauvegarde du {_when(backup['date'])} ?",
+                  "Elle ne pourra plus être restaurée. Les autres sauvegardes ne sont pas touchées.",
+                  "Supprimer", Adw.ResponseAppearance.DESTRUCTIVE,
+                  lambda: self._run(lambda: installer.delete_backup(backup["id"]), "Sauvegarde supprimée"))
 

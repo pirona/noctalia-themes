@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Noctalia config fragment, installed as ~/.config/noctalia/zz-theme.toml.
-# @THEME_DIR@ is replaced by the installed theme path. Coordinates are logical (1536x864 on eDP-1); rotation is in radians.
+# @THEME_DIR@ and @OUTPUT@ are replaced at install. Coordinates are logical (designed on 1536x864); rotation is in radians.
 
 [theme]
 source = "custom"
@@ -21,7 +21,7 @@ widget_order = ["vw-clock", "vw-katakana", "vw-rings", "vw-dialog"]
 # Heavy weight, top-left: the clock anchors the frame.
 [desktop_widgets.widget.vw-clock]
 type = "clock"
-output = "eDP-1"
+output = "@OUTPUT@"
 cx = 280.0
 cy = 190.0
 box_width = 440.0
@@ -39,7 +39,7 @@ background = false
 # Vertical line on the right edge: katakana for "vaporwave".
 [desktop_widgets.widget.vw-katakana]
 type = "label"
-output = "eDP-1"
+output = "@OUTPUT@"
 cx = 1480.0
 cy = 470.0
 box_width = 560.0
@@ -56,7 +56,7 @@ background = false
 # The point, bottom-left: audio rings as counterweight to the clock.
 [desktop_widgets.widget.vw-rings]
 type = "fancy_audio_visualizer"
-output = "eDP-1"
+output = "@OUTPUT@"
 cx = 230.0
 cy = 670.0
 box_width = 300.0
@@ -73,7 +73,7 @@ fade_when_idle = false
 # Tension, bottom-right: a slightly tilted fake dialog.
 [desktop_widgets.widget.vw-dialog]
 type = "sticker"
-output = "eDP-1"
+output = "@OUTPUT@"
 cx = 1190.0
 cy = 650.0
 box_width = 380.0

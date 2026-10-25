@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SANDBOX = Path(tempfile.mkdtemp(prefix="noctalia-themes-test-"))
 for var in ("NOCTALIA_CONFIG_HOME", "NOCTALIA_STATE_HOME", "NOCTALIA_THEMES_HOME"):
     os.environ[var] = str(SANDBOX / var)
+os.environ["NOCTALIA_THEMES_OUTPUT"] = "CRT-1985"
 os.environ["PATH"] = ""  # no noctalia binary: config-reload becomes a no-op
 sys.path.insert(0, str(ROOT / "app"))
 import installer  # noqa: E402
@@ -130,6 +131,51 @@ def test_restore_older_backup_while_themed():
     assert sha(installer.STATE) == before
 
 
+def test_output_is_substituted():
+    installer.apply(ROOT / "themes/vaporwave")
+    frag = installer.FRAGMENT.read_text()
+    assert 'output = "CRT-1985"' in frag and "@OUTPUT@" not in frag
+    installer.rollback(installer.current())
+
+
+def test_output_cannot_inject():
+    os.environ["NOCTALIA_THEMES_OUTPUT"] = 'X"\nenabled = false\n#'
+    try:
+        installer.apply(ROOT / "themes/vaporwave")
+        widgets = tomllib.loads(installer.FRAGMENT.read_text())["desktop_widgets"]["widget"]
+        assert widgets["vw-clock"]["output"] == 'X"\nenabled = false\n#'
+        assert "enabled" not in widgets["vw-clock"]
+        installer.rollback(installer.current())
+    finally:
+        os.environ["NOCTALIA_THEMES_OUTPUT"] = "CRT-1985"
+
+
+def test_changes_since_apply():
+    bid = installer.apply(ROOT / "themes/vaporwave")
+    assert installer.changes_since_apply() == []
+    state = installer.STATE.read_text()
+    state = state.replace('builtin = "Noctalia"', 'builtin = "Synthwave du dimanche"')
+    state += '\n[wallpaper.last]\npath = "/tmp/rotation.png"\n'  # Noctalia's own noise
+    installer.STATE.write_text(state)
+    assert installer.changes_since_apply() == ["theme.builtin"]
+    echoed = state + '\n[desktop_widgets]\nenabled = true\n'  # theme value written back by Noctalia
+    echoed += '\n[wallpaper.monitors.eDP-1]\npath = "/tmp/choix-perso.png"\n'  # a real user choice
+    installer.STATE.write_text(echoed)
+    assert installer.changes_since_apply() == ["theme.builtin", "wallpaper.monitors.eDP-1.path"]
+    installer.STATE.write_text(echoed + "[[[ pas du toml")
+    assert installer.changes_since_apply() == [installer.UNREADABLE]
+    installer.STATE.write_text(state)
+    try:
+        installer.delete_backup(bid)
+        raise AssertionError("active theme backup was deleted")
+    except ValueError:
+        pass
+    installer.rollback(bid)
+    assert installer.changes_since_apply() == []
+    installer.delete_backup(bid)
+    assert bid not in [b["id"] for b in installer.list_backups()]
+
+
 def test_real_settings_parse():
     real = Path.home() / ".local/state/noctalia/settings.toml"
     if real.exists():
@@ -145,5 +191,8 @@ if __name__ == "__main__":
     test_palette_name_cannot_escape()
     test_failure_mid_apply_rolls_back()
     test_restore_older_backup_while_themed()
+    test_output_is_substituted()
+    test_output_cannot_inject()
+    test_changes_since_apply()
     test_real_settings_parse()
     print("OK", SANDBOX)

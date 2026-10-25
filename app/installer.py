@@ -120,6 +120,62 @@ def _atomic_copy(src, dst):
     tmp.replace(dst)
 
 
+def _toml_escape(value):
+    # Placeholders sit inside "..." basic strings; JSON escaping is valid TOML there.
+    return json.dumps(str(value))[1:-1]
+
+
+def detect_output():
+    """Connector the widgets go to: override, else niri's focused output, else the first wlr output."""
+    if os.environ.get("NOCTALIA_THEMES_OUTPUT"):
+        return os.environ["NOCTALIA_THEMES_OUTPUT"]
+    for cmd, pick in ((["niri", "msg", "--json", "focused-output"], lambda o: o["name"]),
+                      (["wlr-randr", "--json"], lambda o: next(x["name"] for x in o if x.get("enabled")))):
+        try:
+            out = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=True).stdout
+            return pick(json.loads(out))
+        except (OSError, subprocess.SubprocessError, ValueError, LookupError, TypeError, StopIteration):
+            continue
+    raise ValueError("Aucun écran détecté (ni niri ni wlr-randr). Définis NOCTALIA_THEMES_OUTPUT, ex. eDP-1.")
+
+
+def _flatten(table, prefix=""):
+    out = {}
+    for k, v in table.items():
+        key = f"{prefix}{k}"
+        out.update(_flatten(v, key + ".") if isinstance(v, dict) else {key: v})
+    return out
+
+
+# Written by Noctalia itself on every wallpaper change: not a user setting.
+NOISE_PREFIXES = ("wallpaper.last.",)
+UNREADABLE = "(configuration illisible : impossible de vérifier ce qui serait perdu)"
+
+
+def changes_since_apply():
+    """Settings changed in Noctalia while the theme was active; they are lost on removal."""
+    bid = current()
+    written = BACKUPS / str(bid) / "stripped.toml"
+    if not bid or not written.exists() or not STATE.exists():
+        return []
+    try:
+        before = _flatten(tomllib.loads(written.read_text()))
+        now = _flatten(tomllib.loads(STATE.read_text()))
+        theme = _flatten(tomllib.loads(FRAGMENT.read_text())) if FRAGMENT.exists() else {}
+    except (OSError, tomllib.TOMLDecodeError):
+        return [UNREADABLE]  # warn rather than block the way back
+    changed = {k for k in before.keys() | now.keys() if before.get(k) != now.get(k)}
+    # A theme value echoed back into state by Noctalia is not a user change.
+    return sorted(k for k in changed if not k.startswith(NOISE_PREFIXES) and now.get(k) != theme.get(k, object()))
+
+
+def delete_backup(backup_id):
+    if backup_id == current():
+        raise ValueError("Cette sauvegarde est le seul retour possible pour le thème actif : retire le thème d'abord.")
+    shutil.rmtree(BACKUPS / backup_id)
+    log.info("deleted backup %s", backup_id)
+
+
 def current():
     """Backup id of the theme currently applied, or None."""
     return CURRENT.read_text().strip() if CURRENT.exists() else None
@@ -150,6 +206,7 @@ def validate(theme_dir):
 def apply(theme_dir, label=None):
     theme_dir = Path(theme_dir).resolve()
     validate(theme_dir)
+    output = detect_output() if "@OUTPUT@" in (theme_dir / "noctalia.toml").read_text() else None
     if current():
         rollback(current())  # snapshot must capture the untouched user state, not a themed one
     meta = tomllib.loads((theme_dir / "theme.toml").read_text())
@@ -177,7 +234,9 @@ def apply(theme_dir, label=None):
         if installed.exists():
             shutil.rmtree(installed)
         shutil.copytree(theme_dir, installed, ignore=shutil.ignore_patterns("SOURCES.md", "*.py", "__pycache__"))
-        fragment_text = (theme_dir / "noctalia.toml").read_text().replace("@THEME_DIR@", str(installed))
+        fragment_text = (theme_dir / "noctalia.toml").read_text().replace("@THEME_DIR@", _toml_escape(installed))
+        if output:
+            fragment_text = fragment_text.replace("@OUTPUT@", _toml_escape(output))
         fragment = tomllib.loads(fragment_text)
         stripped = strip_overrides(STATE.read_text(), fragment) if STATE.exists() else None
         palette_dst.parent.mkdir(parents=True, exist_ok=True)

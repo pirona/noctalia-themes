@@ -20,8 +20,10 @@ Lancer : « Thèmes Noctalia » dans le lanceur, ou `python3 app/main.py`.
 ## Utilisation
 
 - **Appliquer** : bouton sur la carte du thème, après confirmation. Un toast propose « Annuler » pendant 8 s.
-- **Retirer** : bandeau en haut de la fenêtre dès qu'un thème est actif, un clic.
-- **Sauvegardes** : liste datée ; « Restaurer » remet la config Noctalia exactement dans l'état de cette date.
+- **Retirer** : bandeau en haut de la fenêtre dès qu'un thème est actif, un clic. Si des réglages Noctalia ont été
+  modifiés depuis l'application du thème, l'appli les liste et demande confirmation avant de les perdre.
+- **Sauvegardes** : liste datée ; « Restaurer » remet la config Noctalia exactement dans l'état de cette date ;
+  la corbeille supprime une sauvegarde après confirmation (impossible pour celle du thème actif, seul retour possible).
   Menu → « Ouvrir le dossier des sauvegardes » pour les voir dans le gestionnaire de fichiers.
 
 À savoir : les réglages faits dans l'interface Noctalia **pendant** qu'un thème est actif sont perdus au retrait.
@@ -52,10 +54,11 @@ Créer un dossier dans `themes/`, aucune modification de l'appli n'est nécessai
 |---|---|
 | `theme.toml` | `name`, `description`, `author`, `palette` (nom de fichier, `[A-Za-z0-9_-]+`), `preview` (optionnel) |
 | `palette.json` | palette Noctalia : `dark` + `light`, 16 rôles + bloc `terminal`, `#RRGGBB` strict |
-| `noctalia.toml` | fragment de config Noctalia ; `@THEME_DIR@` est remplacé par le chemin installé |
+| `noctalia.toml` | fragment de config Noctalia ; `@THEME_DIR@` devient le chemin installé, `@OUTPUT@` l'écran détecté (écran actif sous niri, sinon le premier de `wlr-randr` ; forçable avec `NOCTALIA_THEMES_OUTPUT=HDMI-A-1`) |
 | `stickers/`, `wallpapers/` | assets **originaux** ; `wallpapers/SOURCES.md` pour les prompts et seeds |
 
-Sans `preview.webp`, l'appli affiche des bandes aux couleurs de la palette. Partir de `themes/vaporwave/`.
+Aperçu : appliquer le thème puis `tools/preview.sh themes/<nom>` (capture le bureau sur un espace de travail vide,
+niri uniquement). Sans `preview.webp`, l'appli affiche des bandes aux couleurs de la palette. Partir de `themes/vaporwave/`.
 
 ## Ligne de commande
 
@@ -69,12 +72,20 @@ python3 app/installer.py rollback <id>            # retour à l'état de cette s
 
 ```bash
 python3 app/palette.py               # format des couleurs + contraste >= 4.5:1 (Noctalia ignore une couleur invalide sans prévenir)
-python3 tests/test_installer.py      # bac à sable : aller-retour, thème invalide, panne en cours d'application, chemin piégé
+python3 tests/test_installer.py      # bac à sable : aller-retour, thème invalide, panne, chemin piégé, écran, réglages perdus
 pipx run ruff==0.12.0 check .        # lint + PEP 8 (config dans pyproject.toml), sans installation durable
 ```
 
 Structure : `app/installer.py` (logique, sans GTK, testable), `app/window.py` (interface), `app/main.py` (application,
 actions, raccourcis), `app/palette.py` (validation). Logs sur la sortie d'erreur (journal systemd quand lancé depuis le lanceur).
+
+## Limites connues
+
+- **Un seul écran** : `@OUTPUT@` est figé à l'application du thème, et les positions sont pensées pour 1536×864
+  logiques. Sur un autre écran, ou si cet écran disparaît (dock débranché), les widgets sont mal placés ou absents :
+  ré-appliquer le thème. Noctalia ne propose pas de cible « tous les écrans » documentée.
+- Les réglages modifiés dans Noctalia pendant qu'un thème est actif sont perdus au retrait (l'appli prévient).
+- Pas de verrou avec Noctalia : une écriture qu'il ferait pile pendant l'application (fraction de seconde) serait perdue.
 
 ## Pièges Noctalia relevés
 
