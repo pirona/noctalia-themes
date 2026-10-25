@@ -77,9 +77,15 @@ Créer un dossier dans `themes/`, aucune modification de l'appli n'est nécessai
 | `noctalia.toml` | fragment de config Noctalia ; `@THEME_DIR@` devient le chemin installé, `@OUTPUT@` l'écran cible : `NOCTALIA_THEMES_OUTPUT` s'il est défini, sinon l'écran choisi dans les préférences, sinon l'écran actif sous niri, sinon le premier écran allumé de `wlr-randr` |
 | `[widget_groups]` dans `theme.toml` | optionnel : libellés des interrupteurs « afficher/masquer », un groupe peut regrouper plusieurs widgets |
 | `stickers/`, `wallpapers/` | assets **originaux** ; `wallpapers/SOURCES.md` pour les prompts et seeds |
+| `fonts/` | optionnel : polices `.ttf`/`.otf` (licence libre à côté) posées dans `~/.local/share/fonts/noctalia-themes/`,
+retirées au retour arrière ; un widget les nomme par famille (`font_family`) |
 
 Aperçu : appliquer le thème puis `tools/preview.sh themes/<nom>` (capture le bureau sur un espace de travail vide,
 niri uniquement). Sans `preview.webp`, l'appli affiche des bandes aux couleurs de la palette. Partir de `themes/vaporwave/`.
+
+Fonds : `tools/comfy_generate.py --theme <nom> …` (un job ComfyUI à la fois), puis
+`tools/promote_wallpaper.py --theme <nom> <rendu.png> <nom-court>` (retire un cadre de case dessiné par le modèle,
+rogne en 1920×1080, WebP, `SOURCES.md`, copie dans `~/Images/wallpapers/<nom>/`).
 
 ## Ligne de commande
 
@@ -122,6 +128,8 @@ trace des applications, restaurations, suppressions et changements de fond), aus
 - Fond d'écran GIF : seule la première image s'affiche, pas d'animation (testé sur 5.3.0).
 - Les widgets de bureau ont un fond par défaut : `background = false` pour du texte seul.
 - Les stickers sont mis en cache par chemin : pour remplacer une image, lui donner un **nouveau nom de fichier**.
+- Une police installée pendant que Noctalia tourne n'est vue qu'**au redémarrage de Noctalia** (fontconfig est lu au
+  lancement) : au premier `apply` d'un thème avec `fonts/`, le texte retombe sur la police par défaut jusque-là.
 - Le lecteur média (`media_player`) n'affiche la pochette que si le lecteur publie en MPRIS un `mpris:artUrl` lisible.
   Un lecteur **Flatpak** basé sur Chromium/Electron (ex. Aonsoku) l'écrit dans **son** `/tmp` privé : Noctalia ne peut
   pas l'ouvrir. Correctif : `flatpak override --user --filesystem=/tmp <app-id>` puis relancer l'appli

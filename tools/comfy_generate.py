@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Queue ONE wallpaper on ComfyUI, wait, fetch it to a buffer dir outside the repo, free the cache.
 
-  tools/comfy_generate.py --prompt-file p.txt --seed 20111209 --name test01 [--steps 24] [--size 1920x1088] [--dry-run]
+  tools/comfy_generate.py --prompt-file p.txt --seed 20111209 --name test01 [--theme vaporwave]
+      [--steps 24] [--size 1920x1088] [--dry-run]
 Env: COMFY_URL (default http://192.168.1.2:8188), WALLPAPER_BUFFER (default ~/Images/noctalia-vaporwave-tampon).
 Never interrupts or deletes a job: if the queue is busy, the job just waits its turn.
 """
@@ -29,7 +30,7 @@ def post(path, body, timeout=60):
     return urllib.request.urlopen(req, timeout=timeout).read()
 
 
-def build(prompt, seed, steps, width, height, name):
+def build(prompt, seed, steps, width, height, name, theme="vaporwave"):
     if width % 32 or height % 32:
         raise SystemExit(f"Flux.2 wants multiples of 32, got {width}x{height}")
     g = json.loads(WORKFLOW.read_text())
@@ -40,7 +41,7 @@ def build(prompt, seed, steps, width, height, name):
     g["noise"]["inputs"]["noise_seed"] = seed
     g["sched"]["inputs"].update(steps=steps, width=width, height=height)
     g["latent"]["inputs"].update(width=width, height=height)
-    g["save"]["inputs"]["filename_prefix"] = f"noctalia-vaporwave/{name}_s{seed}"
+    g["save"]["inputs"]["filename_prefix"] = f"noctalia-{theme}/{name}_s{seed}"
     return g
 
 
@@ -60,13 +61,14 @@ def main():
     ap.add_argument("--prompt-file", required=True, type=Path)
     ap.add_argument("--seed", required=True, type=int)
     ap.add_argument("--name", required=True)
+    ap.add_argument("--theme", default="vaporwave")
     ap.add_argument("--steps", type=int, default=24)
     ap.add_argument("--size", default="1920x1088")
     ap.add_argument("--dry-run", action="store_true")
     a = ap.parse_args()
     width, height = (int(v) for v in a.size.split("x"))
     prompt = a.prompt_file.read_text().strip()
-    graph = build(prompt, a.seed, a.steps, width, height, a.name)
+    graph = build(prompt, a.seed, a.steps, width, height, a.name, a.theme)
     if a.dry_run:
         print(json.dumps(graph, indent=1, ensure_ascii=False))
         return
@@ -76,7 +78,7 @@ def main():
     # extra_pnginfo.workflow is mandatory: without it comfyui_queue_manager hangs the worker forever.
     body = {"prompt": graph, "client_id": str(uuid.uuid4()),
             "extra_data": {"extra_pnginfo": {"workflow": {
-                "id": str(uuid.uuid4()), "workflow_name": f"noctalia_vaporwave_{a.name}_claude",
+                "id": str(uuid.uuid4()), "workflow_name": f"noctalia_{a.theme}_{a.name}_claude",
                 "nodes": [], "links": []}}}}
     pid = json.loads(post("/prompt", body))["prompt_id"]
     print("queued", pid, flush=True)

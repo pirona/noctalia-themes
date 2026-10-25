@@ -10,7 +10,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SANDBOX = Path(tempfile.mkdtemp(prefix="noctalia-themes-test-"))
-for var in ("NOCTALIA_CONFIG_HOME", "NOCTALIA_STATE_HOME", "NOCTALIA_THEMES_HOME", "NOCTALIA_THEMES_CONFIG"):
+for var in ("NOCTALIA_CONFIG_HOME", "NOCTALIA_STATE_HOME", "NOCTALIA_THEMES_HOME", "NOCTALIA_THEMES_CONFIG",
+            "NOCTALIA_THEMES_FONTS"):
     os.environ[var] = str(SANDBOX / var)
 os.environ["NOCTALIA_THEMES_OUTPUT"] = "CRT-1985"
 os.environ["PATH"] = ""  # no noctalia binary: config-reload becomes a no-op
@@ -229,6 +230,14 @@ def test_excess_backups_spare_active():
     installer.rollback(active)
 
 
+def test_fonts_installed_and_removed():
+    font = installer.FONTS / "GochiHand-Regular.ttf"
+    bid = installer.apply(ROOT / "themes/batman")
+    assert sha(font) == sha(ROOT / "themes/batman/fonts/GochiHand-Regular.ttf")
+    installer.rollback(bid)
+    assert not font.exists()  # created by the theme: gone on rollback
+
+
 def test_real_settings_parse():
     real = Path.home() / ".local/state/noctalia/settings.toml"
     if real.exists():
@@ -251,5 +260,6 @@ if __name__ == "__main__":
     test_preferences_fragment()
     test_echoed_preference_is_not_a_user_change()
     test_excess_backups_spare_active()
+    test_fonts_installed_and_removed()
     test_real_settings_parse()
     print("OK", SANDBOX)
