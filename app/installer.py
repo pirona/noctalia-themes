@@ -1,13 +1,19 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Apply / roll back Noctalia themes. Every apply snapshots first; rollback restores bytes exactly."""
 import json
+import logging
 import os
+import re
 import shutil
 import subprocess
 import sys
 import tomllib
 from datetime import datetime
 from pathlib import Path
+
+import palette
+
+log = logging.getLogger("noctalia-themes")
 
 
 def _home(var, xdg, default):
@@ -107,23 +113,53 @@ def _reload():
         pass
 
 
+def _atomic_copy(src, dst):
+    # Noctalia watches these files: never let it read a half-written one.
+    tmp = Path(dst).with_name(Path(dst).name + ".tmp")
+    shutil.copy2(src, tmp)
+    tmp.replace(dst)
+
+
 def current():
     """Backup id of the theme currently applied, or None."""
     return CURRENT.read_text().strip() if CURRENT.exists() else None
 
 
+def current_theme():
+    """Manifest of the applied theme, or None."""
+    bid = current()
+    return next((b for b in list_backups() if b["id"] == bid), None)
+
+
+def validate(theme_dir):
+    """Raise ValueError if the theme is broken; nothing is touched before this passes."""
+    theme_dir = Path(theme_dir)
+    errors = palette.check(theme_dir / "palette.json")
+    meta = tomllib.loads((theme_dir / "theme.toml").read_text())
+    for key in ("name", "palette"):
+        if key not in meta:
+            errors.append(f"theme.toml: missing '{key}'")
+    # The palette name becomes a file name: keep it from escaping palettes/.
+    if not re.fullmatch(r"[A-Za-z0-9_-]+", str(meta.get("palette", ""))):
+        errors.append("theme.toml: 'palette' must match [A-Za-z0-9_-]+")
+    tomllib.loads((theme_dir / "noctalia.toml").read_text())
+    if errors:
+        raise ValueError("\n".join(errors))
+
+
 def apply(theme_dir, label=None):
+    theme_dir = Path(theme_dir).resolve()
+    validate(theme_dir)
     if current():
         rollback(current())  # snapshot must capture the untouched user state, not a themed one
-    theme_dir = Path(theme_dir).resolve()
     meta = tomllib.loads((theme_dir / "theme.toml").read_text())
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     bdir = BACKUPS / stamp
     bdir.mkdir(parents=True)
 
     installed = DATA / "themes" / theme_dir.name
-    palette = CONFIG / "palettes" / f"{meta['palette']}.json"
-    targets = [palette, FRAGMENT]
+    palette_dst = CONFIG / "palettes" / f"{meta['palette']}.json"
+    targets = [palette_dst, FRAGMENT]
     manifest = {"theme": meta["name"], "date": stamp, "label": label or f"Avant « {meta['name']} »",
                 "state_existed": STATE.exists(), "files": {}}
     # Snapshot first, before anything is written.
@@ -137,36 +173,45 @@ def apply(theme_dir, label=None):
         manifest["files"][str(t)] = saved
     (bdir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
 
-    if installed.exists():
-        shutil.rmtree(installed)
-    shutil.copytree(theme_dir, installed, ignore=shutil.ignore_patterns("SOURCES.md", "*.py", "__pycache__"))
-    fragment_text = (theme_dir / "noctalia.toml").read_text().replace("@THEME_DIR@", str(installed))
-    fragment = tomllib.loads(fragment_text)
-    palette.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copyfile(theme_dir / "palette.json", palette)
-    FRAGMENT.write_text(fragment_text)
-    if STATE.exists():
-        tmp = STATE.with_suffix(".toml.tmp")
-        tmp.write_text(strip_overrides(STATE.read_text(), fragment))
-        tmp.replace(STATE)
-    CURRENT.write_text(stamp)
+    try:
+        if installed.exists():
+            shutil.rmtree(installed)
+        shutil.copytree(theme_dir, installed, ignore=shutil.ignore_patterns("SOURCES.md", "*.py", "__pycache__"))
+        fragment_text = (theme_dir / "noctalia.toml").read_text().replace("@THEME_DIR@", str(installed))
+        fragment = tomllib.loads(fragment_text)
+        stripped = strip_overrides(STATE.read_text(), fragment) if STATE.exists() else None
+        palette_dst.parent.mkdir(parents=True, exist_ok=True)
+        _atomic_copy(theme_dir / "palette.json", palette_dst)
+        (bdir / "fragment.toml").write_text(fragment_text)
+        _atomic_copy(bdir / "fragment.toml", FRAGMENT)
+        if stripped is not None:
+            # ponytail: no lock with Noctalia; a write it makes between our read and replace is lost (sub-second window)
+            (bdir / "stripped.toml").write_text(stripped)
+            _atomic_copy(bdir / "stripped.toml", STATE)
+        CURRENT.write_text(stamp)
+    except Exception:
+        rollback(stamp)  # leave the user exactly where they were
+        raise
+    log.info("applied theme %s (backup %s)", meta["name"], stamp)
     _reload()
     return stamp
 
 
 def rollback(backup_id):
+    if current() and current() != backup_id:
+        rollback(current())  # remove the active theme cleanly before going further back
     bdir = BACKUPS / backup_id
     manifest = json.loads((bdir / "manifest.json").read_text())
     for path, saved in manifest["files"].items():
         p = Path(path)
         if saved:
-            shutil.copy2(bdir / saved, p)
+            _atomic_copy(bdir / saved, p)
         elif p.exists():
             p.unlink()  # created by the theme, not there before
     if manifest["state_existed"]:
-        shutil.copy2(bdir / "settings.toml", STATE)
-    if current() == backup_id:
-        CURRENT.unlink()
+        _atomic_copy(bdir / "settings.toml", STATE)
+    CURRENT.unlink(missing_ok=True)  # every backup is a theme-free state
+    log.info("restored backup %s", backup_id)
     _reload()
 
 

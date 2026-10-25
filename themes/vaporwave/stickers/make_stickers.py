@@ -32,7 +32,7 @@ def dialog():
     # title bar: pink to cyan instead of the stock navy
     for x in range(4 * S, w - 4 * S):
         t = x / w
-        c = tuple(int(a + (b - a) * t) for a, b in zip((255, 113, 206), (1, 205, 254)))
+        c = tuple(int(a + (b - a) * t) for a, b in zip((255, 113, 206), (1, 205, 254), strict=True))
         d.line([(x, 4 * S), (x, 26 * S)], fill=c)
     d.text((10 * S, 6 * S), "ＡＥＳＴＨＥＴＩＣＳ．ＥＸＥ", font=font(13, True), fill="#FFFFFF")
     bevel(d, (w - 24 * S, 7 * S, w - 8 * S, 23 * S))

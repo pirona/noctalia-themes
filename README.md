@@ -1,43 +1,80 @@
 # noctalia-themes
 
-Thèmes décoratifs pour [Noctalia](https://docs.noctalia.dev/noctalia/) v5 (testé sur 5.3.0, Fedora 44, Niri).
-Premier thème : **vaporwave**. Licence GPL v3.
+Thèmes décoratifs pour [Noctalia](https://docs.noctalia.dev/noctalia/) v5 (testé sur 5.3.0, Fedora 44, Niri),
+avec une petite appli GTK4 / libadwaita pour les appliquer et les retirer. Premier thème : **vaporwave**.
+Licence GPL v3.
 
-## Principe
+## Installation
 
-Un thème = un dossier autonome dans `themes/` :
+```bash
+git clone <ce dépôt> ~/gitea-trucs/noctalia-themes
+cd ~/gitea-trucs/noctalia-themes
+./install.sh            # vérifie python3-gobject, gtk4, libadwaita ; crée l'entrée du lanceur
+```
+
+`install.sh` n'utilise jamais `sudo` : s'il manque un paquet, il affiche la commande `dnf` à lancer.
+Il est rejouable sans effet de bord. `./install.sh --uninstall` retire l'entrée du lanceur (sauvegardes conservées).
+
+Lancer : « Thèmes Noctalia » dans le lanceur, ou `python3 app/main.py`.
+
+## Utilisation
+
+- **Appliquer** : bouton sur la carte du thème, après confirmation. Un toast propose « Annuler » pendant 8 s.
+- **Retirer** : bandeau en haut de la fenêtre dès qu'un thème est actif, un clic.
+- **Sauvegardes** : liste datée ; « Restaurer » remet la config Noctalia exactement dans l'état de cette date.
+  Menu → « Ouvrir le dossier des sauvegardes » pour les voir dans le gestionnaire de fichiers.
+
+À savoir : les réglages faits dans l'interface Noctalia **pendant** qu'un thème est actif sont perdus au retrait.
+C'est le prix d'une restauration exacte.
+
+## Comment ça marche
+
+Noctalia charge trois couches, la dernière gagne : défauts → `~/.config/noctalia/*.toml` →
+`~/.local/state/noctalia/settings.toml` (écrit par l'interface). Un thème déposé dans `~/.config` serait donc
+masqué par l'état. Appliquer un thème :
+
+1. valide le thème (palette, `theme.toml`, TOML lisible) : rien n'est touché si c'est invalide ;
+2. si un thème est déjà actif, le retire d'abord : la sauvegarde capture toujours l'état d'origine ;
+3. sauvegarde `settings.toml` et tout fichier qui sera écrasé dans `~/.local/share/noctalia-themes/backups/<date>/` ;
+4. copie le thème dans `~/.local/share/noctalia-themes/themes/`, la palette dans `~/.config/noctalia/palettes/`,
+   le fragment dans `~/.config/noctalia/zz-theme.toml` ;
+5. retire de `settings.toml` les clés que le thème définit, et toute la table `[desktop_widgets]`.
+
+Si une étape échoue après la sauvegarde, tout est restauré automatiquement. Les écritures sont atomiques
+(fichier temporaire puis renommage) pour que Noctalia, qui surveille ces fichiers, ne lise jamais un fichier à moitié écrit.
+Le retour arrière restaure les copies **à l'octet près** et retire les fichiers créés. Noctalia recharge à chaud.
+
+## Ajouter un thème
+
+Créer un dossier dans `themes/`, aucune modification de l'appli n'est nécessaire :
 
 | Fichier | Rôle |
 |---|---|
-| `theme.toml` | nom, description, auteur, nom de la palette |
-| `palette.json` | palette Noctalia (`dark` + `light`, `#RRGGBB` strict) |
-| `noctalia.toml` | fragment de config Noctalia (thème, transitions, widgets de bureau). `@THEME_DIR@` est remplacé à l'installation |
-| `stickers/`, `wallpapers/` | assets originaux |
+| `theme.toml` | `name`, `description`, `author`, `palette` (nom de fichier, `[A-Za-z0-9_-]+`), `preview` (optionnel) |
+| `palette.json` | palette Noctalia : `dark` + `light`, 16 rôles + bloc `terminal`, `#RRGGBB` strict |
+| `noctalia.toml` | fragment de config Noctalia ; `@THEME_DIR@` est remplacé par le chemin installé |
+| `stickers/`, `wallpapers/` | assets **originaux** ; `wallpapers/SOURCES.md` pour les prompts et seeds |
 
-Appliquer un thème :
+Sans `preview.webp`, l'appli affiche des bandes aux couleurs de la palette. Partir de `themes/vaporwave/`.
 
-1. sauvegarde `~/.local/state/noctalia/settings.toml` et tout fichier qui sera écrasé dans `~/.local/share/noctalia-themes/backups/<date>/` ;
-2. copie le thème dans `~/.local/share/noctalia-themes/themes/`, la palette dans `~/.config/noctalia/palettes/`, le fragment dans `~/.config/noctalia/zz-theme.toml` ;
-3. retire du `settings.toml` d'état les clés que le thème définit (sinon elles l'emportent : l'état est la dernière couche chargée par Noctalia) et toute la table `[desktop_widgets]`.
-
-Le retour arrière restaure les copies **à l'octet près** et retire les fichiers créés. Noctalia recharge à chaud.
-Ré-appliquer un thème fait d'abord le retour arrière du thème actif, la sauvegarde capture donc toujours l'état d'origine.
-Les réglages faits dans l'interface Noctalia pendant qu'un thème est actif sont perdus au retour arrière.
-
-## Ligne de commande (en attendant l'appli)
+## Ligne de commande
 
 ```bash
 python3 app/installer.py apply themes/vaporwave   # affiche l'id de la sauvegarde
 python3 app/installer.py list                     # sauvegardes disponibles
-python3 app/installer.py rollback <id>            # retour à l'état d'avant
+python3 app/installer.py rollback <id>            # retour à l'état de cette sauvegarde
 ```
 
-## Vérifications
+## Développement
 
 ```bash
-python3 tools/check_palette.py     # format des couleurs + contraste >= 4.5:1
-python3 tests/test_installer.py    # aller-retour appliquer/revenir dans un bac à sable
+python3 app/palette.py               # format des couleurs + contraste >= 4.5:1 (Noctalia ignore une couleur invalide sans prévenir)
+python3 tests/test_installer.py      # bac à sable : aller-retour, thème invalide, panne en cours d'application, chemin piégé
+pipx run ruff==0.12.0 check .        # lint + PEP 8 (config dans pyproject.toml), sans installation durable
 ```
+
+Structure : `app/installer.py` (logique, sans GTK, testable), `app/window.py` (interface), `app/main.py` (application,
+actions, raccourcis), `app/palette.py` (validation). Logs sur la sortie d'erreur (journal systemd quand lancé depuis le lanceur).
 
 ## Pièges Noctalia relevés
 
@@ -45,3 +82,4 @@ python3 tests/test_installer.py    # aller-retour appliquer/revenir dans un bac 
 - `theme.shell_mode = "auto"` garde la barre claire même avec `mode = "dark"`.
 - `theme.pure_black_dark = true` remplace les surfaces sombres de la palette par du noir.
 - Fond d'écran GIF : seule la première image s'affiche, pas d'animation (testé sur 5.3.0).
+- Les widgets de bureau ont un fond par défaut : `background = false` pour du texte seul.

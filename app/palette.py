@@ -50,7 +50,7 @@ def check(path):
 
 if __name__ == "__main__":
     assert round(contrast("#000000", "#FFFFFF"), 1) == 21.0
-    paths = sys.argv[1:] or sorted(str(p) for p in Path(__file__).parent.parent.glob("themes/*/palette.json"))
+    paths = sys.argv[1:] or sorted(str(p) for p in Path(__file__).resolve().parent.parent.glob("themes/*/palette.json"))
     bad = 0
     for p in paths:
         errs = check(p)

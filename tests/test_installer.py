@@ -2,6 +2,7 @@
 """Run: python3 tests/test_installer.py  (sandboxed in a temp dir, never touches the real session)"""
 import hashlib
 import os
+import shutil
 import sys
 import tempfile
 import tomllib
@@ -75,6 +76,60 @@ def test_apply_rollback_roundtrip():
     assert not (installer.CONFIG / "palettes/vaporwave.json").exists()
 
 
+def test_invalid_theme_touches_nothing():
+    bad = SANDBOX / "bad-theme"
+    shutil.copytree(ROOT / "themes/vaporwave", bad)
+    (bad / "palette.json").write_text((bad / "palette.json").read_text().replace("#FF71CE", "#F7C", 1))
+    before = sha(installer.STATE)
+    try:
+        installer.apply(bad)
+        raise AssertionError("invalid palette was accepted")
+    except ValueError as e:
+        assert "mPrimary" in str(e)
+    assert sha(installer.STATE) == before and not installer.FRAGMENT.exists()
+
+
+def test_palette_name_cannot_escape():
+    evil = SANDBOX / "evil-theme"
+    shutil.copytree(ROOT / "themes/vaporwave", evil)
+    (evil / "theme.toml").write_text('name = "Trojan Horse Wave"\npalette = "../../../etc/oups"\n')
+    try:
+        installer.validate(evil)
+        raise AssertionError("path traversal accepted")
+    except ValueError as e:
+        assert "palette" in str(e)
+
+
+def test_failure_mid_apply_rolls_back():
+    before = sha(installer.STATE)
+    real_copy = installer._atomic_copy
+
+    def flaky(src, dst):
+        if "stripped" in str(src):
+            raise OSError("disque plein, comme le frigo un dimanche soir")
+        real_copy(src, dst)
+
+    installer._atomic_copy = flaky
+    try:
+        installer.apply(ROOT / "themes/vaporwave")
+        raise AssertionError("failure was swallowed")
+    except OSError:
+        pass
+    finally:
+        installer._atomic_copy = real_copy
+    assert sha(installer.STATE) == before
+    assert not installer.FRAGMENT.exists() and installer.current() is None
+
+
+def test_restore_older_backup_while_themed():
+    before = sha(installer.STATE)
+    older = installer.apply(ROOT / "themes/vaporwave")
+    installer.apply(ROOT / "themes/vaporwave")
+    installer.rollback(older)
+    assert installer.current() is None and not installer.FRAGMENT.exists()
+    assert sha(installer.STATE) == before
+
+
 def test_real_settings_parse():
     real = Path.home() / ".local/state/noctalia/settings.toml"
     if real.exists():
@@ -86,5 +141,9 @@ def test_real_settings_parse():
 if __name__ == "__main__":
     test_strip()
     test_apply_rollback_roundtrip()
+    test_invalid_theme_touches_nothing()
+    test_palette_name_cannot_escape()
+    test_failure_mid_apply_rolls_back()
+    test_restore_older_backup_while_themed()
     test_real_settings_parse()
     print("OK", SANDBOX)
