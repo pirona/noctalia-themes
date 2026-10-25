@@ -122,5 +122,8 @@ trace des applications, restaurations, suppressions et changements de fond), aus
 - Fond d'écran GIF : seule la première image s'affiche, pas d'animation (testé sur 5.3.0).
 - Les widgets de bureau ont un fond par défaut : `background = false` pour du texte seul.
 - Les stickers sont mis en cache par chemin : pour remplacer une image, lui donner un **nouveau nom de fichier**.
-- Le lecteur média (`media_player`) n'affiche la pochette que si le lecteur la publie en MPRIS (Chromium ne le fait pas).
+- Le lecteur média (`media_player`) n'affiche la pochette que si le lecteur publie en MPRIS un `mpris:artUrl` lisible.
+  Un lecteur **Flatpak** basé sur Chromium/Electron (ex. Aonsoku) l'écrit dans **son** `/tmp` privé : Noctalia ne peut
+  pas l'ouvrir. Correctif : `flatpak override --user --filesystem=/tmp <app-id>` puis relancer l'appli
+  (retour arrière : `--nofilesystem=/tmp`). Contrepartie : l'appli voit le `/tmp` de la session.
 - Le visualiseur audio lit le son avant la sortie : en AirPlay (~1,6 s de tampon), il est en avance sur ce qu'on entend.
