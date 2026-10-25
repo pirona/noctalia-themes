@@ -36,3 +36,10 @@ Créations originales générées localement avec ComfyUI (workflow `tools/workf
 - rendu source : `05b-fountain-cloud-deserted_s20111213_00001_.png`
 
 > A small, perfectly formed white cloud floats a few meters above a round fountain basin of smooth pale pink stone, raining a gentle silver drizzle into the still turquoise water, slightly right of center. The fountain stands alone in a vast, empty, rounded hall with seamless lavender walls that curve softly into the ceiling, a single large circular opening above letting in calm evening light. The floor is one continuous polished surface of pale peach, reflecting the cloud and the basin. Very few elements, large smooth planes, soft curves, economy of means. Smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading, the impossible cloud treated as perfectly ordinary, calm uncanny liminal mood, generous quiet space in the upper left, uncluttered foreground.
+
+## wall_elevator-sky.webp
+
+- graine : `20111217` — pas : 24 — taille générée : 1920x1088 — ComfyUI 0.42.1
+- rendu source : `09-elevator-sky_s20111217_00001_.png`
+
+> A single elevator doorway with plain brushed steel doors slid wide open stands in a long, seamless pale pink wall, slightly right of center. Instead of a cabin, the doorway opens onto an endless sunset sky: soft coral and lavender clouds drift level with the threshold, and a round golden sun glows low in the distance. Warm light from that sky spills out across a smooth, continuous teal floor in one long soft rectangle. Nothing else in the space: large flat planes of color, one opening, economy of means. Smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading, the impossible view treated as perfectly ordinary, calm uncanny liminal mood, wide empty wall in the upper left, uncluttered foreground.
