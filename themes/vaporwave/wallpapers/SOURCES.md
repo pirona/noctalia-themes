@@ -43,3 +43,10 @@ Créations originales générées localement avec ComfyUI (workflow `tools/workf
 - rendu source : `09-elevator-sky_s20111217_00001_.png`
 
 > A single elevator doorway with plain brushed steel doors slid wide open stands in a long, seamless pale pink wall, slightly right of center. Instead of a cabin, the doorway opens onto an endless sunset sky: soft coral and lavender clouds drift level with the threshold, and a round golden sun glows low in the distance. Warm light from that sky spills out across a smooth, continuous teal floor in one long soft rectangle. Nothing else in the space: large flat planes of color, one opening, economy of means. Smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading, the impossible view treated as perfectly ordinary, calm uncanny liminal mood, wide empty wall in the upper left, uncluttered foreground.
+
+## wall_moon-hall.webp
+
+- graine : `20111218` — pas : 24 — taille générée : 1920x1088 — ComfyUI 0.42.1
+- rendu source : `10-moon-hall_s20111218_00001_.png`
+
+> A huge pale full moon rests on the floor of a vast, empty, dimly lit hall at night, slightly right of center, glowing with soft silvery light that pools around it on a smooth, continuous teal floor. Its cratered surface is rendered calmly and precisely. The hall is reduced to large seamless planes: a deep lavender back wall, a softly curved ceiling, a single slender palm tree in a round white planter standing to the right of the moon. Nothing else. Economy of means, large smooth surfaces, soft curves. Smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading, the impossible scale treated as perfectly ordinary, calm uncanny liminal mood, quiet dark space in the upper left, uncluttered foreground.
