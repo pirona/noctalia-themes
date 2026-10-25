@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Capture the themed desktop as <theme>/preview.webp. Apply the theme first. Niri only.
+# Capture the themed desktop as <theme>/preview.webp, without the top bar. Apply the theme first. Niri only.
+#   CROP_TOP=64 (physical px to drop at the top)
 #   tools/preview.sh themes/vaporwave
 set -euo pipefail
 
@@ -17,5 +18,8 @@ trap 'niri msg action focus-workspace-previous; rm -f "$shot"' EXIT  # always br
 sleep 1.5  # let the workspace animation finish
 grim -o "$output" "$shot"
 
-magick "$shot" -resize 640x360 -quality 85 "$theme/preview.webp"
+# Drop the top bar (network name, IPs…) then crop back to 16:9: the preview lives in the repo.
+crop_top="${CROP_TOP:-64}"
+magick "$shot" -gravity south -crop "x$(( $(magick identify -format %h "$shot") - crop_top ))+0+0" +repage \
+    -resize 640x360^ -gravity center -extent 640x360 -quality 85 "$theme/preview.webp"
 echo "aperçu : $theme/preview.webp"
