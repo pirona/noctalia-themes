@@ -29,3 +29,10 @@ Créations originales générées localement avec ComfyUI (workflow `tools/workf
 - rendu source : `06-door-parking_s20111214_00001_.png`
 
 > On the empty rooftop parking lot of a shopping mall at twilight, a single freestanding glass entrance door with a pale pink metal frame stands alone on the painted asphalt, attached to no wall. Through its glass panels a bright, sunlit pastel mall interior with palm trees and a turquoise fountain is clearly visible, while all around it the sky is a deep violet dusk fading to warm coral at the low horizon. Faint parking lines in soft cyan lead the eye toward the door, placed slightly right of center. Smooth, crisp, matter-of-fact painterly clarity, clean edges, quiet and dreamlike, calm liminal mood, wide empty sky in the upper left, open asphalt in the foreground.
+
+## wall_fountain-cloud.webp
+
+- graine : `20111213` — pas : 24 — taille générée : 1920x1088 — ComfyUI 0.42.1
+- rendu source : `05b-fountain-cloud-deserted_s20111213_00001_.png`
+
+> A small, perfectly formed white cloud floats a few meters above a round fountain basin of smooth pale pink stone, raining a gentle silver drizzle into the still turquoise water, slightly right of center. The fountain stands alone in a vast, empty, rounded hall with seamless lavender walls that curve softly into the ceiling, a single large circular opening above letting in calm evening light. The floor is one continuous polished surface of pale peach, reflecting the cloud and the basin. Very few elements, large smooth planes, soft curves, economy of means. Smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading, the impossible cloud treated as perfectly ordinary, calm uncanny liminal mood, generous quiet space in the upper left, uncluttered foreground.
