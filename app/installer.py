@@ -25,6 +25,8 @@ CONFIG = _home("NOCTALIA_CONFIG_HOME", "XDG_CONFIG_HOME", ".config") / "noctalia
 STATE = _home("NOCTALIA_STATE_HOME", "XDG_STATE_HOME", ".local/state") / "noctalia" / "settings.toml"
 DATA = _home("NOCTALIA_THEMES_HOME", "XDG_DATA_HOME", ".local/share") / "noctalia-themes"
 BACKUPS = DATA / "backups"
+# Widgets name fonts by family: fontconfig must see them, so they go to the user font dir.
+FONTS = _home("NOCTALIA_THEMES_FONTS", "XDG_DATA_HOME", ".local/share") / "fonts" / "noctalia-themes"
 FRAGMENT = CONFIG / "zz-theme.toml"
 CURRENT = DATA / "current"
 # Loaded after zz-theme.toml (alphabetical), so the app preferences win over the theme.
@@ -284,6 +286,22 @@ def _render(theme_dir, output):
     return text.replace("@OUTPUT@", _toml_escape(output)) if output else text
 
 
+def _fonts(theme_dir):
+    """(source, installed) pairs for the theme's fonts."""
+    return [(f, FONTS / f.name) for f in sorted((theme_dir / "fonts").glob("*.[ot]tf"))]
+
+
+def _install_fonts(pairs):
+    for src, dst in pairs:
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        _atomic_copy(src, dst)
+    if pairs:
+        try:
+            subprocess.run(["fc-cache", str(FONTS)], check=False, capture_output=True, timeout=30)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            pass  # fontconfig rescans on its own, just later
+
+
 def refresh(theme_dir):
     """Update the active theme's files in place (stickers, palette, fragment).
 
@@ -302,6 +320,7 @@ def refresh(theme_dir):
     tmp = DATA / "fragment.refresh.toml"
     tmp.write_text(text)
     _atomic_copy(theme_dir / "palette.json", CONFIG / "palettes" / f"{meta['palette']}.json")
+    _install_fonts(_fonts(theme_dir))  # ponytail: a font added after apply isn't in the backup, so rollback keeps it
     write_options(fragment, reload=False)  # options first: Noctalia never sees new fragment + stale options
     _atomic_copy(tmp, FRAGMENT)
     tmp.unlink()
@@ -321,7 +340,8 @@ def apply(theme_dir, label=None):
     bdir.mkdir(parents=True)
 
     palette_dst = CONFIG / "palettes" / f"{meta['palette']}.json"
-    targets = [palette_dst, FRAGMENT, OPTIONS]
+    fonts = _fonts(theme_dir)
+    targets = [palette_dst, FRAGMENT, OPTIONS] + [dst for _, dst in fonts]
     manifest = {"theme": meta["name"], "date": stamp, "label": label or f"Avant « {meta['name']} »",
                 "state_existed": STATE.exists(), "files": {}}
     # Snapshot first, before anything is written.
@@ -341,6 +361,7 @@ def apply(theme_dir, label=None):
         stripped = strip_overrides(STATE.read_text(), fragment) if STATE.exists() else None
         palette_dst.parent.mkdir(parents=True, exist_ok=True)
         _atomic_copy(theme_dir / "palette.json", palette_dst)
+        _install_fonts(fonts)  # before the fragment: widgets must find their font on first load
         write_options(fragment, reload=False)
         (bdir / "fragment.toml").write_text(fragment_text)
         _atomic_copy(bdir / "fragment.toml", FRAGMENT)
