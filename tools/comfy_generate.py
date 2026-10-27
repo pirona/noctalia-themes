@@ -4,7 +4,7 @@
 
   tools/comfy_generate.py --prompt-file p.txt --seed 20111209 --name test01 [--theme vaporwave]
       [--steps 24] [--size 1920x1088] [--dry-run]
-Env: COMFY_URL (default http://192.168.1.2:8188), WALLPAPER_BUFFER (default ~/Images/noctalia-vaporwave-tampon).
+Env: COMFY_URL (default http://192.168.1.2:8188), WALLPAPER_BUFFER (default ~/Images/noctalia-<theme>-tampon).
 Never interrupts or deletes a job: if the queue is busy, the job just waits its turn.
 """
 import argparse
@@ -17,7 +17,6 @@ import uuid
 from pathlib import Path
 
 COMFY = os.environ.get("COMFY_URL", "http://192.168.1.2:8188")
-BUFFER = Path(os.environ.get("WALLPAPER_BUFFER", Path.home() / "Images/noctalia-vaporwave-tampon"))
 WORKFLOW = Path(__file__).parent / "workflows/flux2_dev_wallpaper_api.json"
 
 
@@ -96,13 +95,14 @@ def main():
     entry = hist[pid]
     print("status:", entry["status"]["status_str"], f"({int(time.monotonic() - start)} s)", flush=True)
 
-    BUFFER.mkdir(parents=True, exist_ok=True)
+    buffer = Path(os.environ.get("WALLPAPER_BUFFER", Path.home() / f"Images/noctalia-{a.theme}-tampon"))
+    buffer.mkdir(parents=True, exist_ok=True)
     for out in entry["outputs"].values():
         for img in out.get("images", []):
             if img.get("type") != "output":
                 continue  # skip previews/temp images
             q = urllib.parse.urlencode({k: img[k] for k in ("filename", "subfolder", "type")})
-            dst = BUFFER / img["filename"]
+            dst = buffer / img["filename"]
             dst.write_bytes(get(f"/view?{q}", timeout=120))
             meta = {"prompt": prompt, "seed": a.seed, "steps": a.steps, "size": a.size, "comfyui": version,
                     "workflow": WORKFLOW.name, "prompt_id": pid}
