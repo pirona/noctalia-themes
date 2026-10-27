@@ -23,6 +23,7 @@ class App(Adw.Application):
         for name, cb, accels in (("quit", lambda *_: self.quit(), ["<primary>q"]),
                                  ("about", self._about, []),
                                  ("preferences", lambda *_: self._window().open_preferences(), ["<primary>comma"]),
+                                 ("save-setup", lambda *_: self._window().save_setup(), ["<primary>s"]),
                                  ("open-backups", self._open_backups, [])):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", cb)

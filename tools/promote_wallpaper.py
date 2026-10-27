@@ -80,9 +80,10 @@ def despeckle(hard, area):
 
 
 def black_and_white(im, speck=60):
-    """Flux always slips greys in: snap to ink or paper, drop specks, keep only a 1-2 px soft edge so lines don't jag."""
-    g = im.convert("L").filter(ImageFilter.GaussianBlur(0.7))
-    hard = despeckle(g.point(lambda v: 0 if v < 128 else 255), speck) if speck else g.point(lambda v: 0 if v < 128 else 255)
+    """Flux slips greys in: snap to ink or paper, drop specks, keep a 1-2 px soft edge so lines don't jag."""
+    hard = im.convert("L").filter(ImageFilter.GaussianBlur(0.7)).point(lambda v: 0 if v < 128 else 255)
+    if speck:
+        hard = despeckle(hard, speck)
     g = hard.filter(ImageFilter.GaussianBlur(0.7))
     return g.point(lambda v: 0 if v < 112 else 255 if v > 144 else (v - 112) * 255 // 32).convert("RGB")
 

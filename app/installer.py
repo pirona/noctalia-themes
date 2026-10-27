@@ -1,5 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Apply / roll back Noctalia themes. Every apply snapshots first; rollback restores bytes exactly."""
+"""Apply / roll back Noctalia themes. Every apply snapshots first; removing a theme restores that snapshot
+plus the settings changed in Noctalia meanwhile. A "setup" backup copies the whole Noctalia state as is."""
 import json
 import logging
 import os
@@ -157,24 +158,80 @@ def _flatten(table, prefix=""):
 # Written by Noctalia itself on every wallpaper change: not a user setting.
 NOISE_PREFIXES = ("wallpaper.last.",)
 UNREADABLE = "(configuration illisible : impossible de vérifier ce qui serait perdu)"
+_GONE = object()  # a setting removed in Noctalia
+
+
+def _flat(table, prefix=()):
+    """Leaves keyed by tuple paths (dotted strings break on keys like "my.widget"); lists are leaves."""
+    out = {}
+    for k, v in table.items():
+        out.update(_flat(v, prefix + (k,)) if isinstance(v, dict) else {prefix + (k,): v})
+    return out
+
+
+def _put(table, path, value):
+    for k in path[:-1]:
+        table = table.setdefault(k, {})
+    if value is _GONE:
+        table.pop(path[-1], None)
+    else:
+        table[path[-1]] = value
+
+
+def _theme_dir_name(bdir):
+    """Folder name of the theme a backup was made for, read from its installed fragment."""
+    frag = bdir / "fragment.toml"
+    m = re.search(re.escape(str(DATA / "themes")) + r"/([A-Za-z0-9_-]+)", frag.read_text()) if frag.exists() else None
+    return m.group(1) if m else None
+
+
+def _user_changes(bid):
+    """Settings changed in Noctalia while the theme of backup `bid` was active: ({path: value} kept, [lost]).
+
+    Kept: everything that is yours (bar, dock, plugins...). Lost: what belongs to the theme (keys it sets,
+    its widgets). A wallpaper from the theme's own folder is dropped silently: it leaves with the theme.
+    """
+    bdir = BACKUPS / str(bid)
+    written = bdir / "stripped.toml"
+    if not written.exists() or not STATE.exists():
+        return {}, []
+    before = _flat(tomllib.loads(written.read_text()))
+    now = _flat(tomllib.loads(STATE.read_text()))
+    theme = _flat(tomllib.loads((bdir / "fragment.toml").read_text())) if (bdir / "fragment.toml").exists() else {}
+    if bid == current() and OPTIONS.exists():
+        theme |= _flat(tomllib.loads(OPTIONS.read_text()))
+    tdir = _theme_dir_name(bdir)
+    kept, lost = {}, []
+    for k in before.keys() | now.keys():
+        v = now.get(k, _GONE)
+        if before.get(k, _GONE) == v or ".".join(k).startswith(NOISE_PREFIXES):
+            continue
+        if isinstance(v, str) and tdir and (v.startswith(str(DATA / "themes" / tdir) + "/")
+                                            or Path(v).parent.parts[-2:] == ("wallpapers", tdir)):
+            continue
+        if k[0] in OWNED_TABLES or k in theme:
+            if v is not _GONE and v == theme.get(k, _GONE):
+                continue  # a theme value echoed back into state by Noctalia
+            lost.append(".".join(k))
+        else:
+            kept[k] = v
+    return kept, sorted(lost)
 
 
 def changes_since_apply():
-    """Settings changed in Noctalia while the theme was active; they are lost on removal."""
-    bid = current()
-    written = BACKUPS / str(bid) / "stripped.toml"
-    if not bid or not written.exists() or not STATE.exists():
-        return []
+    """Theme settings changed while it was active: they leave with it (yours are carried over)."""
     try:
-        before = _flatten(tomllib.loads(written.read_text()))
-        now = _flatten(tomllib.loads(STATE.read_text()))
-        theme = _flatten(tomllib.loads(FRAGMENT.read_text())) if FRAGMENT.exists() else {}
-        theme |= _flatten(tomllib.loads(OPTIONS.read_text())) if OPTIONS.exists() else {}
+        return _user_changes(current())[1] if current() else []
     except (OSError, tomllib.TOMLDecodeError):
         return [UNREADABLE]  # warn rather than block the way back
-    changed = {k for k in before.keys() | now.keys() if before.get(k) != now.get(k)}
-    # A theme value echoed back into state by Noctalia is not a user change.
-    return sorted(k for k in changed if not k.startswith(NOISE_PREFIXES) and now.get(k) != theme.get(k, object()))
+
+
+def kept_since_apply():
+    """Your settings changed while the theme was active: carried over when it is removed."""
+    try:
+        return sorted(".".join(k) for k in _user_changes(current())[0]) if current() else []
+    except (OSError, tomllib.TOMLDecodeError):
+        return []
 
 
 def list_outputs():
@@ -237,7 +294,7 @@ def overridden_by_state():
 
 def excess_backups(keep):
     """Oldest backups beyond `keep`, never the one of the active theme (its only way back)."""
-    ids = [b["id"] for b in list_backups() if b["id"] != current()]
+    ids = [b["id"] for b in list_backups() if b["id"] != current() and b.get("kind") != "setup"]
     room = max(keep - (1 if current() else 0), 0)
     return ids[:max(len(ids) - room, 0)]
 
@@ -379,10 +436,16 @@ def apply(theme_dir, label=None):
 
 
 def rollback(backup_id):
-    if current() and current() != backup_id:
-        rollback(current())  # remove the active theme cleanly before going further back
     bdir = BACKUPS / backup_id
     manifest = json.loads((bdir / "manifest.json").read_text())
+    if manifest.get("kind") == "setup":
+        return _restore_setup(bdir, manifest)
+    if current() and current() != backup_id:
+        rollback(current())  # remove the active theme cleanly before going further back
+    try:  # your settings changed meanwhile survive the removal; only the theme's own leave
+        carry = _user_changes(backup_id)[0] if backup_id == current() else {}
+    except (OSError, tomllib.TOMLDecodeError):
+        carry = {}  # unreadable state: fall back to the exact snapshot
     for path, saved in manifest["files"].items():
         p = Path(path)
         if saved:
@@ -391,10 +454,83 @@ def rollback(backup_id):
             p.unlink()  # created by the theme, not there before
     if str(OPTIONS) not in manifest["files"]:
         OPTIONS.unlink(missing_ok=True)  # backups made before preferences existed don't list it
-    if manifest["state_existed"]:
+    if carry:
+        state = tomllib.loads((bdir / "settings.toml").read_text()) if manifest["state_existed"] else {}
+        for path, value in carry.items():
+            _put(state, path, value)
+        text = options.dump(state)
+        tomllib.loads(text)  # refuse to write anything Noctalia could not parse
+        (bdir / "carried.toml").write_text(text)
+        STATE.parent.mkdir(parents=True, exist_ok=True)
+        _atomic_copy(bdir / "carried.toml", STATE)
+        log.info("carried over %d setting(s): %s", len(carry), ", ".join(".".join(k) for k in sorted(carry)))
+    elif manifest["state_existed"]:
         _atomic_copy(bdir / "settings.toml", STATE)
-    CURRENT.unlink(missing_ok=True)  # every backup is a theme-free state
+    CURRENT.unlink(missing_ok=True)  # every theme backup is a theme-free state
     log.info("restored backup %s", backup_id)
+    _reload()
+
+
+# What a setup backup copies whole: Noctalia's config, the installed themes and their fonts.
+SETUP_DIRS = (("config", lambda: CONFIG), ("themes", lambda: DATA / "themes"), ("fonts", lambda: FONTS))
+
+
+def save_setup():
+    """Copy the whole Noctalia state as it is now (active theme, widget positions, everything)."""
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+    bdir = BACKUPS / stamp
+    bdir.mkdir(parents=True)
+    for name, src in SETUP_DIRS:
+        if src().is_dir():
+            shutil.copytree(src(), bdir / name, symlinks=True)
+    if STATE.exists():
+        shutil.copy2(STATE, bdir / "settings.toml")
+    active = current_theme()
+    if active:  # the theme's way back must survive even if its backup is deleted later
+        shutil.copytree(BACKUPS / active["id"], bdir / "theme-backup")
+    label = f"Mon setup, avec « {active['theme']} »" if active else "Mon setup, sans thème"
+    manifest = {"kind": "setup", "theme": active["theme"] if active else None, "date": stamp, "label": label,
+                "current": active["id"] if active else None, "state_existed": STATE.exists(), "files": {}}
+    (bdir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
+    log.info("saved setup %s", stamp)
+    return stamp
+
+
+def _swap_dir(src, dst):
+    """Replace dst by a copy of src (or remove it), never leaving a half-copied folder in place."""
+    old = dst.with_name(dst.name + ".old")
+    if old.exists():
+        shutil.rmtree(old)
+    if src.is_dir():
+        tmp = dst.with_name(dst.name + ".new")
+        if tmp.exists():
+            shutil.rmtree(tmp)
+        shutil.copytree(src, tmp, symlinks=True)
+    if dst.exists():
+        dst.replace(old)
+    if src.is_dir():
+        tmp.replace(dst)
+    if old.exists():
+        shutil.rmtree(old)
+
+
+def _restore_setup(bdir, manifest):
+    for name, dst in SETUP_DIRS:
+        dst().parent.mkdir(parents=True, exist_ok=True)
+        _swap_dir(bdir / name, dst())
+    if manifest["state_existed"]:
+        STATE.parent.mkdir(parents=True, exist_ok=True)
+        _atomic_copy(bdir / "settings.toml", STATE)
+    else:
+        STATE.unlink(missing_ok=True)
+    cur = manifest["current"]
+    if cur:
+        if not (BACKUPS / cur).exists():
+            shutil.copytree(bdir / "theme-backup", BACKUPS / cur)
+        CURRENT.write_text(cur)
+    else:
+        CURRENT.unlink(missing_ok=True)
+    log.info("restored setup %s", bdir.name)
     _reload()
 
 
@@ -405,6 +541,8 @@ if __name__ == "__main__":
     elif cmd == ["refresh"]:
         refresh(sys.argv[2])
         print("refreshed", sys.argv[2])
+    elif cmd == ["save"]:
+        print(save_setup())
     elif cmd == ["rollback"]:
         rollback(sys.argv[2])
         print("restored", sys.argv[2])

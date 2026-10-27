@@ -82,6 +82,7 @@ class Window(Adw.ApplicationWindow):
         super().__init__(application=app, title="Thèmes Noctalia", default_width=600, default_height=680)
 
         menu = Gio.Menu()
+        menu.append("Sauvegarder mon setup", "app.save-setup")
         menu.append("Préférences", "app.preferences")
         menu.append("Ouvrir le dossier des sauvegardes", "app.open-backups")
         menu.append("À propos", "app.about")
@@ -180,8 +181,9 @@ class Window(Adw.ApplicationWindow):
     def _backups_group(self, active):
         group = Adw.PreferencesGroup(
             title="Sauvegardes",
-            description="Chaque application enregistre d'abord ta configuration Noctalia. "
-                        "Restaurer la remet exactement dans l'état de cette date.")
+            description="Chaque application enregistre d'abord ta configuration Noctalia ; retirer le thème "
+                        "la restaure en gardant tes réglages modifiés entre-temps. « Mon setup » (menu) copie "
+                        "tout tel quel, thème actif compris.")
         backups = list(reversed(installer.list_backups()))
         if not backups:
             group.add(_row("Aucune sauvegarde pour l'instant", ""))
@@ -233,21 +235,27 @@ class Window(Adw.ApplicationWindow):
 
     @staticmethod
     def _lost_warning():
-        """Warn when leaving the active theme would drop settings changed since it was applied."""
-        changed = installer.changes_since_apply()
-        if not changed:
-            return ""
-        shown = "\n".join(f"• {k}" for k in changed[:8])
-        more = f"\n… et {len(changed) - 8} autres" if len(changed) > 8 else ""
-        return f"\n\nRéglages modifiés depuis l'application du thème, qui seront perdus :\n{shown}{more}"
+        """Say what leaving the active theme keeps (your settings) and drops (the theme's own, changed meanwhile)."""
+        def bullets(keys):
+            more = f"\n… et {len(keys) - 8} autres" if len(keys) > 8 else ""
+            return "\n".join(f"• {k}" for k in keys[:8]) + more
+        lost, kept = installer.changes_since_apply(), installer.kept_since_apply()
+        text = f"\n\nTes réglages modifiés entre-temps sont conservés :\n{bullets(kept)}" if kept else ""
+        if lost:
+            text += f"\n\nRéglages du thème modifiés entre-temps, qui partent avec lui :\n{bullets(lost)}"
+        return text
+
+    def save_setup(self):
+        self._run(installer.save_setup, "Setup sauvegardé : tu peux le restaurer depuis les sauvegardes")
 
     def _confirm_apply(self, theme):
         if not options.load()["confirm_apply"] and not installer.changes_since_apply():
             return self._do_apply(theme)  # still undoable from the toast
         self._ask(f"Appliquer « {theme['name']} » ?",
                   "Ta configuration actuelle est sauvegardée d'abord.\n"
-                  "Les réglages modifiés dans Noctalia pendant que le thème est actif "
-                  "seront perdus quand tu le retireras." + self._lost_warning(),
+                  "Tes réglages modifiés dans Noctalia pendant que le thème est actif "
+                  "sont conservés quand tu le retires ; seuls ceux du thème partent avec lui."
+                  + self._lost_warning(),
                   "Appliquer", Adw.ResponseAppearance.SUGGESTED, lambda: self._do_apply(theme))
 
     def _do_apply(self, theme):
@@ -259,13 +267,21 @@ class Window(Adw.ApplicationWindow):
             self._run(lambda: installer.rollback(installer.current()),
                       "Thème retiré, configuration d'origine restaurée")
 
+        if not installer.changes_since_apply():
+            return remove()  # nothing of the theme's own to lose: one click, no dialog
         warning = self._lost_warning()
-        if not warning:
-            return remove()  # nothing to lose: one click, no dialog
         self._ask("Retirer le thème ?", "Ta configuration d'origine va être restaurée." + warning,
                   "Retirer quand même", Adw.ResponseAppearance.DESTRUCTIVE, remove)
 
     def _confirm_restore(self, backup):
+        if backup.get("kind") == "setup":
+            return self._ask(f"Restaurer ton setup du {_when(backup['date'])} ?",
+                             "Tout Noctalia revient exactement à ce setup : thème actif, widgets, barre, dock. "
+                             "Ta configuration actuelle est remplacée en entier : sauvegarde-la d'abord si tu "
+                             "veux pouvoir y revenir.\n\nSi le thème restauré a ses propres polices, redémarre "
+                             "Noctalia pour qu'il les voie.",
+                             "Restaurer", Adw.ResponseAppearance.DESTRUCTIVE,
+                             lambda: self._run(lambda: installer.rollback(backup["id"]), "Setup restauré"))
         self._ask(f"Restaurer la sauvegarde du {_when(backup['date'])} ?",
                   "La configuration actuelle de Noctalia sera remplacée par celle de cette date."
                   + self._lost_warning(),
