@@ -20,8 +20,13 @@ Lancer : « Thèmes Noctalia » dans le lanceur, ou `python3 app/main.py`.
 ## Utilisation
 
 - **Appliquer** : bouton sur la carte du thème, après confirmation. Un toast propose « Annuler » pendant 8 s.
-- **Retirer** : bandeau en haut de la fenêtre dès qu'un thème est actif, un clic. Si des réglages Noctalia ont été
-  modifiés depuis l'application du thème, l'appli les liste et demande confirmation avant de les perdre.
+- **Retirer** : bandeau en haut de la fenêtre dès qu'un thème est actif, un clic. La configuration d'avant le thème
+  revient, **avec tes réglages modifiés entre-temps** (barre, dock, plugins…) : seuls les réglages du thème partent
+  avec lui (clés qu'il pose, ses widgets, un fond pris dans son dossier). Si tu as modifié des réglages du thème,
+  l'appli les liste avant de retirer. Même chose quand on passe directement d'un thème à un autre.
+- **Sauvegarder mon setup** (menu, Ctrl+S) : copie tout Noctalia tel quel (config, `settings.toml`, thème actif,
+  positions des widgets, polices). Le restaurer remet tout à l'identique ; ces sauvegardes ne sont jamais purgées
+  automatiquement.
 - **Fonds d'écran** : galerie des fonds du thème actif ; clic = fond posé (via `noctalia msg wallpaper-set`), 🔀 = au hasard.
 - **Mettre à jour** (⟳ sur le thème actif) : réinstalle stickers, palette et widgets sans toucher à tes réglages.
 - **Sauvegardes** : liste datée ; « Restaurer » remet la config Noctalia exactement dans l'état de cette date ;
@@ -41,8 +46,9 @@ Les préférences sont rangées dans `~/.config/noctalia-themes/settings.json` (
 la valeur par défaut). Une préférence laissée sur « comme le thème » n'écrit rien. Chaque changement est appliqué au
 thème actif au bout de 400 ms.
 
-À savoir : les réglages faits dans l'interface Noctalia **pendant** qu'un thème est actif sont perdus au retrait.
-C'est le prix d'une restauration exacte.
+À savoir : les réglages faits dans l'interface Noctalia **pendant** qu'un thème est actif sont reportés au retrait,
+sauf ceux du thème lui-même. `settings.toml` est alors réécrit par l'appli (même contenu, mise en forme
+différente, tableaux de tables écrits en tables en ligne) ; sans réglage à reporter, il revient octet pour octet.
 
 ## Comment ça marche
 
@@ -103,7 +109,7 @@ python3 app/installer.py refresh themes/vaporwave # met à jour le thème actif 
 python3 app/palette.py               # format des couleurs + contraste >= 4.5:1 (Noctalia ignore une couleur invalide sans prévenir)
 python3 app/options.py               # préférences : surcharges, format d'horloge, clés TOML, validation
 python3 tests/test_installer.py      # bac à sable : aller-retour, thème invalide, panne, chemin piégé, écran,
-                                     # réglages perdus, préférences, ménage des sauvegardes
+                                     # réglages reportés, setup complet, préférences, ménage des sauvegardes
 pipx run ruff==0.12.0 check .        # lint + PEP 8 (config dans pyproject.toml), sans installation durable
 ```
 
@@ -117,7 +123,10 @@ trace des applications, restaurations, suppressions et changements de fond), aus
 - **Un seul écran** : `@OUTPUT@` est figé à l'application du thème, et les positions sont pensées pour 1536×864
   logiques. Sur un autre écran, ou si cet écran disparaît (dock débranché), les widgets sont mal placés ou absents :
   ré-appliquer le thème. Noctalia ne propose pas de cible « tous les écrans » documentée.
-- Les réglages modifiés dans Noctalia pendant qu'un thème est actif sont perdus au retrait (l'appli prévient).
+- Les réglages **du thème** modifiés pendant qu'il est actif (position d'un de ses widgets…) partent avec lui
+  (l'appli prévient) ; pour les garder tels quels, « Sauvegarder mon setup » avant de changer.
+- Les sauvegardes de thème faites avant cette version ne contiennent que l'état d'avant le thème : le report des
+  réglages fonctionne avec elles aussi (il compare à l'état écrit à l'application).
 - Pas de verrou avec Noctalia : une écriture qu'il ferait pile pendant l'application (fraction de seconde) serait perdue.
 
 ## Pièges Noctalia relevés

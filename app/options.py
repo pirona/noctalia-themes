@@ -126,6 +126,8 @@ def _value(v):
         return json.dumps(v)  # JSON string escaping is valid TOML
     if isinstance(v, list):
         return "[" + ", ".join(_value(x) for x in v) + "]"
+    if isinstance(v, dict):  # a table inside a list (e.g. [[bar.default.capsule_group]]): inline table
+        return "{" + ", ".join(f"{_key(k)} = {_value(x)}" for k, x in v.items()) + "}"
     raise TypeError(f"unsupported TOML value: {v!r}")
 
 
@@ -164,6 +166,8 @@ if __name__ == "__main__":
     odd = {"desktop_widgets": {"widget": {"my clock.v2": {"type": "clock", "settings": {"format": "{:%H:%M}"}}}}}
     assert "my clock.v2" in tomllib.loads(dump(overrides(odd, {**DEFAULTS, "clock_seconds": True})))[
         "desktop_widgets"]["widget"]
+    groups = {"bar": {"default": {"capsule_group": [{"id": "g1", "members": ["a", "b"], "padding": 6.0}]}}}
+    assert tomllib.loads(dump(groups)) == groups  # array of tables survives as inline tables
     import tempfile
     PATH = Path(tempfile.mkdtemp()) / "settings.json"
     PATH.write_text('{"theme_mode": "Dark", "max_backups": "10", "clock_12h": true}')

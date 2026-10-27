@@ -154,16 +154,20 @@ def test_output_cannot_inject():
 
 def test_changes_since_apply():
     bid = installer.apply(ROOT / "themes/vaporwave")
-    assert installer.changes_since_apply() == []
+    assert installer.changes_since_apply() == [] and installer.kept_since_apply() == []
     state = installer.STATE.read_text()
     state = state.replace('builtin = "Noctalia"', 'builtin = "Synthwave du dimanche"')
     state += '\n[wallpaper.last]\npath = "/tmp/rotation.png"\n'  # Noctalia's own noise
     installer.STATE.write_text(state)
-    assert installer.changes_since_apply() == ["theme.builtin"]
+    assert installer.kept_since_apply() == ["theme.builtin"] and installer.changes_since_apply() == []
     echoed = state + '\n[desktop_widgets]\nenabled = true\n'  # theme value written back by Noctalia
     echoed += '\n[wallpaper.monitors.eDP-1]\npath = "/tmp/choix-perso.png"\n'  # a real user choice
     installer.STATE.write_text(echoed)
-    assert installer.changes_since_apply() == ["theme.builtin", "wallpaper.monitors.eDP-1.path"]
+    assert installer.kept_since_apply() == ["theme.builtin", "wallpaper.monitors.eDP-1.path"]
+    assert installer.changes_since_apply() == []
+    moved = echoed.replace("enabled = true", "enabled = true\nwidget_order = [ \"vw-clock\" ]")
+    installer.STATE.write_text(moved)  # a theme widget rearranged: belongs to the theme, leaves with it
+    assert installer.changes_since_apply() == ["desktop_widgets.widget_order"]
     installer.STATE.write_text(echoed + "[[[ pas du toml")
     assert installer.changes_since_apply() == [installer.UNREADABLE]
     installer.STATE.write_text(state)
@@ -174,8 +178,55 @@ def test_changes_since_apply():
         pass
     installer.rollback(bid)
     assert installer.changes_since_apply() == []
+    installer.STATE.write_text(STATE_SAMPLE)  # back to the sample for the next tests
     installer.delete_backup(bid)
     assert bid not in [b["id"] for b in installer.list_backups()]
+
+
+def test_user_settings_survive_removal_and_switch():
+    installer.STATE.write_text(STATE_SAMPLE)
+    bid = installer.apply(ROOT / "themes/vaporwave")
+    st = tomllib.loads(installer.STATE.read_text())
+    # What a user does while the theme is on: bar to the bottom, dock to the left, a status widget dropped.
+    user = installer.STATE.read_text().replace('"status",\n    ', "")
+    user += '\n[dock]\nposition = "left"\n'
+    user = user.replace("[bar.default]\n", '[bar.default]\nposition = "bottom"\n')
+    theme_wall = installer.DATA / "themes" / "vaporwave" / "wallpapers" / "wall_x.webp"
+    user += f'\n[wallpaper.monitors.eDP-1]\npath = "{theme_wall}"\n'  # a theme wallpaper: leaves with it
+    installer.STATE.write_text(user)
+    assert st["bar"]["default"]["end"] == ["status", "tray"]
+    installer.apply(ROOT / "themes/batman")  # switch: removes vaporwave first
+    after = tomllib.loads(installer.STATE.read_text())
+    assert after["bar"]["default"]["position"] == "bottom" and after["dock"]["position"] == "left"
+    assert after["bar"]["default"]["end"] == ["tray"]
+    assert "monitors" not in after.get("wallpaper", {})
+    assert installer.current_theme()["theme"] == "Batman — Year One"
+    installer.rollback(installer.current())  # removal: still there, theme gone
+    gone = tomllib.loads(installer.STATE.read_text())
+    assert gone["bar"]["default"]["position"] == "bottom" and gone["dock"]["position"] == "left"
+    assert gone["theme"]["source"] == "wallpaper"  # the theme's own keys are back to yours
+    assert installer.current() is None and bid
+    installer.STATE.write_text(STATE_SAMPLE)
+
+
+def test_setup_backup_restores_everything():
+    installer.STATE.write_text(STATE_SAMPLE)
+    installer.apply(ROOT / "themes/batman")
+    installer.STATE.write_text(installer.STATE.read_text() + '\n[dock]\nposition = "left"\n')
+    files = {p: sha(p) for p in [installer.STATE, installer.FRAGMENT, *installer.CONFIG.rglob("*.*")]}
+    font = installer.FONTS / "Kalam-Regular.ttf"
+    sid = installer.save_setup()
+    theme_bid = installer.current()
+    installer.apply(ROOT / "themes/vaporwave")  # wander off: other theme, another setting
+    installer.STATE.write_text(installer.STATE.read_text() + '\n[idle]\nenabled = false\n')
+    assert sid not in installer.excess_backups(0)  # pruning never takes a saved setup
+    installer.rollback(sid)
+    assert {p: sha(p) for p in files} == files  # byte for byte, theme fragment and widgets included
+    assert installer.current() == theme_bid and installer.current_theme()["theme"] == "Batman — Year One"
+    assert font.exists() and not (installer.CONFIG / "palettes/vaporwave.json").exists()
+    installer.rollback(theme_bid)  # the theme still comes off cleanly afterwards
+    assert installer.current() is None
+    installer.STATE.write_text(STATE_SAMPLE)
 
 
 def test_refresh_keeps_user_changes():
@@ -226,7 +277,8 @@ def test_excess_backups_spare_active():
     active = installer.current()
     doomed = installer.excess_backups(2)
     assert active not in doomed
-    assert len([b for b in installer.list_backups() if b["id"] not in doomed]) == 2
+    themed = [b for b in installer.list_backups() if b.get("kind") != "setup"]  # saved setups are never pruned
+    assert len([b for b in themed if b["id"] not in doomed]) == 2
     installer.rollback(active)
 
 
@@ -256,6 +308,8 @@ if __name__ == "__main__":
     test_output_is_substituted()
     test_output_cannot_inject()
     test_changes_since_apply()
+    test_user_settings_survive_removal_and_switch()
+    test_setup_backup_restores_everything()
     test_refresh_keeps_user_changes()
     test_preferences_fragment()
     test_echoed_preference_is_not_a_user_change()
