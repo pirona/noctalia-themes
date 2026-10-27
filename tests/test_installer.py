@@ -231,9 +231,9 @@ def test_excess_backups_spare_active():
 
 
 def test_fonts_installed_and_removed():
-    font = installer.FONTS / "GochiHand-Regular.ttf"
+    font = installer.FONTS / "Kalam-Regular.ttf"
     bid = installer.apply(ROOT / "themes/batman")
-    assert sha(font) == sha(ROOT / "themes/batman/fonts/GochiHand-Regular.ttf")
+    assert sha(font) == sha(ROOT / "themes/batman/fonts/Kalam-Regular.ttf")
     installer.rollback(bid)
     assert not font.exists()  # created by the theme: gone on rollback
 
