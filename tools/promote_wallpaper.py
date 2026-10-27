@@ -7,15 +7,17 @@
 Env: WALLPAPER_DIR (default ~/Images/wallpapers/<theme>, the folder Noctalia's picker browses).
 Re-running with the same name replaces the image and its SOURCES.md entry.
 A comic-panel frame drawn by the model (light margin + border line) is trimmed off automatically.
+A theme with `ink = "black-and-white"` in theme.toml gets its wallpapers thresholded to pure ink and paper.
 """
 import json
 import os
 import re
 import shutil
 import sys
+import tomllib
 from pathlib import Path
 
-from PIL import Image, ImageStat
+from PIL import Image, ImageFilter, ImageStat
 
 ROOT = Path(__file__).resolve().parent.parent
 TARGET = (1920, 1080)
@@ -53,6 +55,38 @@ def trim_frame(im):
     return im.crop((left, t, im.width - r, im.height - b)) if any((t, b, left, r)) else im
 
 
+def despeckle(hard, area):
+    """Flip every black or white island smaller than `area` px: texture left over by the threshold, not drawing."""
+    w, h = hard.size
+    px = bytearray(hard.tobytes())
+    seen = bytearray(w * h)
+    for start in range(w * h):
+        if seen[start]:
+            continue
+        color, comp, stack = px[start], [], [start]
+        seen[start] = 1
+        while stack:
+            i = stack.pop()
+            comp.append(i)
+            x = i % w
+            for j in (i - w, i + w, i - 1 if x else -1, i + 1 if x < w - 1 else -1):
+                if 0 <= j < w * h and not seen[j] and px[j] == color:
+                    seen[j] = 1
+                    stack.append(j)
+        if len(comp) < area:
+            for i in comp:
+                px[i] = 255 - color
+    return Image.frombytes("L", (w, h), bytes(px))
+
+
+def black_and_white(im, speck=60):
+    """Flux always slips greys in: snap to ink or paper, drop specks, keep only a 1-2 px soft edge so lines don't jag."""
+    g = im.convert("L").filter(ImageFilter.GaussianBlur(0.7))
+    hard = despeckle(g.point(lambda v: 0 if v < 128 else 255), speck) if speck else g.point(lambda v: 0 if v < 128 else 255)
+    g = hard.filter(ImageFilter.GaussianBlur(0.7))
+    return g.point(lambda v: 0 if v < 112 else 255 if v > 144 else (v - 112) * 255 // 32).convert("RGB")
+
+
 def promote(src, name, theme="vaporwave"):
     if not re.fullmatch(r"[a-z0-9-]+", name) or not re.fullmatch(r"[a-z0-9-]+", theme):
         raise SystemExit("name and theme must be lowercase [a-z0-9-]")  # both become paths
@@ -67,6 +101,8 @@ def promote(src, name, theme="vaporwave"):
     im = im.resize((round(w * scale), round(h * scale)), Image.LANCZOS)
     left, top = (im.width - tw) // 2, (im.height - th) // 2
     im = im.crop((left, top, left + tw, top + th))
+    if tomllib.loads((ROOT / "themes" / theme / "theme.toml").read_text()).get("ink") == "black-and-white":
+        im = black_and_white(im)
 
     repo_dir.mkdir(parents=True, exist_ok=True)
     out = repo_dir / f"wall_{name}.webp"
