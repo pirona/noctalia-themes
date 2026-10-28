@@ -471,6 +471,94 @@ def rollback(backup_id):
     _reload()
 
 
+# Positions at the last glue pass, per applied theme: tells which member of a group the user dragged.
+GLUE = DATA / "glue.json"
+GLUE_TOLERANCE = 0.5  # logical pixels; below that a position counts as unchanged
+
+
+def _positions(state, fragment):
+    """(cx, cy) of each theme widget: where Noctalia saved it after a drag, else where the theme put it."""
+    saved = state.get("desktop_widgets", {}).get("widget", {})
+    out = {}
+    for wid, w in fragment.get("desktop_widgets", {}).get("widget", {}).items():
+        s = saved.get(wid, {})
+        out[wid] = (float(s.get("cx", w.get("cx", 0.0))), float(s.get("cy", w.get("cy", 0.0))))
+    return out
+
+
+def _set_position(text, wid, cx, cy):
+    """Set cx/cy of one desktop widget in settings.toml text; line-based so the rest stays byte-identical."""
+    lines = text.splitlines(keepends=True)
+    path = ("desktop_widgets", "widget", wid)
+    start = next((n for n, line in enumerate(lines) if _header(line) == path), None)
+    if start is None:  # never dragged: Noctalia merges a partial table over the theme's
+        sep = "\n" if text and not text.endswith("\n") else ""
+        return f"{text}{sep}\n[desktop_widgets.widget.{options._key(wid)}]\ncx = {cx!r}\ncy = {cy!r}\n"
+    end = next((n for n in range(start + 1, len(lines)) if _header(lines[n]) is not None), len(lines))
+    todo = {"cx": cx, "cy": cy}
+    for n in range(start + 1, end):
+        line = lines[n]
+        key = line.split("=", 1)[0].strip() if "=" in line and not line.lstrip().startswith("#") else None
+        if key in todo:
+            indent = line[:len(line) - len(line.lstrip())]
+            lines[n] = f"{indent}{key} = {todo.pop(key)!r}\n"
+    lines[start + 1:start + 1] = [f"{k} = {v!r}\n" for k, v in todo.items()]
+    return "".join(lines)
+
+
+def glue_groups():
+    """Keep each `widget_groups` entry of the active theme together (e.g. a player and its frame).
+
+    Noctalia drags widgets one by one; when one member of a group moved, the others get the same offset.
+    Runs after the fact (app focus, settings.toml change). Returns the ids it moved.
+    """
+    bid = current()
+    tdir = _theme_dir_name(BACKUPS / bid) if bid else None
+    meta = DATA / "themes" / tdir / "theme.toml" if tdir else None
+    if not meta or not meta.exists() or not FRAGMENT.exists() or not STATE.exists():
+        return []
+    groups = tomllib.loads(meta.read_text()).get("widget_groups", {})
+    fragment = tomllib.loads(FRAGMENT.read_text())
+    now = _positions(tomllib.loads(STATE.read_text()), fragment)
+    base = _positions({}, fragment)  # right after apply, widgets sit where the theme put them
+    try:
+        saved = json.loads(GLUE.read_text())
+        if saved["backup"] == bid:
+            base |= {k: tuple(v) for k, v in saved["positions"].items() if k in base}
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        pass
+
+    def delta(i):
+        return now[i][0] - base[i][0], now[i][1] - base[i][1]
+
+    target = dict(now)
+    for ids in groups.values():
+        ids = [i for i in ids if i in now]
+        moved = [i for i in ids if max(map(abs, delta(i))) > GLUE_TOLERANCE]
+        if not moved or len(moved) == len(ids):
+            continue  # untouched, or every member placed by hand: leave it
+        dx, dy = delta(max(moved, key=lambda i: sum(map(abs, delta(i)))))
+        for i in ids:
+            if i not in moved:
+                target[i] = (round(now[i][0] + dx, 1), round(now[i][1] + dy, 1))
+    changed = sorted(i for i in target if target[i] != now[i])
+    if changed:
+        # ponytail: no lock with Noctalia; a save it makes between our read and replace wins (sub-second window)
+        text = STATE.read_text()
+        for i in changed:
+            text = _set_position(text, i, *target[i])
+        tomllib.loads(text)  # refuse to write anything Noctalia could not parse
+        tmp = DATA / "glue.tmp.toml"
+        tmp.write_text(text)
+        _atomic_copy(tmp, STATE)
+        tmp.unlink()
+    GLUE.write_text(json.dumps({"backup": bid, "positions": target}))
+    if changed:
+        log.info("glued widget(s) back to their group: %s", ", ".join(changed))
+        _reload()
+    return changed
+
+
 # What a setup backup copies whole: Noctalia's config, the installed themes and their fonts.
 SETUP_DIRS = (("config", lambda: CONFIG), ("themes", lambda: DATA / "themes"), ("fonts", lambda: FONTS))
 
@@ -530,6 +618,7 @@ def _restore_setup(bdir, manifest):
         CURRENT.write_text(cur)
     else:
         CURRENT.unlink(missing_ok=True)
+    GLUE.unlink(missing_ok=True)  # positions remembered from another session would misread who moved
     log.info("restored setup %s", bdir.name)
     _reload()
 
@@ -541,6 +630,8 @@ if __name__ == "__main__":
     elif cmd == ["refresh"]:
         refresh(sys.argv[2])
         print("refreshed", sys.argv[2])
+    elif cmd == ["glue"]:
+        print("moved:", ", ".join(glue_groups()) or "nothing")
     elif cmd == ["save"]:
         print(save_setup())
     elif cmd == ["rollback"]:

@@ -298,6 +298,33 @@ def test_real_settings_parse():
         assert "desktop_widgets" not in out and "lockscreen_widgets" in out
 
 
+def test_glue_moves_group_together():
+    for b in installer.list_backups():  # start theme-free
+        if b["id"] == installer.current():
+            installer.rollback(b["id"])
+    installer.apply(ROOT / "themes/batman-bw")
+    # Noctalia saves a dragged widget as a full table; the block (its frame) was never dragged
+    installer.STATE.write_text(installer.STATE.read_text() + """
+[desktop_widgets.widget.bw-player]
+type = "media_player"
+cx = 340.0
+cy = 652.0
+""")
+    assert installer.glue_groups() == ["bw-block"]
+    state, frag = (tomllib.loads(f.read_text()) for f in (installer.STATE, installer.FRAGMENT))
+    pos = installer._positions(state, frag)
+    assert pos["bw-block"] == (340.0, 650.0)  # theme had it at (240, 700): same (+100, -50) as the player
+    assert pos["bw-clock"] == (250.0, 160.0)  # other groups untouched
+    assert installer.glue_groups() == []  # idempotent: nothing moves twice
+    # now the frame is dragged: the player follows
+    installer.STATE.write_text(installer._set_position(installer.STATE.read_text(), "bw-block", 140.0, 650.0))
+    assert installer.glue_groups() == ["bw-player"]
+    state = tomllib.loads(installer.STATE.read_text())["desktop_widgets"]["widget"]
+    assert (state["bw-player"]["cx"], state["bw-player"]["cy"]) == (140.0, 652.0)
+    assert state["bw-player"]["type"] == "media_player"  # the rest of Noctalia's table is kept
+    installer.rollback(installer.current())
+
+
 if __name__ == "__main__":
     test_strip()
     test_apply_rollback_roundtrip()
@@ -316,4 +343,5 @@ if __name__ == "__main__":
     test_excess_backups_spare_active()
     test_fonts_installed_and_removed()
     test_real_settings_parse()
+    test_glue_moves_group_together()
     print("OK", SANDBOX)

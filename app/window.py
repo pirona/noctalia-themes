@@ -16,7 +16,8 @@ from gi.repository import Adw, Gdk, GdkPixbuf, Gio, GLib, Gtk  # noqa: E402
 from preferences import Preferences  # noqa: E402
 
 THEMES_ROOT = Path(__file__).resolve().parent.parent / "themes"
-SWATCH_ROLES = ("mSurface", "mPrimary", "mSecondary", "mTertiary", "mOnSurface")
+GLUE_DEBOUNCE_MS = 300  # Noctalia may write settings.toml several times per drag
+SWATCH_ROLES =("mSurface", "mPrimary", "mSecondary", "mTertiary", "mOnSurface")
 log = logging.getLogger("noctalia-themes")
 
 
@@ -105,8 +106,25 @@ class Window(Adw.ApplicationWindow):
         self.set_content(view)
 
         # Backups may also be created from the CLI: refresh when the window regains focus.
-        self.connect("notify::is-active", lambda *_: self.is_active() and self.refresh())
+        self.connect("notify::is-active", lambda *_: self.is_active() and (self._glue(), self.refresh()))
+        # Noctalia saves its state after each drag: re-glue widget groups live while the app is open.
+        self._glue_pending = None
+        self._state_monitor = Gio.File.new_for_path(str(installer.STATE)).monitor_file(Gio.FileMonitorFlags.NONE)
+        self._state_monitor.connect("changed", lambda *_: self._schedule_glue())
         self.refresh()
+
+    def _schedule_glue(self):
+        if self._glue_pending:
+            GLib.source_remove(self._glue_pending)
+        self._glue_pending = GLib.timeout_add(GLUE_DEBOUNCE_MS, self._glue)
+
+    def _glue(self):
+        self._glue_pending = None
+        try:
+            installer.glue_groups()
+        except Exception:  # never let a bad state file break the window
+            log.exception("could not glue widget groups")
+        return GLib.SOURCE_REMOVE
 
     # --- building -------------------------------------------------------
 
