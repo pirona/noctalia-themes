@@ -14,7 +14,7 @@ from gi.repository import Adw, Gio, Gtk  # noqa: E402
 from i18n import _  # noqa: E402
 from window import Window  # noqa: E402
 
-APP_ID = "fr.gyozamancave.NoctaliaThemes"
+APP_ID = "com.billisdead.NoctaliaThemes"
 VERSION = "0.1.0"
 
 

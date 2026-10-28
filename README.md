@@ -114,10 +114,45 @@ Create a folder in `themes/`; the app needs no change:
 Preview: apply the theme, then `tools/preview.sh themes/<name>` (captures the desktop on an empty workspace; niri only).
 Without `preview.webp`, the app shows the palette's colors. Start from `themes/vaporwave/`.
 
-Wallpapers: `tools/comfy_generate.py --theme <name> …` queues one ComfyUI job (`COMFY_URL`, default
-`http://127.0.0.1:8188`), then `tools/promote_wallpaper.py --theme <name> <render.png> <short-name>` trims a frame drawn
-by the model, crops to 1920×1080, converts to WebP, updates `SOURCES.md` and copies it to `<Pictures>/wallpapers/<name>/`.
-Prompt rules per theme live in `tools/prompts/<name>/RULES.md`.
+Wallpapers: see [Generate wallpapers with ComfyUI](#generate-wallpapers-with-comfyui).
+
+## Generate wallpapers with ComfyUI
+
+Optional: only needed to make new wallpapers. Requires a [ComfyUI](https://www.comfy.org/) server (local or on your
+network) with the Flux.2 Dev files: diffusion model `flux2_dev_fp8mixed`, text encoder `mistral_3_small_flux2_fp8`,
+VAE `flux2-vae`.
+
+**Configure once**, in one command:
+
+```bash
+python3 tools/comfy_generate.py --setup
+```
+
+It asks for the server address (Enter keeps `http://127.0.0.1:8188`), checks that the server answers, lists the model
+files it offers and proposes the right ones (Enter accepts). Everything goes to **`~/.config/noctalia-themes/comfyui.toml`**:
+
+```toml
+url = "http://127.0.0.1:8188"
+unet = "flux2_dev_fp8mixed.safetensors"
+clip = "mistral_3_small_flux2_fp8.safetensors"
+vae = "flux2-vae.safetensors"
+```
+
+Edit it by hand or run `--setup` again. `COMFY_URL` overrides the address for one run. Without the file, these
+defaults are used, and a model stored in a subfolder on the server (e.g. `FLUX2/flux2_dev_fp8mixed.safetensors`) is
+found by its file name. If the server does not answer or a model is missing, the tool says so and points to `--setup`.
+
+**Generate and promote**:
+
+```bash
+python3 tools/comfy_generate.py --theme vaporwave --prompt-file tools/prompts/vaporwave/01-atrium.txt \
+    --seed 20111209 --name atrium       # one job; waits its turn, never cancels anything; --dry-run prints the graph
+python3 tools/promote_wallpaper.py --theme vaporwave <render.png> atrium
+```
+
+Renders land in `<Pictures>/noctalia-<theme>-renders/` (`WALLPAPER_BUFFER` to change). Promotion trims a frame drawn
+by the model, crops to 1920×1080, converts to WebP, updates `SOURCES.md` and copies the file to
+`<Pictures>/wallpapers/<theme>/` (`WALLPAPER_DIR` to change). Prompt rules per theme: `tools/prompts/<theme>/RULES.md`.
 
 ## Command line
 

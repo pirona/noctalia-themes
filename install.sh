@@ -5,7 +5,7 @@
 #   ./install.sh --uninstall  remove the desktop entry (themes and backups are kept)
 set -euo pipefail
 
-APP_ID="fr.gyozamancave.NoctaliaThemes"
+APP_ID="com.billisdead.NoctaliaThemes"
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DESKTOP="${XDG_DATA_HOME:-$HOME/.local/share}/applications/$APP_ID.desktop"
 
