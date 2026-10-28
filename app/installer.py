@@ -618,6 +618,7 @@ def _restore_setup(bdir, manifest):
         CURRENT.write_text(cur)
     else:
         CURRENT.unlink(missing_ok=True)
+    GLUE.unlink(missing_ok=True)  # positions remembered from another session would misread who moved
     log.info("restored setup %s", bdir.name)
     _reload()
 
