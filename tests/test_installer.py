@@ -298,6 +298,45 @@ def test_real_settings_parse():
         assert "desktop_widgets" not in out and "lockscreen_widgets" in out
 
 
+FAKE_NOCTALIA = f"""#!{sys.executable}
+import json, sys
+from pathlib import Path
+db = Path(__file__).with_name("wallpaper.json")
+args = sys.argv[2:]
+if args[0] == "wallpaper-get":
+    print(json.loads(db.read_text()) if db.exists() else "")
+elif args[0] == "wallpaper-set":
+    db.write_text(json.dumps(args[-1]))
+"""
+
+
+def test_wallpaper_follows_backups():
+    fake = SANDBOX / "bin"
+    fake.mkdir(exist_ok=True)
+    (fake / "noctalia").write_text(FAKE_NOCTALIA)
+    (fake / "noctalia").chmod(0o755)
+    os.environ["PATH"] = str(fake)
+    try:
+        mine = SANDBOX / "chat-qui-dort.webp"  # the user's own wallpaper, a cat asleep on the keyboard
+        mine.write_bytes(b"zzz")
+        installer.set_wallpaper(mine)
+        installer.apply(ROOT / "themes/vaporwave")
+        themed = installer.wallpapers(ROOT / "themes/vaporwave")[0]
+        installer.set_wallpaper(themed)
+        setup = installer.save_setup()
+        installer.rollback(installer.current())  # the theme's wallpaper leaves with it
+        assert installer.current_wallpapers() == {"": str(mine)}
+        installer.rollback(setup)  # a setup brings its wallpaper back
+        assert installer.current_wallpapers() == {"": str(themed)}
+        other = SANDBOX / "fond-perso.webp"
+        other.write_bytes(b"!")
+        installer.set_wallpaper(other)  # picked by hand while themed: kept on removal
+        installer.rollback(installer.current())
+        assert installer.current_wallpapers() == {"": str(other)}
+    finally:
+        os.environ["PATH"] = ""
+
+
 def test_glue_moves_group_together():
     for b in installer.list_backups():  # start theme-free
         if b["id"] == installer.current():
@@ -343,5 +382,6 @@ if __name__ == "__main__":
     test_excess_backups_spare_active()
     test_fonts_installed_and_removed()
     test_real_settings_parse()
+    test_wallpaper_follows_backups()
     test_glue_moves_group_together()
     print("OK", SANDBOX)

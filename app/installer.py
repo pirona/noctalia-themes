@@ -252,10 +252,41 @@ def wallpapers(theme_dir):
     return sorted(p for p in folder.glob("*") if p.suffix.lower() in (".webp", ".png", ".jpg", ".jpeg", ".avif"))
 
 
-def set_wallpaper(path):
-    """Set the wallpaper through Noctalia's IPC (it persists the choice in settings.toml itself)."""
-    subprocess.run(["noctalia", "msg", "wallpaper-set", str(path)], check=True, capture_output=True, timeout=10)
-    log.info("wallpaper set to %s", path)
+def set_wallpaper(path, output=None):
+    """Set the wallpaper (of one output, or all) through Noctalia's IPC; it persists the choice itself."""
+    cmd = ["noctalia", "msg", "wallpaper-set", *([output] if output else []), str(path)]
+    subprocess.run(cmd, check=True, capture_output=True, timeout=10)
+    log.info("wallpaper set to %s%s", path, f" on {output}" if output else "")
+
+
+def current_wallpapers():
+    """{output: path} shown now ("" = all outputs when none can be listed); {} if Noctalia does not answer."""
+    out = {}
+    for output in list_outputs() or [""]:
+        try:
+            cmd = ["noctalia", "msg", "wallpaper-get", *([output] if output else [])]
+            path = subprocess.run(cmd, capture_output=True, text=True, timeout=5, check=True).stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            continue
+        if path:
+            out[output] = path
+    return out
+
+
+def _restore_wallpapers(saved, only_from=None):
+    """Put back the wallpapers recorded in a backup. With `only_from`, only on outputs showing a file from that
+    folder (a theme's wallpaper leaving with it): a wallpaper you picked yourself meanwhile stays."""
+    shown = current_wallpapers() if only_from else {}
+    for output, path in (saved or {}).items():
+        if only_from and not shown.get(output, "").startswith(str(only_from) + "/"):
+            continue
+        if not Path(path).is_file():
+            log.warning("saved wallpaper is gone, left as is: %s", path)
+            continue
+        try:
+            set_wallpaper(path, output or None)
+        except (OSError, subprocess.SubprocessError):
+            log.warning("could not restore wallpaper %s", path)  # the rest of the restore already succeeded
 
 
 def write_options(fragment=None, reload=True):
@@ -400,7 +431,7 @@ def apply(theme_dir, label=None):
     fonts = _fonts(theme_dir)
     targets = [palette_dst, FRAGMENT, OPTIONS] + [dst for _, dst in fonts]
     manifest = {"theme": meta["name"], "date": stamp, "label": label or f"Avant « {meta['name']} »",
-                "state_existed": STATE.exists(), "files": {}}
+                "state_existed": STATE.exists(), "files": {}, "wallpapers": current_wallpapers()}
     # Snapshot first, before anything is written.
     if STATE.exists():
         shutil.copy2(STATE, bdir / "settings.toml")
@@ -442,6 +473,8 @@ def rollback(backup_id):
         return _restore_setup(bdir, manifest)
     if current() and current() != backup_id:
         rollback(current())  # remove the active theme cleanly before going further back
+    removing = backup_id == current()
+    tdir = _theme_dir_name(bdir)
     try:  # your settings changed meanwhile survive the removal; only the theme's own leave
         carry = _user_changes(backup_id)[0] if backup_id == current() else {}
     except (OSError, tomllib.TOMLDecodeError):
@@ -469,6 +502,8 @@ def rollback(backup_id):
     CURRENT.unlink(missing_ok=True)  # every theme backup is a theme-free state
     log.info("restored backup %s", backup_id)
     _reload()
+    # Leaving the theme: only its own wallpaper goes. Going back to an older backup: its wallpaper returns.
+    _restore_wallpapers(manifest.get("wallpapers"), DATA / "themes" / tdir if removing and tdir else None)
 
 
 # Positions at the last glue pass, per applied theme: tells which member of a group the user dragged.
@@ -589,7 +624,8 @@ def save_setup():
         shutil.copytree(BACKUPS / active["id"], bdir / "theme-backup")
     label = f"Mon setup, avec « {active['theme']} »" if active else "Mon setup, sans thème"
     manifest = {"kind": "setup", "theme": active["theme"] if active else None, "date": stamp, "label": label,
-                "current": active["id"] if active else None, "state_existed": STATE.exists(), "files": {}}
+                "current": active["id"] if active else None, "state_existed": STATE.exists(), "files": {},
+                "wallpapers": current_wallpapers()}
     (bdir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False))
     log.info("saved setup %s", stamp)
     return stamp
@@ -632,6 +668,7 @@ def _restore_setup(bdir, manifest):
     GLUE.unlink(missing_ok=True)  # positions remembered from another session would misread who moved
     log.info("restored setup %s", bdir.name)
     _reload()
+    _restore_wallpapers(manifest.get("wallpapers"))
 
 
 if __name__ == "__main__":
