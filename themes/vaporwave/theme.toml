@@ -1,13 +1,23 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 name = "Vaporwave"
-description = "Néons rose, cyan et violet, fausse fenêtre de chargement nostalgique et lecteur CD façon Windows 95. Hommage à l'univers vaporwave, créations originales."
+description = "Pink, cyan and purple neon, a nostalgic fake loading window and a Windows 95 style CD player. A tribute to vaporwave, original artwork."
 author = "Antoine Piron"
 palette = "vaporwave"        # palette.json is installed as palettes/<palette>.json
 preview = "preview.webp"
 
-# Labels for the app's show/hide switches; a group toggles all its widgets together.
+# Labels for the app's show/hide switches; a group toggles its widgets together and the app keeps them glued.
 [widget_groups]
-"Horloge" = ["vw-clock"]
-"Katakana vertical" = ["vw-katakana"]
-"Lecteur CD" = ["vw-player-frame", "vw-player"]
-"Boîte de dialogue" = ["vw-dialog"]
+"Clock" = ["vw-clock"]
+"Vertical katakana" = ["vw-katakana"]
+"CD player" = ["vw-player-frame", "vw-player"]
+"Dialog box" = ["vw-dialog"]
+
+# Shown instead when the UI language is French; group labels are keyed by their English label.
+[locale.fr]
+description = "Néons rose, cyan et violet, fausse fenêtre de chargement nostalgique et lecteur CD façon Windows 95. Hommage à l'univers vaporwave, créations originales."
+
+[locale.fr.widget_groups]
+"Clock" = "Horloge"
+"Vertical katakana" = "Katakana vertical"
+"CD player" = "Lecteur CD"
+"Dialog box" = "Boîte de dialogue"

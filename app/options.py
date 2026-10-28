@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """App preferences, and their translation into a Noctalia config fragment layered over the theme's."""
 import json
-import os
 import re
 from pathlib import Path
 
-PATH = Path(os.environ.get("NOCTALIA_THEMES_CONFIG") or os.environ.get("XDG_CONFIG_HOME")
-            or Path.home() / ".config") / "noctalia-themes" / "settings.json"
+import paths
+
+PATH = paths.SETTINGS
 
 TRANSITIONS = ["fade", "wipe", "disc", "stripes", "zoom", "honeycomb", "vortex", "pixel", "diamond", "golden", "melt"]
 FILL_MODES = ["crop", "fit", "center", "stretch", "repeat", "span"]
@@ -54,7 +54,7 @@ def load():
 
 
 def save(opts):
-    PATH.parent.mkdir(parents=True, exist_ok=True)
+    paths.ensure_dir(PATH.parent)
     tmp = PATH.with_suffix(".tmp")
     tmp.write_text(json.dumps(opts, indent=2, ensure_ascii=False))
     tmp.replace(PATH)

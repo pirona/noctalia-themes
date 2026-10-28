@@ -4,19 +4,23 @@
 
   tools/comfy_generate.py --prompt-file p.txt --seed 20111209 --name test01 [--theme vaporwave]
       [--steps 24] [--size 1920x1088] [--dry-run]
-Env: COMFY_URL (default http://192.168.1.2:8188), WALLPAPER_BUFFER (default ~/Images/noctalia-<theme>-tampon).
+Env: COMFY_URL (default http://127.0.0.1:8188), WALLPAPER_BUFFER (default <Pictures>/noctalia-<theme>-renders).
 Never interrupts or deletes a job: if the queue is busy, the job just waits its turn.
 """
 import argparse
 import json
 import os
+import sys
 import time
 import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
 
-COMFY = os.environ.get("COMFY_URL", "http://192.168.1.2:8188")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "app"))
+import paths  # noqa: E402
+
+COMFY = os.environ.get("COMFY_URL", "http://127.0.0.1:8188")
 WORKFLOW = Path(__file__).parent / "workflows/flux2_dev_wallpaper_api.json"
 
 
@@ -33,7 +37,7 @@ def build(prompt, seed, steps, width, height, name, theme="vaporwave"):
     if width % 32 or height % 32:
         raise SystemExit(f"Flux.2 wants multiples of 32, got {width}x{height}")
     g = json.loads(WORKFLOW.read_text())
-    # Guard: this workflow must stay LoRA-free (parasitic LoRAs were seen in other workflows on this PC).
+    # Guard: the wallpaper style comes from the prompt alone; a LoRA slipped into the workflow would change it.
     if any("lora" in n["class_type"].lower() for n in g.values()):
         raise SystemExit("LoRA node found in workflow: refusing")
     g["prompt"]["inputs"]["text"] = prompt
@@ -77,7 +81,7 @@ def main():
     # extra_pnginfo.workflow is mandatory: without it comfyui_queue_manager hangs the worker forever.
     body = {"prompt": graph, "client_id": str(uuid.uuid4()),
             "extra_data": {"extra_pnginfo": {"workflow": {
-                "id": str(uuid.uuid4()), "workflow_name": f"noctalia_{a.theme}_{a.name}_claude",
+                "id": str(uuid.uuid4()), "workflow_name": f"noctalia_{a.theme}_{a.name}",
                 "nodes": [], "links": []}}}}
     pid = json.loads(post("/prompt", body))["prompt_id"]
     print("queued", pid, flush=True)
@@ -95,7 +99,7 @@ def main():
     entry = hist[pid]
     print("status:", entry["status"]["status_str"], f"({int(time.monotonic() - start)} s)", flush=True)
 
-    buffer = Path(os.environ.get("WALLPAPER_BUFFER", Path.home() / f"Images/noctalia-{a.theme}-tampon"))
+    buffer = Path(os.environ.get("WALLPAPER_BUFFER", paths.pictures() / f"noctalia-{a.theme}-renders"))
     buffer.mkdir(parents=True, exist_ok=True)
     for out in entry["outputs"].values():
         for img in out.get("images", []):
@@ -108,7 +112,7 @@ def main():
                     "workflow": WORKFLOW.name, "prompt_id": pid}
             dst.with_suffix(".json").write_text(json.dumps(meta, indent=2, ensure_ascii=False))
             print("saved", dst, flush=True)
-    # Unload models between jobs: avoids stacking them in the 32 GB of RAM.
+    # Unload models between jobs: keeps RAM free on the ComfyUI host.
     post("/free", {"unload_models": True, "free_memory": True})
     print("cache freed", flush=True)
 

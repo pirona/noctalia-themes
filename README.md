@@ -1,146 +1,184 @@
 # noctalia-themes
 
-Thèmes décoratifs pour [Noctalia](https://docs.noctalia.dev/noctalia/) v5 (testé sur 5.3.0, Fedora 44, Niri),
-avec une petite appli GTK4 / libadwaita pour les appliquer et les retirer. Premier thème : **vaporwave**.
-Licence GPL v3.
+Decorative themes for [Noctalia](https://docs.noctalia.dev/noctalia/) v5 (tested on 5.3.0 with niri), with a small
+GTK 4 / libadwaita app to apply and remove them safely. Themes: **Vaporwave**, **Batman — Year One**,
+**Batman — Black and White**. License: GPL-3.0-or-later.
 
-## Installation
+The app is in English, with a French translation picked from your locale.
+
+## Install
 
 ```bash
-git clone <ce dépôt> ~/gitea-trucs/noctalia-themes
-cd ~/gitea-trucs/noctalia-themes
-./install.sh            # vérifie python3-gobject, gtk4, libadwaita ; crée l'entrée du lanceur
+git clone <this repository> noctalia-themes
+cd noctalia-themes
+./install.sh
 ```
 
-`install.sh` n'utilise jamais `sudo` : s'il manque un paquet, il affiche la commande `dnf` à lancer.
-Il est rejouable sans effet de bord. `./install.sh --uninstall` retire l'entrée du lanceur (sauvegardes conservées).
+`install.sh` checks that Python 3.11+, PyGObject, GTK 4 and libadwaita are importable (it prints the package
+command for Fedora, Debian/Ubuntu and Arch otherwise), builds the translations if `msgfmt` is available, and adds a
+launcher entry. It never uses `sudo` and can be run again at any time. `./install.sh --uninstall` removes the launcher
+entry; themes and backups are kept.
 
-Lancer : « Thèmes Noctalia » dans le lanceur, ou `python3 app/main.py`.
+Start “Noctalia Themes” from the launcher, or run `python3 app/main.py`.
 
-## Utilisation
+## Use
 
-- **Appliquer** : bouton sur la carte du thème, après confirmation. Un toast propose « Annuler » pendant 8 s.
-- **Retirer** : bandeau en haut de la fenêtre dès qu'un thème est actif, un clic. La configuration d'avant le thème
-  revient, **avec tes réglages modifiés entre-temps** (barre, dock, plugins…) : seuls les réglages du thème partent
-  avec lui (clés qu'il pose, ses widgets, un fond pris dans son dossier). Si tu as modifié des réglages du thème,
-  l'appli les liste avant de retirer. Même chose quand on passe directement d'un thème à un autre.
-- **Sauvegarder mon setup** (menu, Ctrl+S) : copie tout Noctalia tel quel (config, `settings.toml`, thème actif,
-  positions des widgets, polices). Le restaurer remet tout à l'identique ; ces sauvegardes ne sont jamais purgées
-  automatiquement.
-- **Fonds d'écran** : galerie des fonds du thème actif ; clic = fond posé (via `noctalia msg wallpaper-set`), 🔀 = au hasard.
-- **Mettre à jour** (⟳ sur le thème actif) : réinstalle stickers, palette et widgets sans toucher à tes réglages.
-- **Sauvegardes** : liste datée ; « Restaurer » remet la config Noctalia exactement dans l'état de cette date ;
-  la corbeille supprime une sauvegarde après confirmation (impossible pour celle du thème actif, seul retour possible).
-  Menu → « Ouvrir le dossier des sauvegardes » pour les voir dans le gestionnaire de fichiers.
+- **Apply**: button on the theme's row, after confirmation. A toast offers “Undo” for 8 s.
+- **Remove**: the banner at the top as soon as a theme is active, one click. The configuration from before the theme
+  comes back **with the settings you changed meanwhile** (bar, dock, plugins…); only the theme's own settings leave
+  with it (keys it sets, its widgets, a wallpaper from its folder). If you changed some of the theme's own settings,
+  the app lists them first. Switching straight from one theme to another works the same way.
+- **Save my setup** (menu, Ctrl+S): copies all of Noctalia as is (config, `settings.toml`, active theme, widget
+  positions, fonts, wallpaper). Restoring it brings everything back; these backups are never pruned automatically.
+- **Wallpapers**: gallery of the active theme's wallpapers; click to set one, 🔀 for a random one.
+- **Update** (⟳ on the active theme): reinstalls stickers, palette and widgets without touching your settings.
+- **Backups**: dated list. “Restore” brings Noctalia back to that date, wallpaper included; the trash deletes a
+  backup after confirmation (never the active theme's, its only way back).
+- **Widget groups stay together**: a theme groups widgets that form one visual unit (a player and its frame, a clock
+  and its ink blot). Noctalia's widget editor moves widgets one by one; when you close it, the app (if it is open)
+  moves the rest of the group by the same offset. It also does it when its window gets the focus back.
 
-### Préférences (menu → Préférences, ou Ctrl+,)
+### Preferences (menu → Preferences, or Ctrl+,)
 
-| Onglet | Réglages |
+| Page | Settings |
 |---|---|
-| Fonds | effets de transition (11), durée, remplissage |
-| Widgets | afficher/masquer chaque widget (groupes définis par le thème), mode sombre/clair/auto, horloge 12 h / secondes / couleur, lecteur CD (pochette floutée, masquer à l'arrêt) |
-| Appli | confirmation avant d'appliquer, écran cible, nombre de sauvegardes à garder + ménage (confirmé, jamais celle du thème actif) |
-| Diagnostic | versions, thème actif, écran, réglages modifiés ou écrasés, chemins, fin du journal, copie dans le presse-papiers |
+| Wallpapers | transition effects (11), duration, fill mode |
+| Widgets | show/hide each widget group, dark/light/auto mode, clock 12 h / seconds / color, media player (blurred cover, hide when idle) |
+| App | confirm before applying, target screen, number of backups to keep + clean-up (confirmed, never the active theme's) |
+| Diagnostic | versions, active theme, screen, changed or overridden settings, paths, log tail, copy to clipboard |
 
-Les préférences sont rangées dans `~/.config/noctalia-themes/settings.json` (une valeur invalide retombe sur
-la valeur par défaut). Une préférence laissée sur « comme le thème » n'écrit rien. Chaque changement est appliqué au
-thème actif au bout de 400 ms.
+A preference left on “like the theme” writes nothing. Invalid values in the preferences file fall back to defaults.
 
-À savoir : les réglages faits dans l'interface Noctalia **pendant** qu'un thème est actif sont reportés au retrait,
-sauf ceux du thème lui-même. `settings.toml` est alors réécrit par l'appli (même contenu, mise en forme
-différente, tableaux de tables écrits en tables en ligne) ; sans réglage à reporter, il revient octet pour octet.
+## How it works
 
-## Comment ça marche
+Noctalia loads its layers in this order, the last one wins:
 
-Noctalia charge ses couches dans cet ordre, la dernière gagne :
+1. its defaults;
+2. `~/.config/noctalia/*.toml`, **in alphabetical order**: `zz-theme.toml` (the theme), then
+   `zzz-theme-options.toml` (the app's preferences, which therefore win over the theme);
+3. `~/.local/state/noctalia/settings.toml`, written by Noctalia's own settings UI, which wins over everything.
 
-1. ses valeurs par défaut ;
-2. les `~/.config/noctalia/*.toml`, **par ordre alphabétique** : `zz-theme.toml` (le thème) puis
-   `zzz-theme-options.toml` (les préférences de l'appli, qui l'emportent donc sur le thème) ;
-3. `~/.local/state/noctalia/settings.toml`, écrit par l'interface de Noctalia, qui l'emporte sur tout.
+A theme dropped in `~/.config` would be hidden by the state file. So applying a theme:
 
-Un thème déposé dans `~/.config` serait donc masqué par l'état. Appliquer un thème :
+1. validates it (palette, `theme.toml`, readable TOML): nothing is touched if it is invalid;
+2. removes the active theme first, if any, so the backup always captures the original state;
+3. backs up `settings.toml`, every file about to be overwritten and the current wallpaper;
+4. copies the theme to its installed place, the palette to `palettes/`, the fragment to `zz-theme.toml`, the
+   preferences to `zzz-theme-options.toml`;
+5. removes from `settings.toml` the keys the theme sets, and the whole `[desktop_widgets]` table.
 
-1. valide le thème (palette, `theme.toml`, TOML lisible) : rien n'est touché si c'est invalide ;
-2. si un thème est déjà actif, le retire d'abord : la sauvegarde capture toujours l'état d'origine ;
-3. sauvegarde `settings.toml` et tout fichier qui sera écrasé dans `~/.local/share/noctalia-themes/backups/<date>/` ;
-4. copie le thème dans `~/.local/share/noctalia-themes/themes/`, la palette dans `~/.config/noctalia/palettes/`,
-   le fragment dans `~/.config/noctalia/zz-theme.toml`, les préférences dans `zzz-theme-options.toml` ;
-5. retire de `settings.toml` les clés que le thème définit, et toute la table `[desktop_widgets]`.
+If a step fails after the backup, everything is restored. Writes are atomic (temporary file, then rename), so
+Noctalia, which watches these files, never reads a half-written one. Noctalia reloads them live.
 
-Si une étape échoue après la sauvegarde, tout est restauré automatiquement. Les écritures sont atomiques
-(fichier temporaire puis renommage) pour que Noctalia, qui surveille ces fichiers, ne lise jamais un fichier à moitié écrit.
-Le retour arrière restaure les copies **à l'octet près** et retire les fichiers créés. Noctalia recharge à chaud.
+When no setting needs carrying over, removing a theme restores `settings.toml` byte for byte. Otherwise it is
+rewritten with the same content in a different layout (arrays of tables become inline tables).
 
-## Ajouter un thème
+### Files and folders
 
-Créer un dossier dans `themes/`, aucune modification de l'appli n'est nécessaire :
+| Path | Owner | What |
+|---|---|---|
+| `~/.config/noctalia/zz-theme.toml`, `zzz-theme-options.toml`, `palettes/<name>.json` | Noctalia, written by the app | the active theme and preferences |
+| `~/.local/state/noctalia/settings.toml` | Noctalia | read; theme keys removed on apply, widget positions adjusted by the group glue |
+| `~/.local/share/noctalia-themes/` | the app, **0700** | installed theme copies, `backups/`, `current`, `glue.json`, `app.log` |
+| `~/.local/share/fonts/noctalia-themes/` | the app | theme fonts (fontconfig must see them) |
+| `~/.config/noctalia-themes/settings.json` | the app, **0700** folder | app preferences |
 
-| Fichier | Rôle |
+Each base folder follows XDG and can be overridden: `NOCTALIA_CONFIG_HOME`, `NOCTALIA_STATE_HOME`,
+`NOCTALIA_THEMES_HOME`, `NOCTALIA_THEMES_FONTS`, `NOCTALIA_THEMES_CONFIG` (all defined in `app/paths.py`).
+`NOCTALIA_THEMES_OUTPUT` forces the screen the widgets go to.
+
+### Security
+
+- No `sudo`, no network access from the app, nothing outside the folders above.
+- Backups hold copies of `settings.toml`, which may contain tokens (calendar accounts, plugins): the app's data
+  folder is owner-only (0700), and so is its preferences folder.
+- Folders are created when first written to, never at start-up.
+- Every TOML file is parsed before it is written; a theme's palette name is restricted to `[A-Za-z0-9_-]+` and the
+  screen name is escaped, so a theme cannot write outside its place.
+- Log: `~/.local/share/noctalia-themes/app.log` (rotated at 200 KB): applies, restores, deletions, wallpaper changes.
+
+## Add a theme
+
+Create a folder in `themes/`; the app needs no change:
+
+| File | Role |
 |---|---|
-| `theme.toml` | `name`, `description`, `author`, `palette` (nom de fichier, `[A-Za-z0-9_-]+`), `preview` (optionnel) |
-| `palette.json` | palette Noctalia : `dark` + `light`, 16 rôles + bloc `terminal`, `#RRGGBB` strict |
-| `noctalia.toml` | fragment de config Noctalia ; `@THEME_DIR@` devient le chemin installé, `@OUTPUT@` l'écran cible : `NOCTALIA_THEMES_OUTPUT` s'il est défini, sinon l'écran choisi dans les préférences, sinon l'écran actif sous niri, sinon le premier écran allumé de `wlr-randr` |
-| `[widget_groups]` dans `theme.toml` | optionnel : libellés des interrupteurs « afficher/masquer », un groupe peut regrouper plusieurs widgets |
-| `stickers/`, `wallpapers/` | assets **originaux** ; `wallpapers/SOURCES.md` pour les prompts et seeds |
-| `fonts/` | optionnel : polices `.ttf`/`.otf` (licence libre à côté) posées dans `~/.local/share/fonts/noctalia-themes/`,
-retirées au retour arrière ; un widget les nomme par famille (`font_family`) |
+| `theme.toml` | `name`, `description`, `author`, `palette` (file name, `[A-Za-z0-9_-]+`), `preview` (optional) |
+| `[widget_groups]` in `theme.toml` | optional: show/hide labels; the widgets of a group toggle and move together |
+| `[locale.<lang>]` in `theme.toml` | optional: `name`, `description` and `[locale.<lang>.widget_groups]` (English label → translation) |
+| `palette.json` | Noctalia palette: `dark` + `light`, 16 roles + a `terminal` block, strict `#RRGGBB` |
+| `noctalia.toml` | Noctalia config fragment; `@THEME_DIR@` becomes the installed path, `@OUTPUT@` the target screen: `NOCTALIA_THEMES_OUTPUT` if set, else the screen chosen in the preferences, else niri's focused screen, else the first enabled `wlr-randr` output |
+| `stickers/`, `wallpapers/` | **original** artwork; `wallpapers/SOURCES.md` for prompts and seeds |
+| `fonts/` | optional `.ttf`/`.otf` (with their free license), installed with the theme and removed on rollback; widgets name them by family (`font_family`) |
 
-Aperçu : appliquer le thème puis `tools/preview.sh themes/<nom>` (capture le bureau sur un espace de travail vide,
-niri uniquement). Sans `preview.webp`, l'appli affiche des bandes aux couleurs de la palette. Partir de `themes/vaporwave/`.
+Preview: apply the theme, then `tools/preview.sh themes/<name>` (captures the desktop on an empty workspace; niri only).
+Without `preview.webp`, the app shows the palette's colors. Start from `themes/vaporwave/`.
 
-Fonds : `tools/comfy_generate.py --theme <nom> …` (un job ComfyUI à la fois), puis
-`tools/promote_wallpaper.py --theme <nom> <rendu.png> <nom-court>` (retire un cadre de case dessiné par le modèle,
-rogne en 1920×1080, WebP, `SOURCES.md`, copie dans `~/Images/wallpapers/<nom>/`).
+Wallpapers: `tools/comfy_generate.py --theme <name> …` queues one ComfyUI job (`COMFY_URL`, default
+`http://127.0.0.1:8188`), then `tools/promote_wallpaper.py --theme <name> <render.png> <short-name>` trims a frame drawn
+by the model, crops to 1920×1080, converts to WebP, updates `SOURCES.md` and copies it to `<Pictures>/wallpapers/<name>/`.
+Prompt rules per theme live in `tools/prompts/<name>/RULES.md`.
 
-## Ligne de commande
-
-```bash
-python3 app/installer.py apply themes/vaporwave   # affiche l'id de la sauvegarde
-python3 app/installer.py list                     # sauvegardes disponibles
-python3 app/installer.py rollback <id>            # retour à l'état de cette sauvegarde
-python3 app/installer.py refresh themes/vaporwave # met à jour le thème actif sur place (stickers, palette, widgets)
-                                                  # sans toucher à settings.toml : tes réglages modifiés depuis sont gardés
-```
-
-## Développement
+## Command line
 
 ```bash
-python3 app/palette.py               # format des couleurs + contraste >= 4.5:1 (Noctalia ignore une couleur invalide sans prévenir)
-python3 app/options.py               # préférences : surcharges, format d'horloge, clés TOML, validation
-python3 tests/test_installer.py      # bac à sable : aller-retour, thème invalide, panne, chemin piégé, écran,
-                                     # réglages reportés, setup complet, préférences, ménage des sauvegardes
-pipx run ruff==0.12.0 check .        # lint + PEP 8 (config dans pyproject.toml), sans installation durable
+python3 app/installer.py apply themes/vaporwave   # prints the backup id
+python3 app/installer.py list                     # available backups
+python3 app/installer.py rollback <id>            # back to that backup
+python3 app/installer.py refresh themes/vaporwave # update the active theme in place, your settings untouched
+python3 app/installer.py save                     # save my setup
+python3 app/installer.py glue                     # move widget groups back together
 ```
 
-Structure : `app/installer.py` (logique, sans GTK, testable), `app/options.py` (préférences → fragment TOML),
-`app/window.py` (fenêtre principale), `app/preferences.py` (préférences), `app/main.py` (application, actions,
-raccourcis), `app/palette.py` (validation). Journal : `~/.local/share/noctalia-themes/app.log` (rotation à 200 Ko,
-trace des applications, restaurations, suppressions et changements de fond), aussi sur la sortie d'erreur.
+## Development
 
-## Limites connues
+```bash
+python3 app/palette.py           # color format + contrast >= 4.5:1 (Noctalia silently ignores a bad color)
+python3 app/options.py           # preferences: overrides, clock format, TOML keys, validation
+python3 tests/test_installer.py  # sandbox: round trip, invalid theme, failure, path tricks, screen, carried
+                                 # settings, setup backup, preferences, clean-up, glue, wallpaper, permissions
+python3 tests/test_promote_bw.py # black and white thresholding
+pipx run ruff==0.12.0 check .    # lint + PEP 8 (config in pyproject.toml)
+```
 
-- **Un seul écran** : `@OUTPUT@` est figé à l'application du thème, et les positions sont pensées pour 1536×864
-  logiques. Sur un autre écran, ou si cet écran disparaît (dock débranché), les widgets sont mal placés ou absents :
-  ré-appliquer le thème. Noctalia ne propose pas de cible « tous les écrans » documentée.
-- Les réglages **du thème** modifiés pendant qu'il est actif (position d'un de ses widgets…) partent avec lui
-  (l'appli prévient) ; pour les garder tels quels, « Sauvegarder mon setup » avant de changer.
-- Les sauvegardes de thème faites avant cette version ne contiennent que l'état d'avant le thème : le report des
-  réglages fonctionne avec elles aussi (il compare à l'état écrit à l'application).
-- Pas de verrou avec Noctalia : une écriture qu'il ferait pile pendant l'application (fraction de seconde) serait perdue.
+Layout: `app/paths.py` (every path), `app/i18n.py` (translations), `app/installer.py` (logic, no GTK, testable),
+`app/options.py` (preferences → TOML fragment), `app/window.py` (main window), `app/preferences.py` (preferences
+dialog), `app/main.py` (application, actions, shortcuts), `app/palette.py` (palette validation).
 
-## Pièges Noctalia relevés
+Translations: strings are English in the code, wrapped in `_()`. After changing them:
 
-- `rotation` des widgets de bureau est en **radians** (la doc ne le dit pas).
-- `theme.shell_mode = "auto"` garde la barre claire même avec `mode = "dark"`.
-- `theme.pure_black_dark = true` remplace les surfaces sombres de la palette par du noir.
-- Fond d'écran GIF : seule la première image s'affiche, pas d'animation (testé sur 5.3.0).
-- Les widgets de bureau ont un fond par défaut : `background = false` pour du texte seul.
-- Les stickers sont mis en cache par chemin : pour remplacer une image, lui donner un **nouveau nom de fichier**.
-- Une police installée pendant que Noctalia tourne n'est vue qu'**au redémarrage de Noctalia** (fontconfig est lu au
-  lancement) : au premier `apply` d'un thème avec `fonts/`, le texte retombe sur la police par défaut jusque-là.
-- Le lecteur média (`media_player`) n'affiche la pochette que si le lecteur publie en MPRIS un `mpris:artUrl` lisible.
-  Un lecteur **Flatpak** basé sur Chromium/Electron (ex. Aonsoku) l'écrit dans **son** `/tmp` privé : Noctalia ne peut
-  pas l'ouvrir. Correctif : `flatpak override --user --filesystem=/tmp <app-id>` puis relancer l'appli
-  (retour arrière : `--nofilesystem=/tmp`). Contrepartie : l'appli voit le `/tmp` de la session.
-- Le visualiseur audio lit le son avant la sortie : en AirPlay (~1,6 s de tampon), il est en avance sur ce qu'on entend.
+```bash
+xgettext -L Python --from-code=UTF-8 -k_ -kngettext:1,2 --add-comments=Translators --no-wrap \
+    --package-name=noctalia-themes -o po/noctalia-themes.pot app/*.py
+msgmerge -q --no-wrap -U po/fr.po po/noctalia-themes.pot   # then translate the new or fuzzy entries
+./install.sh                                                # rebuilds app/locale/
+```
+
+A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <lang> -o po/<lang>.po`).
+
+## Known limits
+
+- **One screen**: `@OUTPUT@` is fixed when the theme is applied, and positions are designed for 1536×864 logical
+  pixels. On another screen, or if that screen goes away, widgets are misplaced or missing: apply the theme again.
+- **Group glue** needs the app to be open when the widget editor closes (or to get the focus afterwards), and detects
+  the editor through niri; on another compositor a glue made while the editor is open is overwritten by Noctalia.
+- The **theme's own** settings changed while it is active (a widget's position…) leave with it (the app warns);
+  use “Save my setup” first to keep them.
+- No lock with Noctalia: a write it makes during the sub-second window of an apply would be lost.
+
+## Noctalia pitfalls
+
+- Desktop widget `rotation` is in **radians** (the documentation does not say).
+- `theme.shell_mode = "auto"` keeps the bar light even with `mode = "dark"`.
+- `theme.pure_black_dark = true` replaces the palette's dark surfaces with black.
+- GIF wallpapers: only the first frame is shown (5.3.0).
+- Desktop widgets have a background by default: `background = false` for bare text.
+- Stickers are cached by path: to replace an image, give it a **new file name**.
+- A font installed while Noctalia runs is only seen after **restarting Noctalia** (fontconfig is read at start).
+- While the widget editor is open, Noctalia ignores changes to `settings.toml` and rewrites its own positions when
+  the editor closes.
+- The media player only shows the cover if the player publishes a readable `mpris:artUrl`. A **Flatpak** player
+  based on Chromium/Electron writes it into **its own** private `/tmp`, which Noctalia cannot read. Fix:
+  `flatpak override --user --filesystem=/tmp <app-id>` then restart the player (undo: `--nofilesystem=/tmp`);
+  the trade-off is that the player sees the session's `/tmp`.
+- The audio visualizer reads the sound before the output: with AirPlay (~1.6 s of buffer) it runs ahead of what you hear.

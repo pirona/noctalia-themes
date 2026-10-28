@@ -14,24 +14,12 @@ from pathlib import Path
 
 import options
 import palette
+from i18n import _, localize
+from paths import BACKUPS, CONFIG, CURRENT, DATA, FONTS, FRAGMENT, GLUE, INSTALLED, OPTIONS, PALETTES, STATE, ensure_dir
 
 log = logging.getLogger("noctalia-themes")
 
 
-def _home(var, xdg, default):
-    return Path(os.environ.get(var) or os.environ.get(xdg) or Path.home() / default)
-
-
-CONFIG = _home("NOCTALIA_CONFIG_HOME", "XDG_CONFIG_HOME", ".config") / "noctalia"
-STATE = _home("NOCTALIA_STATE_HOME", "XDG_STATE_HOME", ".local/state") / "noctalia" / "settings.toml"
-DATA = _home("NOCTALIA_THEMES_HOME", "XDG_DATA_HOME", ".local/share") / "noctalia-themes"
-BACKUPS = DATA / "backups"
-# Widgets name fonts by family: fontconfig must see them, so they go to the user font dir.
-FONTS = _home("NOCTALIA_THEMES_FONTS", "XDG_DATA_HOME", ".local/share") / "fonts" / "noctalia-themes"
-FRAGMENT = CONFIG / "zz-theme.toml"
-CURRENT = DATA / "current"
-# Loaded after zz-theme.toml (alphabetical), so the app preferences win over the theme.
-OPTIONS = CONFIG / "zzz-theme-options.toml"
 # Tables the theme owns entirely: their state overrides are dropped as a whole.
 OWNED_TABLES = ("desktop_widgets",)
 
@@ -41,7 +29,7 @@ def list_themes(root):
     for d in sorted(Path(root).glob("*/theme.toml")):
         meta = tomllib.loads(d.read_text())
         meta["dir"] = d.parent
-        themes.append(meta)
+        themes.append(localize(meta))
     return themes
 
 
@@ -144,7 +132,8 @@ def detect_output():
             return pick(json.loads(out))
         except (OSError, subprocess.SubprocessError, ValueError, LookupError, TypeError, StopIteration):
             continue
-    raise ValueError("Aucun écran détecté (ni niri ni wlr-randr). Définis NOCTALIA_THEMES_OUTPUT, ex. eDP-1.")
+    raise ValueError(_("No screen found (neither niri nor wlr-randr answered). Set NOCTALIA_THEMES_OUTPUT, "
+                       "e.g. eDP-1."))
 
 
 def _flatten(table, prefix=""):
@@ -157,7 +146,7 @@ def _flatten(table, prefix=""):
 
 # Written by Noctalia itself on every wallpaper change: not a user setting.
 NOISE_PREFIXES = ("wallpaper.last.",)
-UNREADABLE = "(configuration illisible : impossible de vérifier ce qui serait perdu)"
+UNREADABLE = _("(unreadable configuration: cannot check what would be lost)")
 _GONE = object()  # a setting removed in Noctalia
 
 
@@ -181,7 +170,7 @@ def _put(table, path, value):
 def _theme_dir_name(bdir):
     """Folder name of the theme a backup was made for, read from its installed fragment."""
     frag = bdir / "fragment.toml"
-    m = re.search(re.escape(str(DATA / "themes")) + r"/([A-Za-z0-9_-]+)", frag.read_text()) if frag.exists() else None
+    m = re.search(re.escape(str(INSTALLED)) + r"/([A-Za-z0-9_-]+)", frag.read_text()) if frag.exists() else None
     return m.group(1) if m else None
 
 
@@ -206,7 +195,7 @@ def _user_changes(bid):
         v = now.get(k, _GONE)
         if before.get(k, _GONE) == v or ".".join(k).startswith(NOISE_PREFIXES):
             continue
-        if isinstance(v, str) and tdir and (v.startswith(str(DATA / "themes" / tdir) + "/")
+        if isinstance(v, str) and tdir and (v.startswith(str(INSTALLED / tdir) + "/")
                                             or Path(v).parent.parts[-2:] == ("wallpapers", tdir)):
             continue
         if k[0] in OWNED_TABLES or k in theme:
@@ -247,7 +236,7 @@ def list_outputs():
 
 def wallpapers(theme_dir):
     """Wallpapers of a theme, from its installed copy when there is one (stable path for Noctalia)."""
-    installed = DATA / "themes" / Path(theme_dir).name / "wallpapers"
+    installed = INSTALLED / Path(theme_dir).name / "wallpapers"
     folder = installed if installed.is_dir() else Path(theme_dir) / "wallpapers"
     return sorted(p for p in folder.glob("*") if p.suffix.lower() in (".webp", ".png", ".jpg", ".jpeg", ".avif"))
 
@@ -303,7 +292,7 @@ def write_options(fragment=None, reload=True):
         OPTIONS.unlink(missing_ok=True)
     else:
         tomllib.loads(text)
-        tmp = DATA / "options.tmp.toml"
+        tmp = ensure_dir(DATA) / "options.tmp.toml"
         tmp.write_text("# Written by the Noctalia Themes app: preferences layered over the theme.\n" + text)
         _atomic_copy(tmp, OPTIONS)
         tmp.unlink()
@@ -332,7 +321,7 @@ def excess_backups(keep):
 
 def delete_backup(backup_id):
     if backup_id == current():
-        raise ValueError("Cette sauvegarde est le seul retour possible pour le thème actif : retire le thème d'abord.")
+        raise ValueError(_("This backup is the only way back from the active theme: remove the theme first."))
     shutil.rmtree(BACKUPS / backup_id)
     log.info("deleted backup %s", backup_id)
 
@@ -366,7 +355,7 @@ def validate(theme_dir):
 
 def _render(theme_dir, output):
     """Copy the theme to its installed place and return its fragment with placeholders filled."""
-    installed = DATA / "themes" / theme_dir.name
+    installed = ensure_dir(INSTALLED) / theme_dir.name
     if installed.exists():
         shutil.rmtree(installed)
     shutil.copytree(theme_dir, installed, ignore=shutil.ignore_patterns("SOURCES.md", "*.py", "__pycache__"))
@@ -381,7 +370,7 @@ def _fonts(theme_dir):
 
 def _install_fonts(pairs):
     for src, dst in pairs:
-        dst.parent.mkdir(parents=True, exist_ok=True)
+        ensure_dir(dst.parent)
         _atomic_copy(src, dst)
     if pairs:
         try:
@@ -401,13 +390,13 @@ def refresh(theme_dir):
     meta = tomllib.loads((theme_dir / "theme.toml").read_text())
     active = current_theme()
     if not active or active["theme"] != meta["name"]:
-        raise ValueError(f"« {meta['name']} » n'est pas le thème actif : utilise apply.")
+        raise ValueError(_("“{name}” is not the active theme: use apply.").format(name=meta["name"]))
     output = detect_output() if "@OUTPUT@" in (theme_dir / "noctalia.toml").read_text() else None
     text = _render(theme_dir, output)
     fragment = tomllib.loads(text)
-    tmp = DATA / "fragment.refresh.toml"
+    tmp = ensure_dir(DATA) / "fragment.refresh.toml"
     tmp.write_text(text)
-    _atomic_copy(theme_dir / "palette.json", CONFIG / "palettes" / f"{meta['palette']}.json")
+    _atomic_copy(theme_dir / "palette.json", PALETTES / f"{meta['palette']}.json")
     _install_fonts(_fonts(theme_dir))  # ponytail: a font added after apply isn't in the backup, so rollback keeps it
     write_options(fragment, reload=False)  # options first: Noctalia never sees new fragment + stale options
     _atomic_copy(tmp, FRAGMENT)
@@ -424,13 +413,12 @@ def apply(theme_dir, label=None):
         rollback(current())  # snapshot must capture the untouched user state, not a themed one
     meta = tomllib.loads((theme_dir / "theme.toml").read_text())
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    bdir = BACKUPS / stamp
-    bdir.mkdir(parents=True)
+    bdir = ensure_dir(BACKUPS / stamp)
 
-    palette_dst = CONFIG / "palettes" / f"{meta['palette']}.json"
+    palette_dst = PALETTES / f"{meta['palette']}.json"
     fonts = _fonts(theme_dir)
-    targets = [palette_dst, FRAGMENT, OPTIONS] + [dst for _, dst in fonts]
-    manifest = {"theme": meta["name"], "date": stamp, "label": label or f"Avant « {meta['name']} »",
+    targets = [palette_dst, FRAGMENT, OPTIONS] + [dst for _src, dst in fonts]
+    manifest = {"theme": meta["name"], "date": stamp, "label": label or _("Before “{name}”").format(name=meta["name"]),
                 "state_existed": STATE.exists(), "files": {}, "wallpapers": current_wallpapers()}
     # Snapshot first, before anything is written.
     if STATE.exists():
@@ -447,7 +435,7 @@ def apply(theme_dir, label=None):
         fragment_text = _render(theme_dir, output)
         fragment = tomllib.loads(fragment_text)
         stripped = strip_overrides(STATE.read_text(), fragment) if STATE.exists() else None
-        palette_dst.parent.mkdir(parents=True, exist_ok=True)
+        ensure_dir(palette_dst.parent)
         _atomic_copy(theme_dir / "palette.json", palette_dst)
         _install_fonts(fonts)  # before the fragment: widgets must find their font on first load
         write_options(fragment, reload=False)
@@ -494,7 +482,7 @@ def rollback(backup_id):
         text = options.dump(state)
         tomllib.loads(text)  # refuse to write anything Noctalia could not parse
         (bdir / "carried.toml").write_text(text)
-        STATE.parent.mkdir(parents=True, exist_ok=True)
+        ensure_dir(STATE.parent)
         _atomic_copy(bdir / "carried.toml", STATE)
         log.info("carried over %d setting(s): %s", len(carry), ", ".join(".".join(k) for k in sorted(carry)))
     elif manifest["state_existed"]:
@@ -503,11 +491,9 @@ def rollback(backup_id):
     log.info("restored backup %s", backup_id)
     _reload()
     # Leaving the theme: only its own wallpaper goes. Going back to an older backup: its wallpaper returns.
-    _restore_wallpapers(manifest.get("wallpapers"), DATA / "themes" / tdir if removing and tdir else None)
+    _restore_wallpapers(manifest.get("wallpapers"), INSTALLED / tdir if removing and tdir else None)
 
 
-# Positions at the last glue pass, per applied theme: tells which member of a group the user dragged.
-GLUE = DATA / "glue.json"
 GLUE_TOLERANCE = 0.5  # logical pixels; below that a position counts as unchanged
 
 
@@ -560,7 +546,7 @@ def glue_groups():
     """
     bid = current()
     tdir = _theme_dir_name(BACKUPS / bid) if bid else None
-    meta = DATA / "themes" / tdir / "theme.toml" if tdir else None
+    meta = INSTALLED / tdir / "theme.toml" if tdir else None
     if not meta or not meta.exists() or not FRAGMENT.exists() or not STATE.exists() or _editor_open():
         return []  # editor open: wait for the save Noctalia makes when it closes
     groups = tomllib.loads(meta.read_text()).get("widget_groups", {})
@@ -594,7 +580,7 @@ def glue_groups():
         for i in changed:
             text = _set_position(text, i, *target[i])
         tomllib.loads(text)  # refuse to write anything Noctalia could not parse
-        tmp = DATA / "glue.tmp.toml"
+        tmp = ensure_dir(DATA) / "glue.tmp.toml"
         tmp.write_text(text)
         _atomic_copy(tmp, STATE)
         tmp.unlink()
@@ -606,14 +592,13 @@ def glue_groups():
 
 
 # What a setup backup copies whole: Noctalia's config, the installed themes and their fonts.
-SETUP_DIRS = (("config", lambda: CONFIG), ("themes", lambda: DATA / "themes"), ("fonts", lambda: FONTS))
+SETUP_DIRS = (("config", lambda: CONFIG), ("themes", lambda: INSTALLED), ("fonts", lambda: FONTS))
 
 
 def save_setup():
     """Copy the whole Noctalia state as it is now (active theme, widget positions, everything)."""
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
-    bdir = BACKUPS / stamp
-    bdir.mkdir(parents=True)
+    bdir = ensure_dir(BACKUPS / stamp)
     for name, src in SETUP_DIRS:
         if src().is_dir():
             shutil.copytree(src(), bdir / name, symlinks=True)
@@ -622,7 +607,8 @@ def save_setup():
     active = current_theme()
     if active:  # the theme's way back must survive even if its backup is deleted later
         shutil.copytree(BACKUPS / active["id"], bdir / "theme-backup")
-    label = f"Mon setup, avec « {active['theme']} »" if active else "Mon setup, sans thème"
+    label = (_("My setup, with “{name}”").format(name=active["theme"]) if active
+             else _("My setup, without a theme"))
     manifest = {"kind": "setup", "theme": active["theme"] if active else None, "date": stamp, "label": label,
                 "current": active["id"] if active else None, "state_existed": STATE.exists(), "files": {},
                 "wallpapers": current_wallpapers()}
@@ -651,10 +637,10 @@ def _swap_dir(src, dst):
 
 def _restore_setup(bdir, manifest):
     for name, dst in SETUP_DIRS:
-        dst().parent.mkdir(parents=True, exist_ok=True)
+        ensure_dir(dst().parent)
         _swap_dir(bdir / name, dst())
     if manifest["state_existed"]:
-        STATE.parent.mkdir(parents=True, exist_ok=True)
+        ensure_dir(STATE.parent)
         _atomic_copy(bdir / "settings.toml", STATE)
     else:
         STATE.unlink(missing_ok=True)

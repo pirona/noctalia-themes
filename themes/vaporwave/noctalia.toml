@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # Noctalia config fragment, installed as ~/.config/noctalia/zz-theme.toml.
-# @THEME_DIR@ and @OUTPUT@ are replaced at install. Coordinates are logical (designed on 1536x864); rotation is in radians.
+# The THEME_DIR and OUTPUT placeholders, between @ signs, are filled in at install. Coordinates are logical (designed on 1536x864); rotation is in radians.
 
 [theme]
 source = "custom"
