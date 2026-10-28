@@ -1,0 +1,651 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the noctalia-themes package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: noctalia-themes\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-28 08:07+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+
+#: app/installer.py:135
+msgid "No screen found (neither niri nor wlr-randr answered). Set NOCTALIA_THEMES_OUTPUT, e.g. eDP-1."
+msgstr ""
+
+#: app/installer.py:149
+msgid "(unreadable configuration: cannot check what would be lost)"
+msgstr ""
+
+#: app/installer.py:324
+msgid "This backup is the only way back from the active theme: remove the theme first."
+msgstr ""
+
+#: app/installer.py:393
+#, python-brace-format
+msgid "“{name}” is not the active theme: use apply."
+msgstr ""
+
+#: app/installer.py:421
+#, python-brace-format
+msgid "Before “{name}”"
+msgstr ""
+
+#: app/installer.py:610
+#, python-brace-format
+msgid "My setup, with “{name}”"
+msgstr ""
+
+#: app/installer.py:611
+msgid "My setup, without a theme"
+msgstr ""
+
+#: app/main.py:48 app/window.py:84
+msgid "Noctalia Themes"
+msgstr ""
+
+#: app/main.py:50
+msgid "Decorative themes for Noctalia v5, with guaranteed rollback."
+msgstr ""
+
+#: app/preferences.py:20
+msgid "Fade"
+msgstr ""
+
+#: app/preferences.py:20
+msgid "Wipe"
+msgstr ""
+
+#: app/preferences.py:20
+msgid "Disc"
+msgstr ""
+
+#: app/preferences.py:20
+msgid "Stripes"
+msgstr ""
+
+#: app/preferences.py:21
+msgid "Zoom"
+msgstr ""
+
+#: app/preferences.py:21
+msgid "Honeycomb"
+msgstr ""
+
+#: app/preferences.py:21
+msgid "Vortex"
+msgstr ""
+
+#: app/preferences.py:21
+msgid "Pixels"
+msgstr ""
+
+#: app/preferences.py:22
+msgid "Diamonds"
+msgstr ""
+
+#: app/preferences.py:22
+msgid "Golden spiral"
+msgstr ""
+
+#: app/preferences.py:22
+msgid "Melt"
+msgstr ""
+
+#: app/preferences.py:23
+msgid "Fill (crop)"
+msgstr ""
+
+#: app/preferences.py:23
+msgid "Fit"
+msgstr ""
+
+#: app/preferences.py:23
+msgid "Center"
+msgstr ""
+
+#: app/preferences.py:23
+msgid "Stretch"
+msgstr ""
+
+#: app/preferences.py:24
+msgid "Tile"
+msgstr ""
+
+#: app/preferences.py:24
+msgid "Span across screens"
+msgstr ""
+
+#: app/preferences.py:25 app/preferences.py:26 app/preferences.py:120
+msgid "The theme's"
+msgstr ""
+
+#: app/preferences.py:25
+msgid "Dark"
+msgstr ""
+
+#: app/preferences.py:25
+msgid "Light"
+msgstr ""
+
+#: app/preferences.py:25
+msgid "Automatic (Noctalia)"
+msgstr ""
+
+#: app/preferences.py:26
+msgid "Primary"
+msgstr ""
+
+#: app/preferences.py:26
+msgid "Secondary"
+msgstr ""
+
+#: app/preferences.py:27
+msgid "Tertiary"
+msgstr ""
+
+#: app/preferences.py:27
+msgid "Text (neutral)"
+msgstr ""
+
+#: app/preferences.py:28
+msgid "Like the theme"
+msgstr ""
+
+#: app/preferences.py:28
+msgid "Yes"
+msgstr ""
+
+#: app/preferences.py:28
+msgid "No"
+msgstr ""
+
+#: app/preferences.py:49 app/window.py:88
+msgid "Preferences"
+msgstr ""
+
+#: app/preferences.py:87
+#, python-brace-format
+msgid "Preference saved but not applied: {error}"
+msgstr ""
+
+#: app/preferences.py:95 app/window.py:153
+msgid "Wallpapers"
+msgstr ""
+
+#: app/preferences.py:101
+msgid "Transition effects"
+msgstr ""
+
+#: app/preferences.py:102
+msgid "Noctalia picks one at random on each wallpaper change."
+msgstr ""
+
+#: app/preferences.py:111
+msgid "Rendering"
+msgstr ""
+
+#: app/preferences.py:113
+msgid "Transition duration"
+msgstr ""
+
+#: app/preferences.py:114
+msgid "in milliseconds"
+msgstr ""
+
+#: app/preferences.py:120
+msgid "Fill mode"
+msgstr ""
+
+#: app/preferences.py:125
+msgid "Back to the theme's settings"
+msgstr ""
+
+#: app/preferences.py:143
+msgid "At least one effect is needed: the theme's are back."
+msgstr ""
+
+#: app/preferences.py:151
+msgid "The theme's wallpaper settings are back."
+msgstr ""
+
+#: app/preferences.py:154
+msgid "Widgets"
+msgstr ""
+
+#: app/preferences.py:158
+msgid "Some settings are ignored"
+msgstr ""
+
+#: app/preferences.py:159
+#, python-brace-format
+msgid "Your Noctalia configuration (settings.toml) already sets them and wins: {keys}. Change them in Noctalia, or remove the theme and apply it again."
+msgstr ""
+
+#: app/preferences.py:164
+msgid "Display"
+msgstr ""
+
+#: app/preferences.py:164
+msgid "Hiding a widget removes it from the desktop."
+msgstr ""
+
+#: app/preferences.py:174
+msgid "Appearance"
+msgstr ""
+
+#: app/preferences.py:176 app/preferences.py:328
+msgid "Mode"
+msgstr ""
+
+#: app/preferences.py:177
+msgid "Dark, light, or let Noctalia decide"
+msgstr ""
+
+#: app/preferences.py:182
+msgid "Clock"
+msgstr ""
+
+#: app/preferences.py:183
+msgid "12-hour format"
+msgstr ""
+
+#: app/preferences.py:183
+msgid "Show seconds"
+msgstr ""
+
+#: app/preferences.py:188
+msgid "Color"
+msgstr ""
+
+#: app/preferences.py:194
+msgid "Media player"
+msgstr ""
+
+#: app/preferences.py:195
+msgid "Title, artist and cover of what is playing."
+msgstr ""
+
+#: app/preferences.py:196
+msgid "Blurred cover as background"
+msgstr ""
+
+#: app/preferences.py:197
+msgid "Hide when nothing plays"
+msgstr ""
+
+#: app/preferences.py:210
+msgid "App"
+msgstr ""
+
+#: app/preferences.py:212
+msgid "Behavior"
+msgstr ""
+
+#: app/preferences.py:213
+msgid "Ask before applying"
+msgstr ""
+
+#: app/preferences.py:214
+msgid "The “Undo” toast is offered either way"
+msgstr ""
+
+#: app/preferences.py:220
+msgid "Screen"
+msgstr ""
+
+#: app/preferences.py:220
+msgid "Screen the theme's widgets are shown on."
+msgstr ""
+
+#: app/preferences.py:224
+msgid "Target screen"
+msgstr ""
+
+#: app/preferences.py:224
+msgid "Automatic (focused screen)"
+msgstr ""
+
+#: app/preferences.py:231 app/window.py:204
+msgid "Backups"
+msgstr ""
+
+#: app/preferences.py:232
+msgid "Nothing is deleted automatically. The active theme's backup is never deleted."
+msgstr ""
+
+#: app/preferences.py:234
+msgid "Backups to keep"
+msgstr ""
+
+#: app/preferences.py:238
+msgid "Clean up"
+msgstr ""
+
+#: app/preferences.py:255
+#, python-brace-format
+msgid "{total} backup, {extra} over the limit"
+msgid_plural "{total} backups, {extra} over the limit"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/preferences.py:263
+#, python-brace-format
+msgid "Delete the oldest backup?"
+msgid_plural "Delete the {n} oldest backups?"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/preferences.py:265
+msgid "They can no longer be restored. The active theme's backup is kept."
+msgstr ""
+
+#: app/preferences.py:266 app/window.py:230
+msgid "Cancel"
+msgstr ""
+
+#: app/preferences.py:267 app/window.py:316
+msgid "Delete"
+msgstr ""
+
+#: app/preferences.py:279
+#, python-brace-format
+msgid "{n} backup deleted"
+msgid_plural "{n} backups deleted"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/preferences.py:282
+msgid "Diagnostic"
+msgstr ""
+
+#: app/preferences.py:284
+msgid "State"
+msgstr ""
+
+#: app/preferences.py:284
+msgid "Computing…"
+msgstr ""
+
+#: app/preferences.py:290
+msgid "Copy the diagnostic"
+msgstr ""
+
+#: app/preferences.py:295
+msgid "Log"
+msgstr ""
+
+#: app/preferences.py:317
+msgid "unavailable"
+msgstr ""
+
+#: app/preferences.py:327
+msgid "Active palette"
+msgstr ""
+
+#: app/preferences.py:329
+msgid "Active theme"
+msgstr ""
+
+#: app/preferences.py:329
+#, python-brace-format
+msgid "{name} (backup {id})"
+msgstr ""
+
+#: app/preferences.py:330
+msgid "none"
+msgstr ""
+
+#: app/preferences.py:331
+msgid "Widgets screen"
+msgstr ""
+
+#: app/preferences.py:332
+msgid "Settings changed since apply"
+msgstr ""
+
+#: app/preferences.py:333
+msgid "Preferences overridden by settings.toml"
+msgstr ""
+
+#: app/preferences.py:334
+msgid "Noctalia config"
+msgstr ""
+
+#: app/preferences.py:335
+msgid "Noctalia state"
+msgstr ""
+
+#: app/preferences.py:336
+msgid "App preferences"
+msgstr ""
+
+#: app/preferences.py:337
+msgid "Installed themes and backups"
+msgstr ""
+
+#: app/preferences.py:343
+msgid "(empty)"
+msgstr ""
+
+#: app/preferences.py:345
+msgid "(no log yet)"
+msgstr ""
+
+#: app/preferences.py:350
+msgid "Diagnostic copied"
+msgstr ""
+
+#. Translators: strftime format of a backup date
+#: app/window.py:26
+msgid "%Y-%m-%d at %H:%M"
+msgstr ""
+
+#: app/window.py:87
+msgid "Save my setup"
+msgstr ""
+
+#: app/window.py:89
+msgid "Open the backups folder"
+msgstr ""
+
+#: app/window.py:90
+msgid "About"
+msgstr ""
+
+#: app/window.py:91
+msgid "Quit"
+msgstr ""
+
+#: app/window.py:94
+msgid "Main menu"
+msgstr ""
+
+#: app/window.py:96
+msgid "Remove the theme"
+msgstr ""
+
+#: app/window.py:139
+#, python-brace-format
+msgid "“{name}” is applied"
+msgstr ""
+
+#: app/window.py:154
+msgid "Click a thumbnail to set it as wallpaper right away."
+msgstr ""
+
+#: app/window.py:155
+msgid "A random wallpaper"
+msgstr ""
+
+#: app/window.py:177
+#, python-brace-format
+msgid "Wallpaper: {name}"
+msgstr ""
+
+#: app/window.py:180
+msgid "Themes"
+msgstr ""
+
+#: app/window.py:182
+msgid "No theme found"
+msgstr ""
+
+#: app/window.py:188
+msgid "Update (stickers, palette, widgets) without touching your settings"
+msgstr ""
+
+#: app/window.py:191
+#, python-brace-format
+msgid "“{name}” updated"
+msgstr ""
+
+#: app/window.py:193
+msgid "Active"
+msgstr ""
+
+#: app/window.py:196 app/window.py:280
+msgid "Apply"
+msgstr ""
+
+#: app/window.py:205
+msgid "Every apply first saves your Noctalia configuration; removing the theme restores it and keeps the settings you changed meanwhile. “Save my setup” (menu) copies everything as is, active theme and wallpaper included."
+msgstr ""
+
+#: app/window.py:210
+msgid "No backup yet"
+msgstr ""
+
+#: app/window.py:213 app/window.py:305 app/window.py:310
+msgid "Restore"
+msgstr ""
+
+#: app/window.py:217
+msgid "Delete this backup"
+msgstr ""
+
+#: app/window.py:220
+msgid "Only way back from the active theme: remove the theme first"
+msgstr ""
+
+#: app/window.py:244
+msgid "The operation failed"
+msgstr ""
+
+#: app/window.py:245
+msgid "Your configuration was left as it was."
+msgstr ""
+
+#: app/window.py:246
+msgid "Close"
+msgstr ""
+
+#: app/window.py:252
+msgid "Undo"
+msgstr ""
+
+#: app/window.py:262
+#, python-brace-format
+msgid "… and {n} more"
+msgid_plural "… and {n} more"
+msgstr[0] ""
+msgstr[1] ""
+
+#: app/window.py:265
+msgid "Your settings changed meanwhile are kept:"
+msgstr ""
+
+#: app/window.py:267
+msgid "Theme settings changed meanwhile, which leave with it:"
+msgstr ""
+
+#: app/window.py:271
+msgid "Setup saved: you can restore it from the backups"
+msgstr ""
+
+#: app/window.py:276
+#, python-brace-format
+msgid "Apply “{name}”?"
+msgstr ""
+
+#: app/window.py:277
+msgid ""
+"Your current configuration is saved first.\n"
+"Settings you change in Noctalia while the theme is active are kept when you remove it; only the theme's own leave with it."
+msgstr ""
+
+#: app/window.py:283
+#, python-brace-format
+msgid "“{name}” applied"
+msgstr ""
+
+#: app/window.py:285
+msgid "Original configuration restored"
+msgstr ""
+
+#: app/window.py:290
+msgid "Theme removed, original configuration restored"
+msgstr ""
+
+#: app/window.py:294
+msgid "Remove the theme?"
+msgstr ""
+
+#: app/window.py:294
+msgid "Your original configuration will be restored."
+msgstr ""
+
+#: app/window.py:295
+msgid "Remove anyway"
+msgstr ""
+
+#: app/window.py:300
+#, python-brace-format
+msgid "Restore your setup from {date}?"
+msgstr ""
+
+#: app/window.py:301
+msgid ""
+"All of Noctalia goes back exactly to this setup: active theme, widgets, bar, dock, wallpaper. Your current configuration is replaced entirely: save it first if you want to come back to it.\n"
+"\n"
+"If the restored theme has its own fonts, restart Noctalia so it sees them."
+msgstr ""
+
+#: app/window.py:306
+msgid "Setup restored"
+msgstr ""
+
+#: app/window.py:307
+#, python-brace-format
+msgid "Restore the backup from {date}?"
+msgstr ""
+
+#: app/window.py:308
+msgid "Noctalia's current configuration will be replaced by the one from that date."
+msgstr ""
+
+#: app/window.py:311
+msgid "Backup restored"
+msgstr ""
+
+#: app/window.py:314
+#, python-brace-format
+msgid "Delete the backup from {date}?"
+msgstr ""
+
+#: app/window.py:315
+msgid "It can no longer be restored. Other backups are not touched."
+msgstr ""
+
+#: app/window.py:317
+msgid "Backup deleted"
+msgstr ""

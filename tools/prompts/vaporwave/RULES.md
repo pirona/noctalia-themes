@@ -1,13 +1,13 @@
-# Règles de prompt (Flux.2 Dev, fonds vaporwave)
+# Prompt rules (Flux.2 Dev, vaporwave wallpapers)
 
-Tirées des rendus du 2026-10-25.
+Learned from the renders of 2026-10-25.
 
-- **Style peint** : « smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading ».
-  Le rendu photo (« film grain », « haze ») appelle passants, enseignes et saleté.
-- **Pas de lignes fines répétées** : garde-corps, verrières quadrillées, rangées de tables ou de portants,
-  rampes, damiers serrés. Flux les emmêle. Préférer de grands aplats, des volumes simples et des courbes,
-  avec un seul objet surréaliste (économie de moyens).
-- **Ne pas écrire « abandoned »** : il appelle la ruine. Écrire « deserted, pristine ».
-- **Ne pas écrire « storefront » ni « shop sign »** : ils appellent du pseudo-texte. Écrire « blank panels of soft light ».
-- **Réserver les zones des widgets** : « generous quiet space in the upper left, uncluttered foreground ».
-- Ne nommer aucun artiste : décrire ses procédés (l'impossible traité comme ordinaire).
+- **Painted style**: “smooth, crisp, matter-of-fact painterly clarity, clean edges, flat soft shading”.
+  A photographic look (“film grain”, “haze”) brings in passers-by, shop signs and dirt.
+- **No repeated thin lines**: railings, gridded glass roofs, rows of tables or racks, ramps, tight checkerboards.
+  Flux tangles them. Prefer large flat areas, simple volumes and curves, with a single surreal object
+  (economy of means).
+- **Don't write “abandoned”**: it brings ruins. Write “deserted, pristine”.
+- **Don't write “storefront” or “shop sign”**: they bring pseudo-text. Write “blank panels of soft light”.
+- **Keep the widget areas quiet**: “generous quiet space in the upper left, uncluttered foreground”.
+- Name no artist: describe their devices (the impossible treated as ordinary).

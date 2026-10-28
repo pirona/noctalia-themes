@@ -2,9 +2,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Promote a validated render from the buffer: crop to screen, WebP, wall_ prefix, SOURCES.md, Noctalia folder.
 
-  tools/promote_wallpaper.py ~/Images/noctalia-vaporwave-tampon/03-corridor-forest_s20111211_00001_.png corridor-forest
+  tools/promote_wallpaper.py ~/Pictures/noctalia-vaporwave-renders/03-corridor-forest_s20111211_00001_.png corridor
   tools/promote_wallpaper.py --theme batman <render.png> <name>
-Env: WALLPAPER_DIR (default ~/Images/wallpapers/<theme>, the folder Noctalia's picker browses).
+Env: WALLPAPER_DIR (default <Pictures>/wallpapers/<theme>, a folder Noctalia's picker can browse).
 Re-running with the same name replaces the image and its SOURCES.md entry.
 A comic-panel frame drawn by the model (light margin + border line) is trimmed off automatically.
 A theme with `ink = "black-and-white"` in theme.toml gets its wallpapers thresholded to pure ink and paper.
@@ -20,6 +20,9 @@ from pathlib import Path
 from PIL import Image, ImageFilter, ImageStat
 
 ROOT = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT / "app"))
+import paths  # noqa: E402
+
 TARGET = (1920, 1080)
 
 
@@ -94,7 +97,7 @@ def promote(src, name, theme="vaporwave"):
     src = Path(src).expanduser()
     meta = json.loads(src.with_suffix(".json").read_text())
     repo_dir = ROOT / "themes" / theme / "wallpapers"
-    user_dir = Path(os.environ.get("WALLPAPER_DIR", Path.home() / "Images/wallpapers" / theme))
+    user_dir = Path(os.environ.get("WALLPAPER_DIR", paths.pictures() / "wallpapers" / theme))
     im = trim_frame(Image.open(src).convert("RGB"))
     w, h = im.size
     tw, th = TARGET
@@ -111,18 +114,18 @@ def promote(src, name, theme="vaporwave"):
 
     sources = repo_dir / "SOURCES.md"
     text = sources.read_text() if sources.exists() else (
-        f"# Fonds {theme} — sources\n\nCréations originales générées localement avec ComfyUI "
-        "(workflow `tools/workflows/flux2_dev_wallpaper_api.json`, Flux.2 Dev fp8mixed, sans LoRA, "
-        "euler + Flux2Scheduler, FluxGuidance 2.0), puis rognées à 1920×1080 et converties en WebP.\n")
+        f"# {theme} wallpapers — sources\n\nOriginal artwork generated locally with ComfyUI "
+        "(workflow `tools/workflows/flux2_dev_wallpaper_api.json`, Flux.2 Dev fp8mixed, no LoRA, "
+        "euler + Flux2Scheduler, FluxGuidance 2.0), then cropped to 1920×1080 and converted to WebP.\n")
     text = re.sub(rf"\n## wall_{name}\.webp\n.*?(?=\n## |\Z)", "", text, flags=re.S)  # replace on re-run
-    text += (f"\n## wall_{name}.webp\n\n- graine : `{meta['seed']}` — pas : {meta['steps']} — taille générée : "
-             f"{meta['size']} — ComfyUI {meta['comfyui']}\n- rendu source : `{src.name}`\n\n"
+    text += (f"\n## wall_{name}.webp\n\n- seed: `{meta['seed']}` — steps: {meta['steps']} — generated size: "
+             f"{meta['size']} — ComfyUI {meta['comfyui']}\n- source render: `{src.name}`\n\n"
              f"> {meta['prompt']}\n")
     sources.write_text(text)
 
     user_dir.mkdir(parents=True, exist_ok=True)
     shutil.copy2(out, user_dir / out.name)
-    print(f"{out.relative_to(ROOT)} ({out.stat().st_size // 1024} Ko) -> {user_dir / out.name}")
+    print(f"{out.relative_to(ROOT)} ({out.stat().st_size // 1024} KiB) -> {user_dir / out.name}")
 
 
 if __name__ == "__main__":

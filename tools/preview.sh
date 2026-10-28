@@ -6,8 +6,8 @@
 set -euo pipefail
 
 theme="${1:?usage: tools/preview.sh themes/<name>}"
-[[ -f "$theme/theme.toml" ]] || { echo "pas un thème : $theme" >&2; exit 1; }
-for cmd in niri grim magick; do command -v "$cmd" >/dev/null || { echo "manque : $cmd" >&2; exit 1; }; done
+[[ -f "$theme/theme.toml" ]] || { echo "not a theme: $theme" >&2; exit 1; }
+for cmd in niri grim magick; do command -v "$cmd" >/dev/null || { echo "missing: $cmd" >&2; exit 1; }; done
 
 shot="$(mktemp --suffix=.png)"
 output="$(niri msg --json focused-output | python3 -c 'import json,sys; print(json.load(sys.stdin)["name"])')"
@@ -21,10 +21,11 @@ grim -o "$output" "$shot"
 # Drop the bar (network name, IPs…) on whichever edge it sits, then crop back to 16:9: the preview lives in the repo.
 crop="${CROP_BAR:-64}"
 side="$(python3 -c 'import sys,tomllib,pathlib
-p=pathlib.Path.home()/".local/state/noctalia/settings.toml"
+import os
+p=pathlib.Path(os.environ.get("XDG_STATE_HOME") or pathlib.Path.home()/".local/state")/"noctalia/settings.toml"
 s=tomllib.loads(p.read_text()) if p.exists() else {}
 print(s.get("bar",{}).get("default",{}).get("position","top"))')"
 keep="north"; [[ "$side" == "top" ]] && keep="south"  # keep the edge opposite the bar
 magick "$shot" -gravity "$keep" -crop "x$(( $(magick identify -format %h "$shot") - crop ))+0+0" +repage \
     -resize 640x360^ -gravity center -extent 640x360 -quality 85 "$theme/preview.webp"
-echo "aperçu : $theme/preview.webp"
+echo "preview: $theme/preview.webp"

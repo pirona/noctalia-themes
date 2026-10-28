@@ -233,7 +233,7 @@ def test_refresh_keeps_user_changes():
     bid = installer.apply(ROOT / "themes/vaporwave")
     user = installer.STATE.read_text() + '\n[wallpaper.monitors.eDP-1]\npath = "/tmp/mon-fond-a-moi.webp"\n'
     installer.STATE.write_text(user)
-    installer.FRAGMENT.write_text("# vieux fragment périmé\n")
+    installer.FRAGMENT.write_text("# stale fragment from long ago\n")
     installer.refresh(ROOT / "themes/vaporwave")
     assert installer.STATE.read_text() == user  # state untouched
     assert "vw-player" in installer.FRAGMENT.read_text()
@@ -364,6 +364,15 @@ cy = 652.0
     installer.rollback(installer.current())
 
 
+def test_private_dirs():
+    import paths
+    paths.DATA.chmod(0o755)  # as an older version left it
+    installer.save_setup()
+    assert paths.DATA.stat().st_mode & 0o777 == 0o700  # backups hold copies of settings.toml
+    options.save(options.load())
+    assert paths.SETTINGS.parent.stat().st_mode & 0o777 == 0o700
+
+
 if __name__ == "__main__":
     test_strip()
     test_apply_rollback_roundtrip()
@@ -384,4 +393,5 @@ if __name__ == "__main__":
     test_real_settings_parse()
     test_wallpaper_follows_backups()
     test_glue_moves_group_together()
+    test_private_dirs()
     print("OK", SANDBOX)

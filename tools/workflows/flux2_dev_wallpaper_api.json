@@ -1,5 +1,5 @@
 {
-  "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": "FLUX2\\flux2_dev_fp8mixed.safetensors", "weight_dtype": "default"}},
+  "unet": {"class_type": "UNETLoader", "inputs": {"unet_name": "flux2_dev_fp8mixed.safetensors", "weight_dtype": "default"}},
   "clip": {"class_type": "CLIPLoader", "inputs": {"clip_name": "mistral_3_small_flux2_fp8.safetensors", "type": "flux2", "device": "default"}},
   "vae": {"class_type": "VAELoader", "inputs": {"vae_name": "flux2-vae.safetensors"}},
   "prompt": {"class_type": "CLIPTextEncode", "inputs": {"clip": ["clip", 0], "text": ""}},
