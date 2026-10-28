@@ -506,17 +506,28 @@ def _set_position(text, wid, cx, cy):
     return "".join(lines)
 
 
+def _editor_open():
+    """True while Noctalia's widget editor is open: it ignores file changes then and rewrites its own on exit."""
+    # ponytail: niri only; elsewhere assume closed (a glue during editing is then overwritten, not harmful)
+    try:
+        out = subprocess.run(["niri", "msg", "--json", "layers"], capture_output=True, text=True, timeout=5,
+                             check=True).stdout
+        return any(layer.get("namespace") == "noctalia-desktop-widgets-editor" for layer in json.loads(out))
+    except (OSError, subprocess.SubprocessError, ValueError, TypeError, AttributeError):
+        return False
+
+
 def glue_groups():
     """Keep each `widget_groups` entry of the active theme together (e.g. a player and its frame).
 
     Noctalia drags widgets one by one; when one member of a group moved, the others get the same offset.
-    Runs after the fact (app focus, settings.toml change). Returns the ids it moved.
+    Runs after the fact (app focus, settings.toml change), never while the editor is open. Returns the ids moved.
     """
     bid = current()
     tdir = _theme_dir_name(BACKUPS / bid) if bid else None
     meta = DATA / "themes" / tdir / "theme.toml" if tdir else None
-    if not meta or not meta.exists() or not FRAGMENT.exists() or not STATE.exists():
-        return []
+    if not meta or not meta.exists() or not FRAGMENT.exists() or not STATE.exists() or _editor_open():
+        return []  # editor open: wait for the save Noctalia makes when it closes
     groups = tomllib.loads(meta.read_text()).get("widget_groups", {})
     fragment = tomllib.loads(FRAGMENT.read_text())
     now = _positions(tomllib.loads(STATE.read_text()), fragment)
