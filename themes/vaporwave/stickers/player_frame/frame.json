@@ -9,10 +9,11 @@
     14
   ],
   "bands": {
-    "top": "top-ba2c1233.png",
-    "bottom": "bottom-0a8c07ae.png",
-    "left": "left-1846239c.png",
-    "right": "right-292c342f.png"
+    "top": "top-258561e3.png",
+    "bottom": "bottom-c1c784ca.png",
+    "left": "left-9872e679.png",
+    "right": "right-15df6680.png"
   },
+  "overlap": 2,
   "fill": null
 }

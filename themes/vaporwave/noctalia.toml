@@ -66,6 +66,7 @@ box_height = 150.0
 rotation = 0.0
 
 [desktop_widgets.widget.vw-player.settings]
+background = false  # Noctalia's default backdrop would show around the drawn frame
 frame = "@THEME_DIR@/stickers/player_frame"  # bands cut by tools/slice_frame.py
 fill = "surface"
 color = "on_surface"

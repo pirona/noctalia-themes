@@ -20,7 +20,8 @@ for src in sorted(ROOT.glob("themes/*/stickers/*/frame.json")):
     assert all(v % m["scale"] == 0 for v in m["inset"]), f"{d}: half-pixel band"
     fill = (*bytes.fromhex(m["fill"][1:]), 255) if m["fill"] else (0, 0, 0, 0)
     canvas = Image.new("RGBA", (w, h), fill)
-    for name, xy in (("top", (0, 0)), ("bottom", (0, h - b)), ("left", (0, t)), ("right", (w - r, t))):
+    o = m["overlap"]
+    for name, xy in (("top", (0, 0)), ("bottom", (0, h - b - o)), ("left", (0, t)), ("right", (w - r - o, t))):
         canvas.paste(Image.open(d / m["bands"][name]), xy)
     assert ImageChops.difference(canvas, orig).getbbox() is None, d
     print("ok", d.relative_to(ROOT))

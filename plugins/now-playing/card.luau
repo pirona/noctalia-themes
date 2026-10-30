@@ -27,13 +27,21 @@ do
     local m = noctalia.json.decode(raw)
     local s = m.scale
     frame = {
-      dir = dir, bands = m.bands,
+      dir = dir, bands = m.bands, o = (m.overlap or 0) / s,
       w = m.width / s, h = m.height / s,
       l = m.inset[1] / s, t = m.inset[2] / s, r = m.inset[3] / s, b = m.inset[4] / s,
     }
     frame.innerW = frame.w - frame.l - frame.r
     frame.innerH = frame.h - frame.t - frame.b
-    if m.fill then fillColor = m.fill end
+    if m.fill then
+      fillColor = m.fill
+      -- The drawing fixes the interior colour whatever the light/dark mode: a palette role could vanish on it.
+      if string.sub(textColor, 1, 1) ~= "#" then
+        local r, g, b = tonumber(string.sub(m.fill, 2, 3), 16), tonumber(string.sub(m.fill, 4, 5), 16),
+          tonumber(string.sub(m.fill, 6, 7), 16)
+        textColor = (0.299 * r + 0.587 * g + 0.114 * b) < 128 and "#FFFFFF" or "#000000"
+      end
+    end
   end
 end
 
@@ -52,20 +60,22 @@ local function content(w, h)
   local pad = 8
   local side = h - 2 * pad
   local img = cover and ui.image({ path = cover, width = side, height = side, fit = "cover" })
-    or ui.box({ fill = "surface_variant", width = side, height = side })
+    or ui.box({ fill = fillColor, border = textColor, borderWidth = 1, width = side, height = side })
+  -- No bold with a theme font: hand-lettering fonts often ship one weight, bold would fall back to another font.
   local label = function(text, size, weight)
     return ui.label({ text = text, fontSize = size, fontWeight = weight, fontFamily = fontFamily,
       color = textColor, maxLines = 1 })
   end
   local playing = track.status == "Playing"
+  -- Glyphs, not ui.button: a button takes the palette's colours, which may match the frame's ink.
   local btn = function(glyph, cb)
-    return ui.button({ glyph = glyph, variant = "ghost", controlSize = "sm", onClick = cb })
+    return ui.row({ padding = 4, onClick = cb }, { ui.glyph({ name = glyph, size = 18, color = textColor }) })
   end
   return ui.row({ gap = 10, padding = pad, fill = fillColor, width = w, height = h, align = "center" }, {
     img,
     ui.column({ gap = 2, flexGrow = 1 }, {
       label(noPlayerctl and noctalia.tr("ui.no_playerctl")
-        or track.title ~= "" and track.title or noctalia.tr("ui.nothing"), 14, "bold"),
+        or track.title ~= "" and track.title or noctalia.tr("ui.nothing"), 14, not fontFamily and "bold" or nil),
       label(track.artist, 12),
       ui.row({ gap = 2 }, {
         btn("player-skip-back", "onPrevious"),
@@ -87,14 +97,15 @@ local function render()
   end
   local f = frame
   local band = function(name, w, h) return ui.image({ path = f.dir .. "/" .. f.bands[name], width = w, height = h }) end
-  desktopWidget.render(ui.column({ gap = 0 }, {
-    band("top", f.w, f.t),
-    ui.row({ gap = 0 }, {
-      band("left", f.l, f.innerH),
+  -- ponytail: negative gap (undocumented, works on 5.4) overlaps bands by f.o so scaling leaves no seam
+  desktopWidget.render(ui.column({ gap = -f.o }, {
+    band("top", f.w, f.t + f.o),
+    ui.row({ gap = -f.o }, {
+      band("left", f.l + f.o, f.innerH),
       content(f.innerW, f.innerH),
-      band("right", f.r, f.innerH),
+      band("right", f.r + f.o, f.innerH),
     }),
-    band("bottom", f.w, f.b),
+    band("bottom", f.w, f.b + f.o),
   }))
 end
 
@@ -155,6 +166,14 @@ local function onLine(line)
   track.player, track.status, track.artist, track.title, track.art =
     f[1] or "", f[2] or "", f[3] or "", f[4] or "", f[5] or ""
   if track.art ~= prevArt or track.title ~= prevTitle then resolveCover() else render() end
+end
+
+-- Plugin text only sees fonts it loads itself: find the theme font's file by family name.
+if fontFamily then
+  noctalia.runAsync({ "fc-match", "-f", "%{family}\t%{file}", fontFamily }, function(r)
+    local family, file = string.match(r.stdout or "", "^([^\t]*)\t(.+)$")
+    if file and string.find(family, fontFamily, 1, true) and noctalia.loadFont(file) then render() end
+  end)
 end
 
 if not noPlayerctl then

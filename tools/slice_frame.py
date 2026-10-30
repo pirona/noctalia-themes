@@ -66,9 +66,11 @@ def slice_frame(src, scale=2):
     w, h = im.size
     box, fill = interior(im)
     x0, t, r, b = snap(box, (w, h), scale)
+    o = max(1, round(scale))  # each band runs 1 logical px under its neighbour: no seam when scaled
     out = src.with_suffix("")
     out.mkdir(exist_ok=True)
-    boxes = {"top": (0, 0, w, t), "bottom": (0, b + 1, w, h), "left": (0, t, x0, b + 1), "right": (r + 1, t, w, b + 1)}
+    boxes = {"top": (0, 0, w, t + o), "bottom": (0, b + 1 - o, w, h),
+             "left": (0, t, x0 + o, b + 1), "right": (r + 1 - o, t, w, b + 1)}
     bands = {}
     for name, box in boxes.items():
         buf = io.BytesIO()
@@ -84,6 +86,7 @@ def slice_frame(src, scale=2):
         "height": h,
         "inset": [x0, t, w - 1 - r, h - 1 - b],  # left, top, right, bottom in image pixels
         "bands": bands,
+        "overlap": o,  # image pixels each band reaches into the interior
         "fill": None if fill[3] == 0 else "#{:02x}{:02x}{:02x}".format(*fill[:3]),  # None: theme colour shows through
     }
     (out / "frame.json").write_text(json.dumps(meta, indent=2) + "\n")
