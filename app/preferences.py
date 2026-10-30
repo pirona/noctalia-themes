@@ -193,11 +193,10 @@ class Preferences(Adw.PreferencesDialog):
 
         player = Adw.PreferencesGroup(title=_("Media player"),
                                       description=_("Title, artist and cover of what is playing."))
-        for key, title in (("player_art_background", _("Blurred cover as background")),
-                           ("player_hide_when_idle", _("Hide when nothing plays"))):
-            row = _combo(title, TRISTATE, _tristate(self.opts[key]))
-            row.connect("notify::selected", lambda r, _p, k=key: self._set(k, _from_tristate(r.get_selected())))
-            player.add(row)
+        row = _combo(_("Hide when nothing plays"), TRISTATE, _tristate(self.opts["player_hide_when_idle"]))
+        row.connect("notify::selected", lambda r, _p: self._set("player_hide_when_idle",
+                                                                _from_tristate(r.get_selected())))
+        player.add(row)
         page.add(player)
         return page
 

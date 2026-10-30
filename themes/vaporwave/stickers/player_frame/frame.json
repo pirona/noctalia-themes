@@ -1,0 +1,20 @@
+{
+  "scale": 2,
+  "width": 680,
+  "height": 300,
+  "inset": [
+    14,
+    64,
+    14,
+    14
+  ],
+  "bands": {
+    "top": "top-258561e3.png",
+    "bottom": "bottom-c1c784ca.png",
+    "left": "left-9872e679.png",
+    "right": "right-15df6680.png"
+  },
+  "overlap": 2,
+  "tol": 12,
+  "fill": null
+}

@@ -271,10 +271,6 @@ msgstr "Lecteur média"
 msgid "Title, artist and cover of what is playing."
 msgstr "Titre, artiste et pochette de la musique en cours."
 
-#: app/preferences.py:196
-msgid "Blurred cover as background"
-msgstr "Pochette floutée en fond"
-
 #: app/preferences.py:197
 msgid "Hide when nothing plays"
 msgstr "Masquer quand rien ne joue"

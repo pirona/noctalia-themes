@@ -1,0 +1,35 @@
+{
+  "settings": {
+    "color": {
+      "label": "Couleur du texte"
+    },
+    "fill": {
+      "label": "Couleur du fond"
+    },
+    "font_family": {
+      "label": "Police"
+    },
+    "frame": {
+      "label": "Dossier du cadre"
+    },
+    "hide_when_idle": {
+      "label": "Masquer quand rien ne joue"
+    },
+    "format": {
+      "label": "Format de l'heure"
+    },
+    "date_format": {
+      "label": "Format de la date"
+    },
+    "size": {
+      "label": "Taille de l'heure"
+    },
+    "date_size": {
+      "label": "Taille de la date"
+    }
+  },
+  "ui": {
+    "nothing": "Rien en lecture",
+    "no_playerctl": "playerctl n'est pas installé"
+  }
+}

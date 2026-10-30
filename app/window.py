@@ -122,9 +122,10 @@ class Window(Adw.ApplicationWindow):
     def _glue(self):
         self._glue_pending = None
         try:
+            installer.heal()  # a stale rewrite by Noctalia first, or the glue would move the wrong widgets
             installer.glue_groups()
         except Exception:  # never let a bad state file break the window
-            log.exception("could not glue widget groups")
+            log.exception("could not heal or glue widgets")
         return GLib.SOURCE_REMOVE
 
     # --- building -------------------------------------------------------

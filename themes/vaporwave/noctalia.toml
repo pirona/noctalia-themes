@@ -16,7 +16,7 @@ edge_smoothness = 0.15
 
 [desktop_widgets]
 enabled = true
-widget_order = ["vw-clock", "vw-katakana", "vw-player-frame", "vw-player", "vw-dialog"]  # later = on top
+widget_order = ["vw-clock", "vw-katakana", "vw-player", "vw-dialog"]  # later = on top
 
 # Heavy weight, top-left: the clock anchors the frame.
 [desktop_widgets.widget.vw-clock]
@@ -54,9 +54,10 @@ shadow = true
 background = false
 
 # Counterweight bottom-left: a fake Win95 CD player window around Noctalia's media player
+# Counterweight bottom-left: a fake Win95 CD player window, drawn with its content by one plugin widget
 # (metadata + cover only, no audio capture: stays in sync even over AirPlay).
-[desktop_widgets.widget.vw-player-frame]
-type = "sticker"
+[desktop_widgets.widget.vw-player]
+type = "billisdead/theme-widgets:player"  # plugin shipped in plugins/theme-widgets, installed with the theme
 output = "@OUTPUT@"
 cx = 230.0
 cy = 670.0
@@ -64,31 +65,10 @@ box_width = 340.0
 box_height = 150.0
 rotation = 0.0
 
-[desktop_widgets.widget.vw-player-frame.settings]
-image_path = "@THEME_DIR@/stickers/player_frame.png"
-opacity = 1.0
-background = false
-
-# Sits in the frame's transparent hole: 12 px below the frame center (title bar offset).
-[desktop_widgets.widget.vw-player]
-type = "media_player"
-output = "@OUTPUT@"
-cx = 230.0
-cy = 682.0
-box_width = 324.0
-box_height = 110.0
-rotation = 0.0
-
 [desktop_widgets.widget.vw-player.settings]
-layout = "horizontal"
-album_art_background = true
-album_art_blur = 32
-audio_visualizer = false
-hide_when_no_media = false
-background = true
-background_color = "surface"
-background_opacity = 1.0
-background_radius = 0.0
+background = false  # Noctalia's default backdrop would show around the drawn frame
+frame = "@THEME_DIR@/stickers/player_frame"  # bands cut by tools/slice_frame.py
+fill = "surface"
 color = "on_surface"
 
 # Tension, bottom-right: a slightly tilted fake dialog.

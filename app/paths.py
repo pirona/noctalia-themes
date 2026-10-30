@@ -4,6 +4,7 @@
 Each base directory follows the XDG spec and can be overridden (tests run in a sandbox this way):
   NOCTALIA_CONFIG_HOME   instead of XDG_CONFIG_HOME, for Noctalia's config   (~/.config/noctalia)
   NOCTALIA_STATE_HOME    instead of XDG_STATE_HOME,  for Noctalia's state    (~/.local/state/noctalia)
+  NOCTALIA_DATA_HOME     instead of XDG_DATA_HOME,   for Noctalia's local plugins (~/.local/share/noctalia/plugins)
   NOCTALIA_THEMES_HOME   instead of XDG_DATA_HOME,   for installed themes and backups (~/.local/share/noctalia-themes)
   NOCTALIA_THEMES_FONTS  instead of XDG_DATA_HOME,   for theme fonts         (~/.local/share/fonts/noctalia-themes)
   NOCTALIA_THEMES_CONFIG instead of XDG_CONFIG_HOME, for app preferences     (~/.config/noctalia-themes)
@@ -20,6 +21,7 @@ def _base(override, xdg, default):
 
 ROOT = Path(__file__).resolve().parent.parent
 THEMES = ROOT / "themes"  # themes shipped with the app
+PLUGINS = ROOT / "plugins"  # Noctalia plugins shipped with the app, installed when a theme uses them
 LOCALE = ROOT / "app" / "locale"  # compiled translations (install.sh builds them from po/)
 
 # Noctalia's files. It loads its defaults, then config/*.toml in alphabetical order, then state (wins over all).
@@ -27,6 +29,7 @@ CONFIG = _base("NOCTALIA_CONFIG_HOME", "XDG_CONFIG_HOME", ".config") / "noctalia
 PALETTES = CONFIG / "palettes"
 FRAGMENT = CONFIG / "zz-theme.toml"  # the active theme
 OPTIONS = CONFIG / "zzz-theme-options.toml"  # app preferences: loaded after the theme, so they win over it
+NOCTALIA_PLUGINS = _base("NOCTALIA_DATA_HOME", "XDG_DATA_HOME", ".local/share") / "noctalia" / "plugins"
 STATE = _base("NOCTALIA_STATE_HOME", "XDG_STATE_HOME", ".local/state") / "noctalia" / "settings.toml"
 
 # The app's own files. DATA holds copies of settings.toml (which may carry tokens): private.
@@ -35,6 +38,7 @@ INSTALLED = DATA / "themes"  # stable copy of the active theme, referenced by No
 BACKUPS = DATA / "backups"
 CURRENT = DATA / "current"  # backup id of the applied theme
 GLUE = DATA / "glue.json"  # widget positions at the last glue pass
+EXPECT = DATA / "expected.json"  # what we last wrote to settings.toml, to spot a stale rewrite by Noctalia
 LOG = DATA / "app.log"
 # Widgets name fonts by family: fontconfig must see them, so they go to the user font dir.
 FONTS = _base("NOCTALIA_THEMES_FONTS", "XDG_DATA_HOME", ".local/share") / "fonts" / "noctalia-themes"

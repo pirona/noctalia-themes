@@ -1,0 +1,35 @@
+{
+  "settings": {
+    "color": {
+      "label": "Text colour"
+    },
+    "fill": {
+      "label": "Background colour"
+    },
+    "font_family": {
+      "label": "Font family"
+    },
+    "frame": {
+      "label": "Frame folder"
+    },
+    "hide_when_idle": {
+      "label": "Hide when nothing plays"
+    },
+    "format": {
+      "label": "Time format"
+    },
+    "date_format": {
+      "label": "Date format"
+    },
+    "size": {
+      "label": "Time size"
+    },
+    "date_size": {
+      "label": "Date size"
+    }
+  },
+  "ui": {
+    "nothing": "Nothing playing",
+    "no_playerctl": "playerctl is not installed"
+  }
+}
