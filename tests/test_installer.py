@@ -353,6 +353,8 @@ def test_plugin_installed_and_enabled():
         (dst / "card.luau").write_text("-- stale copy, older than a VHS of Year One")
         installer.refresh(ROOT / "themes/batman")  # refresh brings the plugin up to date too
         assert sha(dst / "card.luau") == sha(ROOT / "plugins/now-playing/card.luau")
+        calls = (fake / "calls.log").read_text().splitlines()
+        assert calls[-3:-1] == ["plugins disable billisdead/now-playing", "plugins enable billisdead/now-playing"]
         installer.rollback(bid)
     finally:
         os.environ["PATH"] = ""

@@ -8,6 +8,9 @@ local FORMAT = table.concat({
 }, SEP)
 local CACHE = noctalia.pluginDataDir() .. "/covers"
 noctalia.mkdirAll(CACHE)
+for _, name in noctalia.listDir(CACHE) or {} do -- one cover on disk at a time: drop leftovers
+  noctalia.removeFile(CACHE .. "/" .. name)
+end
 
 local fillColor = noctalia.getConfig("fill")
 local textColor = noctalia.getConfig("color")
@@ -100,7 +103,11 @@ local function cacheName(s)
   return string.format("%s/%08x", CACHE, h)
 end
 
-local function setCover(path)
+local wanted = nil -- cache path of the current track's cover
+
+local function setCover(path, forDest)
+  if forDest ~= wanted then return end -- a newer track took over while this one was fetched
+  if cover and cover ~= path then noctalia.removeFile(cover) end
   cover = path
   render()
 end
@@ -115,26 +122,27 @@ local function copyLocal(src, dest)
       if pid then table.insert(candidates, "/proc/" .. pid .. "/root" .. src) end
       for _, p in candidates do
         if noctalia.fileExists(p) then
-          noctalia.runAsync({ "cp", "-f", p, dest }, function(c) setCover(c.exitCode == 0 and dest or nil) end)
+          noctalia.runAsync({ "cp", "-f", p, dest }, function(c) setCover(c.exitCode == 0 and dest or nil, dest) end)
           return
         end
       end
-      setCover(nil)
+      setCover(nil, dest)
     end)
 end
 
 local function resolveCover()
   local url = track.art
-  if url == "" then return setCover(nil) end
-  local dest = cacheName(url .. track.title .. track.artist)
-  if noctalia.fileExists(dest) then return setCover(dest) end
+  wanted = url ~= "" and cacheName(url .. track.title .. track.artist) or nil
+  local dest = wanted
+  if not dest then return setCover(nil, nil) end
+  if noctalia.fileExists(dest) then return setCover(dest, dest) end
   local localPath = string.match(url, "^file://(.+)$")
   if localPath then
     copyLocal(noctalia.string.urlDecode(localPath), dest)
   elseif string.match(url, "^https?://") then
-    noctalia.download(url, dest, function(ok) setCover(ok and dest or nil) end)
+    noctalia.download(url, dest, function(ok) setCover(ok and dest or nil, dest) end)
   else
-    setCover(nil)
+    setCover(nil, dest)
   end
 end
 

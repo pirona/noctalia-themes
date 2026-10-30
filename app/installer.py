@@ -405,10 +405,14 @@ def _install_plugins(fragment):
         if pid not in used:
             continue
         dst = ensure_dir(NOCTALIA_PLUGINS) / manifest.parent.name
+        steps = [["enable", pid]]
         if not dst.is_symlink():  # a symlink is a developer checkout: keep it live
+            if dst.exists():
+                steps.insert(0, ["disable", pid])  # Noctalia only hot-reloads edited files, not a swapped folder
             _swap_dir(manifest.parent, dst)
         try:  # ponytail: needs Noctalia running; otherwise enable it once from its settings
-            subprocess.run(["noctalia", "msg", "plugins", "enable", pid], check=False, capture_output=True, timeout=10)
+            for step in steps:
+                subprocess.run(["noctalia", "msg", "plugins", *step], check=False, capture_output=True, timeout=10)
         except (FileNotFoundError, subprocess.TimeoutExpired):
             log.warning("could not enable plugin %s: Noctalia not reachable", pid)
 
