@@ -8,6 +8,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import tomllib
 from datetime import datetime
 from pathlib import Path
@@ -20,6 +21,7 @@ from paths import (
     CONFIG,
     CURRENT,
     DATA,
+    EXPECT,
     FONTS,
     FRAGMENT,
     GLUE,
@@ -420,13 +422,19 @@ def _enable_plugins(fragment):
         enabled = tomllib.loads(STATE.read_text()).get("plugins", {}).get("enabled", []) if STATE.exists() else []
     except tomllib.TOMLDecodeError:
         enabled = []
+    failed = []
     for _src, pid in _plugins_used(fragment):
         if pid in enabled:
             continue
-        try:  # ponytail: needs Noctalia running; otherwise enable it once from its settings
-            subprocess.run(["noctalia", "msg", "plugins", "enable", pid], check=False, capture_output=True, timeout=10)
+        try:
+            ok = subprocess.run(["noctalia", "msg", "plugins", "enable", pid], capture_output=True,
+                                timeout=10).returncode == 0
         except (FileNotFoundError, subprocess.TimeoutExpired):
-            log.warning("could not enable plugin %s: Noctalia not reachable", pid)
+            ok = False
+        if not ok:
+            log.warning("could not enable plugin %s: Noctalia not reachable, retried later", pid)
+            failed.append(pid)
+    return failed
 
 
 def refresh(theme_dir):
@@ -437,6 +445,7 @@ def refresh(theme_dir):
     """
     theme_dir = Path(theme_dir).resolve()
     validate(theme_dir)
+    _close_editor()
     meta = tomllib.loads((theme_dir / "theme.toml").read_text())
     active = current_theme()
     if not active or active["theme"] != meta["name"]:
@@ -454,12 +463,13 @@ def refresh(theme_dir):
     _install_plugins(fragment)
     log.info("refreshed theme %s", meta["name"])
     _reload()
-    _enable_plugins(fragment)
+    _remember_pending(_enable_plugins(fragment))
 
 
 def apply(theme_dir, label=None):
     theme_dir = Path(theme_dir).resolve()
     validate(theme_dir)
+    _close_editor()
     output = detect_output() if "@OUTPUT@" in (theme_dir / "noctalia.toml").read_text() else None
     if current():
         rollback(current())  # snapshot must capture the untouched user state, not a themed one
@@ -497,6 +507,7 @@ def apply(theme_dir, label=None):
             # ponytail: no lock with Noctalia; a write it makes between our read and replace is lost (sub-second window)
             (bdir / "stripped.toml").write_text(stripped)
             _atomic_copy(bdir / "stripped.toml", STATE)
+        _remember(stripped or "", fragment)
         _install_plugins(fragment)
         CURRENT.write_text(stamp)
     except Exception:
@@ -504,13 +515,15 @@ def apply(theme_dir, label=None):
         raise
     log.info("applied theme %s (backup %s)", meta["name"], stamp)
     _reload()
-    _enable_plugins(fragment)
+    _remember_pending(_enable_plugins(fragment))
+    heal()  # enabling may have made Noctalia save stale settings right away
     return stamp
 
 
 def rollback(backup_id):
     bdir = BACKUPS / backup_id
     manifest = json.loads((bdir / "manifest.json").read_text())
+    _close_editor()
     if manifest.get("kind") == "setup":
         return _restore_setup(bdir, manifest)
     if current() and current() != backup_id:
@@ -538,9 +551,13 @@ def rollback(backup_id):
         (bdir / "carried.toml").write_text(text)
         ensure_dir(STATE.parent)
         _atomic_copy(bdir / "carried.toml", STATE)
+        _remember(text)
         log.info("carried over %d setting(s): %s", len(carry), ", ".join(".".join(k) for k in sorted(carry)))
     elif manifest["state_existed"]:
         _atomic_copy(bdir / "settings.toml", STATE)
+        _remember((bdir / "settings.toml").read_text())
+    else:
+        _remember("")
     CURRENT.unlink(missing_ok=True)  # every theme backup is a theme-free state
     log.info("restored backup %s", backup_id)
     _reload()
@@ -591,6 +608,80 @@ def _editor_open():
     except (OSError, subprocess.SubprocessError, ValueError, TypeError, AttributeError):
         return False
 
+
+
+def _close_editor():
+    """The widget editor ignores our files and saves its own layout when it closes: close it before we write."""
+    if not _editor_open():
+        return
+    try:
+        subprocess.run(["noctalia", "msg", "desktop-widgets-exit"], capture_output=True, timeout=5)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    for _i in range(30):
+        time.sleep(0.1)
+        if not _editor_open():
+            time.sleep(0.5)  # let Noctalia finish the save it makes on exit
+            return
+    raise ValueError(_("Close Noctalia's widget editor, then try again."))
+
+
+HEAL_WINDOW = 30  # s after we write settings.toml during which a stale rewrite is undone (seen: 11 s late)
+
+
+def _remember(state_text, fragment=None):
+    """Note the desktop widgets we just wrote (and the theme's), for heal()."""
+    dw = tomllib.loads(state_text).get("desktop_widgets")
+    ids = set((dw or {}).get("widget", {})) | set((fragment or {}).get("desktop_widgets", {}).get("widget", {}))
+    ensure_dir(EXPECT.parent)
+    EXPECT.write_text(json.dumps({"time": time.time(), "widgets": dw, "ids": sorted(ids), "pending": []}))
+
+
+def _remember_pending(pids):
+    try:
+        exp = json.loads(EXPECT.read_text())
+    except (OSError, ValueError):
+        return
+    exp["pending"] = pids
+    EXPECT.write_text(json.dumps(exp))
+
+
+def heal():
+    """Undo what Noctalia brings back from memory right after we changed settings.toml, and enable plugins
+    a theme needed while Noctalia was off. Returns True if something was fixed.
+
+    Noctalia saves its whole settings from memory on some events (a `noctalia msg`, the editor closing); if it
+    had not reloaded our files yet, that save restores the old desktop widgets. Such a rewrite is spotted
+    because none of its widgets is one we wrote or the theme's; a layout edited in the editor keeps them.
+    """
+    try:
+        exp = json.loads(EXPECT.read_text())
+    except (OSError, ValueError):
+        return False
+    fixed = False
+    if exp.get("pending") and FRAGMENT.exists() and current():
+        exp["pending"] = _enable_plugins(tomllib.loads(FRAGMENT.read_text()))
+        EXPECT.write_text(json.dumps(exp))
+        fixed = not exp["pending"]
+    if time.time() - exp.get("time", 0) > HEAL_WINDOW or not STATE.exists() or _editor_open():
+        return fixed
+    state = tomllib.loads(STATE.read_text())
+    ids = set(state.get("desktop_widgets", {}).get("widget", {}))
+    if not ids or ids & set(exp["ids"]):
+        return fixed  # nothing there, or a layout built from ours
+    if exp["widgets"] is None:
+        del state["desktop_widgets"]
+    else:
+        state["desktop_widgets"] = exp["widgets"]
+    text = options.dump(state)
+    tomllib.loads(text)  # refuse to write anything Noctalia could not parse
+    tmp = ensure_dir(DATA) / "heal.tmp.toml"
+    tmp.write_text(text)
+    _atomic_copy(tmp, STATE)
+    tmp.unlink()
+    log.warning("Noctalia rewrote stale desktop widgets (%s): put ours back", ", ".join(sorted(ids)))
+    _reload()
+    return True
 
 def glue_groups():
     """Keep each `widget_groups` entry of the active theme together (e.g. a player and its frame).
@@ -698,6 +789,8 @@ def _restore_setup(bdir, manifest):
         _atomic_copy(bdir / "settings.toml", STATE)
     else:
         STATE.unlink(missing_ok=True)
+    _remember(STATE.read_text() if STATE.exists() else "",
+              tomllib.loads(FRAGMENT.read_text()) if FRAGMENT.exists() else None)
     cur = manifest["current"]
     if cur:
         if not (BACKUPS / cur).exists():

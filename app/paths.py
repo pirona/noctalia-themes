@@ -38,6 +38,7 @@ INSTALLED = DATA / "themes"  # stable copy of the active theme, referenced by No
 BACKUPS = DATA / "backups"
 CURRENT = DATA / "current"  # backup id of the applied theme
 GLUE = DATA / "glue.json"  # widget positions at the last glue pass
+EXPECT = DATA / "expected.json"  # what we last wrote to settings.toml, to spot a stale rewrite by Noctalia
 LOG = DATA / "app.log"
 # Widgets name fonts by family: fontconfig must see them, so they go to the user font dir.
 FONTS = _base("NOCTALIA_THEMES_FONTS", "XDG_DATA_HOME", ".local/share") / "fonts" / "noctalia-themes"

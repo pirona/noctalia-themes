@@ -17,6 +17,7 @@
     }
   },
   "ui": {
-    "nothing": "Nothing playing"
+    "nothing": "Nothing playing",
+    "no_playerctl": "playerctl is not installed"
   }
 }

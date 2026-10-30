@@ -4,9 +4,15 @@
   "height": 300,
   "inset": [
     14,
-    63,
+    64,
     14,
-    13
+    14
   ],
+  "bands": {
+    "top": "top-ba2c1233.png",
+    "bottom": "bottom-0a8c07ae.png",
+    "left": "left-1846239c.png",
+    "right": "right-292c342f.png"
+  },
   "fill": null
 }

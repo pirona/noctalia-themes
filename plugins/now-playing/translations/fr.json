@@ -17,6 +17,7 @@
     }
   },
   "ui": {
-    "nothing": "Rien en lecture"
+    "nothing": "Rien en lecture",
+    "no_playerctl": "playerctl n'est pas installé"
   }
 }

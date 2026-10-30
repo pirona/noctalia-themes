@@ -27,7 +27,7 @@ do
     local m = noctalia.json.decode(raw)
     local s = m.scale
     frame = {
-      dir = dir,
+      dir = dir, bands = m.bands,
       w = m.width / s, h = m.height / s,
       l = m.inset[1] / s, t = m.inset[2] / s, r = m.inset[3] / s, b = m.inset[4] / s,
     }
@@ -38,6 +38,7 @@ do
 end
 
 local track = { player = "", status = "", artist = "", title = "", art = "" }
+local noPlayerctl = not noctalia.commandExists("playerctl") -- say so instead of "nothing playing" forever
 local cover = nil -- cached cover path, nil while none
 
 local function control(action)
@@ -63,7 +64,8 @@ local function content(w, h)
   return ui.row({ gap = 10, padding = pad, fill = fillColor, width = w, height = h, align = "center" }, {
     img,
     ui.column({ gap = 2, flexGrow = 1 }, {
-      label(track.title ~= "" and track.title or noctalia.tr("ui.nothing"), 14, "bold"),
+      label(noPlayerctl and noctalia.tr("ui.no_playerctl")
+        or track.title ~= "" and track.title or noctalia.tr("ui.nothing"), 14, "bold"),
       label(track.artist, 12),
       ui.row({ gap = 2 }, {
         btn("player-skip-back", "onPrevious"),
@@ -75,7 +77,7 @@ local function content(w, h)
 end
 
 local function render()
-  if hideWhenIdle and (track.title == "" or track.status == "Stopped") then
+  if hideWhenIdle and not noPlayerctl and (track.title == "" or track.status == "Stopped") then
     desktopWidget.render(ui.column({}, {}))
     return
   end
@@ -84,7 +86,7 @@ local function render()
     return
   end
   local f = frame
-  local band = function(name, w, h) return ui.image({ path = f.dir .. "/" .. name .. ".png", width = w, height = h }) end
+  local band = function(name, w, h) return ui.image({ path = f.dir .. "/" .. f.bands[name], width = w, height = h }) end
   desktopWidget.render(ui.column({ gap = 0 }, {
     band("top", f.w, f.t),
     ui.row({ gap = 0 }, {
@@ -155,5 +157,7 @@ local function onLine(line)
   if track.art ~= prevArt or track.title ~= prevTitle then resolveCover() else render() end
 end
 
-noctalia.runStream("playerctl --follow metadata --format '" .. FORMAT .. "'", onLine)
+if not noPlayerctl then
+  noPlayerctl = not noctalia.runStream("playerctl --follow metadata --format '" .. FORMAT .. "'", onLine)
+end
 render()

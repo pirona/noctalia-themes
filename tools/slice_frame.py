@@ -3,11 +3,14 @@
 """Cut a drawn frame into four bands around its flat interior, for the now-playing plugin.
 
   tools/slice_frame.py themes/vaporwave/stickers/player_frame.png
-Writes <frame>/top.png, bottom.png, left.png, right.png and frame.json next to the image (folder named after it).
+Writes <frame>/top-<hash>.png (and bottom, left, right) plus frame.json next to the image (folder named after it).
+Band names follow their content: Noctalia caches images by path, so a changed band must get a new name.
 Plugin UIs cannot stack an image under content, so the bands are laid around it and the interior is a flat fill.
 --scale is image pixels per logical pixel (stickers are drawn at 2x).
 """
 import argparse
+import hashlib
+import io
 import json
 from pathlib import Path
 
@@ -47,20 +50,40 @@ def interior(im, tol=12):
     return (x0, t, r, b), fill
 
 
+def snap(box, size, scale):
+    """Shrink the interior so every band is a whole number of logical pixels (no hairline seam when scaled)."""
+    x0, t, r, b = box
+    w, h = size
+    s = int(scale)
+    if s != scale or s < 2:
+        return box
+    up = lambda v: -(-v // s) * s  # noqa: E731
+    return up(x0), up(t), w - 1 - up(w - 1 - r), h - 1 - up(h - 1 - b)
+
+
 def slice_frame(src, scale=2):
     im = Image.open(src).convert("RGBA")
     w, h = im.size
-    (x0, t, r, b), fill = interior(im)
+    box, fill = interior(im)
+    x0, t, r, b = snap(box, (w, h), scale)
     out = src.with_suffix("")
     out.mkdir(exist_ok=True)
-    bands = {"top": (0, 0, w, t), "bottom": (0, b + 1, w, h), "left": (0, t, x0, b + 1), "right": (r + 1, t, w, b + 1)}
-    for name, box in bands.items():
-        im.crop(box).save(out / f"{name}.png")
+    boxes = {"top": (0, 0, w, t), "bottom": (0, b + 1, w, h), "left": (0, t, x0, b + 1), "right": (r + 1, t, w, b + 1)}
+    bands = {}
+    for name, box in boxes.items():
+        buf = io.BytesIO()
+        im.crop(box).save(buf, "PNG")
+        bands[name] = f"{name}-{hashlib.sha256(buf.getvalue()).hexdigest()[:8]}.png"
+        (out / bands[name]).write_bytes(buf.getvalue())
+    for old in out.glob("*.png"):
+        if old.name not in bands.values():
+            old.unlink()  # bands of a previous cut
     meta = {
         "scale": scale,
         "width": w,
         "height": h,
         "inset": [x0, t, w - 1 - r, h - 1 - b],  # left, top, right, bottom in image pixels
+        "bands": bands,
         "fill": None if fill[3] == 0 else "#{:02x}{:02x}{:02x}".format(*fill[:3]),  # None: theme colour shows through
     }
     (out / "frame.json").write_text(json.dumps(meta, indent=2) + "\n")

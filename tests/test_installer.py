@@ -362,6 +362,66 @@ def test_plugin_installed_and_enabled():
         os.environ["PATH"] = ""
 
 
+STALE = """
+[desktop_widgets]
+enabled = false
+widget_order = ["desktop-widget-0000000000000001"]
+
+[desktop_widgets.widget.desktop-widget-0000000000000001]
+type = "media_player"
+"""
+
+
+def test_heal_stale_rewrite():
+    import json
+    import time
+    for b in installer.list_backups():  # start theme-free
+        if b["id"] == installer.current():
+            installer.rollback(b["id"])
+    clean = installer.STATE.read_text()
+    bid = installer.apply(ROOT / "themes/batman-bw")
+    themed = installer.STATE.read_text()
+    # Noctalia saves from memory before reloading: the pre-theme widgets come back, the theme's are hidden
+    installer.STATE.write_text(themed + STALE)
+    assert installer.heal() is True
+    assert "desktop_widgets" not in tomllib.loads(installer.STATE.read_text())
+    # a layout saved by the editor keeps the theme's ids: left alone
+    installer.STATE.write_text(themed + '\n[desktop_widgets.widget.bw-player]\ntype = "x"\ncx = 1.0\n')
+    assert installer.heal() is False
+    # after the window, nothing is undone (the user may have rebuilt everything by hand)
+    exp = json.loads(installer.EXPECT.read_text())
+    installer.EXPECT.write_text(json.dumps(exp | {"time": time.time() - installer.HEAL_WINDOW - 1}))
+    installer.STATE.write_text(themed + STALE)
+    assert installer.heal() is False
+    # removing the theme: a stale save would bring the theme's widgets back over the restored desktop
+    installer.STATE.write_text(themed)
+    installer.rollback(bid)
+    stale = tomllib.loads(installer.STATE.read_text())
+    stale["desktop_widgets"] = {"widget_order": ["bw-player"], "widget": {"bw-player": {"type": "media_player"}}}
+    installer.STATE.write_text(options.dump(stale))
+    assert installer.heal() is True
+    assert tomllib.loads(installer.STATE.read_text()).get("desktop_widgets") == tomllib.loads(clean).get(
+        "desktop_widgets")
+
+
+def test_plugin_enabled_later():
+    import json
+    bid = installer.apply(ROOT / "themes/batman")  # Noctalia off (no binary): enabling is postponed
+    assert json.loads(installer.EXPECT.read_text())["pending"] == ["billisdead/now-playing"]
+    fake = SANDBOX / "bin"
+    fake.mkdir(exist_ok=True)
+    (fake / "noctalia").write_text(FAKE_NOCTALIA)
+    (fake / "noctalia").chmod(0o755)
+    os.environ["PATH"] = str(fake)
+    try:
+        installer.heal()  # what the app runs when settings.toml changes or it gets the focus
+        assert (fake / "calls.log").read_text().splitlines()[-1] == "plugins enable billisdead/now-playing"
+        assert json.loads(installer.EXPECT.read_text())["pending"] == []
+    finally:
+        os.environ["PATH"] = ""
+    installer.rollback(bid)
+
+
 def test_glue_moves_group_together():
     for b in installer.list_backups():  # start theme-free
         if b["id"] == installer.current():
@@ -419,6 +479,8 @@ if __name__ == "__main__":
     test_real_settings_parse()
     test_wallpaper_follows_backups()
     test_plugin_installed_and_enabled()
+    test_heal_stale_rewrite()
+    test_plugin_enabled_later()
     test_glue_moves_group_together()
     test_private_dirs()
     print("OK", SANDBOX)
