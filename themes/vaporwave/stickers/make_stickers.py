@@ -83,6 +83,6 @@ def player_frame():
 if __name__ == "__main__":
     dialog()
     player_frame()
-    slice_frame(HERE / "player_frame.png", S)  # bands for the now-playing plugin
+    slice_frame(HERE / "player_frame.png", S)  # bands for the theme-widgets plugin
     assert Image.open(HERE / "dialog-loading.png").size == (380 * S, 170 * S)
     assert Image.open(HERE / "player_frame.png").getpixel((170 * S, 90 * S))[3] == 0  # hole is transparent

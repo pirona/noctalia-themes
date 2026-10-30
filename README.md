@@ -35,8 +35,8 @@ Start “Noctalia Themes” from the launcher, or run `python3 app/main.py`.
 - **Update** (⟳ on the active theme): reinstalls stickers, palette and widgets without touching your settings.
 - **Backups**: dated list. “Restore” brings Noctalia back to that date, wallpaper included; the trash deletes a
   backup after confirmation (never the active theme's, its only way back).
-- **Widget groups stay together**: a theme groups widgets that form one visual unit (a clock, its date and its ink
-  blot). Noctalia's widget editor moves widgets one by one; when you close it, the app (if it is open)
+- **Widget groups stay together**: a theme groups widgets that form one visual unit (e.g. a sticker and a
+  label). Noctalia's widget editor moves widgets one by one; when you close it, the app (if it is open)
   moves the rest of the group by the same offset. It also does it when its window gets the focus back.
 
 ### Preferences (menu → Preferences, or Ctrl+,)
@@ -82,7 +82,7 @@ rewritten with the same content in a different layout (arrays of tables become i
 | `~/.local/state/noctalia/settings.toml` | Noctalia | read; theme keys removed on apply, widget positions adjusted by the group glue |
 | `~/.local/share/noctalia-themes/` | the app, **0700** | installed theme copies, `backups/`, `current`, `glue.json`, `app.log` |
 | `~/.local/share/fonts/noctalia-themes/` | the app | theme fonts (fontconfig must see them) |
-| `~/.local/share/noctalia/plugins/now-playing/` | Noctalia, written by the app | the player plugin, when the theme uses it (a symlink there is left alone: developer checkout) |
+| `~/.local/share/noctalia/plugins/theme-widgets/` | Noctalia, written by the app | the player and clock plugin, when the theme uses it (a symlink there is left alone: developer checkout) |
 | `~/.config/noctalia-themes/settings.json` | the app, **0700** folder | app preferences |
 
 Each base folder follows XDG and can be overridden: `NOCTALIA_CONFIG_HOME`, `NOCTALIA_STATE_HOME`, `NOCTALIA_DATA_HOME`,
@@ -111,7 +111,7 @@ Create a folder in `themes/`; the app needs no change:
 | `palette.json` | Noctalia palette: `dark` + `light`, 16 roles + a `terminal` block, strict `#RRGGBB` |
 | `noctalia.toml` | Noctalia config fragment; `@THEME_DIR@` becomes the installed path, `@OUTPUT@` the target screen: `NOCTALIA_THEMES_OUTPUT` if set, else the screen chosen in the preferences, else niri's focused screen, else the first enabled `wlr-randr` output |
 | `stickers/`, `wallpapers/` | **original** artwork; `wallpapers/SOURCES.md` for prompts and seeds |
-| player | optional: a `billisdead/now-playing:card` widget (plugin in `plugins/now-playing/`, installed and enabled with the theme) draws cover, title, artist and ⏮ ⏯ ⏭ for any MPRIS player inside your frame. Draw the frame at 2× with a flat or transparent interior, run `tools/slice_frame.py <frame.png>`, and point the widget's `frame` setting at the folder it writes (`fill`, `color`, `font_family` style the content) |
+| player, clock | optional: `billisdead/theme-widgets:player` (cover, title, artist, ⏮ ⏯ ⏭ for any MPRIS player) and `billisdead/theme-widgets:clock` (`format`, `date_format`, `size`, `date_size`) draw inside your frame as **one** widget each (plugin in `plugins/theme-widgets/`, installed and enabled with the theme). Draw the frame at 2× with a flat or transparent interior, run `tools/slice_frame.py <frame.png>` (`--tol 24` for a paper grain, flattened under the text), point the widget's `frame` setting at the folder it writes; `fill`, `color`, `font_family` style the content, and on a frame with a fixed interior colour an unreadable colour role becomes black or white. Set `background = false` |
 | `fonts/` | optional `.ttf`/`.otf` (with their free license), installed with the theme and removed on rollback; widgets name them by family (`font_family`) |
 
 Preview: apply the theme, then `tools/preview.sh themes/<name>` (captures the desktop on an empty workspace; niri only).
@@ -204,9 +204,9 @@ A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <l
 - The **theme's own** settings changed while it is active (a widget's position…) leave with it (the app warns);
   use “Save my setup” first to keep them.
 - No lock with Noctalia: a write it makes during the sub-second window of an apply would be lost.
-- The now-playing plugin is enabled through `noctalia msg`: apply the theme while Noctalia runs (otherwise enable
-  “Now Playing” once in its plugin settings; the app also retries when it gets the focus). It stays installed after the theme leaves; with no widget it draws
-  nothing. It follows the player `playerctl` picks; no progress bar yet.
+- The theme-widgets plugin is enabled through `noctalia msg`: apply the theme while Noctalia runs (otherwise the app
+  retries when it gets the focus, or enable “Theme Widgets” in Noctalia's plugin settings). It stays installed after
+  the theme leaves; with no widget it draws nothing. The player follows the one `playerctl` picks; no progress bar.
 
 ## Noctalia pitfalls
 
@@ -223,9 +223,13 @@ A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <l
   the app changed `settings.toml`, that brings back the old desktop widgets. For 30 s after each write, a layout with
   none of the expected widgets is put back (logged in `app.log`); after that, any layout is yours.
 - Noctalia's own `media_player` only shows the cover if it can read `mpris:artUrl`; a **Flatpak** or Chromium
-  player writes it into **its own** private `/tmp`. The themes use the now-playing plugin instead, which reads it
+  player writes it into **its own** private `/tmp`. The themes use the theme-widgets player instead, which reads it
   through the player's process (`/proc/<pid>/root`): no `flatpak override` needed.
 - Plugin UIs cannot put an image **under** other content: that is why frames are cut into four bands around the
-  player. Like stickers, the bands are cached by path (restart Noctalia after regenerating them).
-- Two widgets drawn as one (a frame sticker + a player) drift apart in the widget editor: one plugin widget cannot.
+  content. Bands overlap by 1 logical px (a negative `gap`): side by side they leave a 1 px seam at fractional scale.
+  Their file names follow their content, since images are cached by path.
+- Plugin desktop widgets get Noctalia's backdrop unless `background = false`; plugin text needs `noctalia.loadFont`
+  (the plugin finds the theme font with `fc-match`); a hand-lettering font in bold falls back to another font.
+- Several widgets drawn as one (a frame sticker + a clock + a date) drift apart in the widget editor: one plugin
+  widget cannot.
 - The audio visualizer reads the sound before the output: with AirPlay (~1.6 s of buffer) it runs ahead of what you hear.

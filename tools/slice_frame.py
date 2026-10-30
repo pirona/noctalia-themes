@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Cut a drawn frame into four bands around its flat interior, for the now-playing plugin.
+"""Cut a drawn frame into four bands around its flat interior, for the theme-widgets plugin.
 
   tools/slice_frame.py themes/vaporwave/stickers/player_frame.png
 Writes <frame>/top-<hash>.png (and bottom, left, right) plus frame.json next to the image (folder named after it).
 Band names follow their content: Noctalia caches images by path, so a changed band must get a new name.
 Plugin UIs cannot stack an image under content, so the bands are laid around it and the interior is a flat fill.
---scale is image pixels per logical pixel (stickers are drawn at 2x).
+--scale is image pixels per logical pixel (stickers are drawn at 2x). --tol accepts a textured interior (paper
+grain): it becomes a flat fill of its mean colour.
 """
 import argparse
 import hashlib
@@ -14,7 +15,7 @@ import io
 import json
 from pathlib import Path
 
-from PIL import Image
+from PIL import Image, ImageStat
 
 
 def interior(im, tol=12):
@@ -61,11 +62,13 @@ def snap(box, size, scale):
     return up(x0), up(t), w - 1 - up(w - 1 - r), h - 1 - up(h - 1 - b)
 
 
-def slice_frame(src, scale=2):
+def slice_frame(src, scale=2, tol=12):
     im = Image.open(src).convert("RGBA")
     w, h = im.size
-    box, fill = interior(im)
+    box, fill = interior(im, tol)
     x0, t, r, b = snap(box, (w, h), scale)
+    if fill[3]:
+        fill = tuple(round(v) for v in ImageStat.Stat(im.crop((x0, t, r + 1, b + 1))).mean)
     o = max(1, round(scale))  # each band runs 1 logical px under its neighbour: no seam when scaled
     out = src.with_suffix("")
     out.mkdir(exist_ok=True)
@@ -87,6 +90,7 @@ def slice_frame(src, scale=2):
         "inset": [x0, t, w - 1 - r, h - 1 - b],  # left, top, right, bottom in image pixels
         "bands": bands,
         "overlap": o,  # image pixels each band reaches into the interior
+        "tol": tol,  # interior pixels may differ this much from the flat fill
         "fill": None if fill[3] == 0 else "#{:02x}{:02x}{:02x}".format(*fill[:3]),  # None: theme colour shows through
     }
     (out / "frame.json").write_text(json.dumps(meta, indent=2) + "\n")
@@ -97,5 +101,6 @@ if __name__ == "__main__":
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("frame", type=Path)
     ap.add_argument("--scale", type=float, default=2)
+    ap.add_argument("--tol", type=int, default=12)
     a = ap.parse_args()
-    print(json.dumps(slice_frame(a.frame, a.scale)))
+    print(json.dumps(slice_frame(a.frame, a.scale, a.tol)))

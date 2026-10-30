@@ -14,6 +14,18 @@
     },
     "hide_when_idle": {
       "label": "Masquer quand rien ne joue"
+    },
+    "format": {
+      "label": "Format de l'heure"
+    },
+    "date_format": {
+      "label": "Format de la date"
+    },
+    "size": {
+      "label": "Taille de l'heure"
+    },
+    "date_size": {
+      "label": "Taille de la date"
     }
   },
   "ui": {

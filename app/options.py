@@ -13,7 +13,8 @@ FILL_MODES = ["crop", "fit", "center", "stretch", "repeat", "span"]
 THEME_MODES = ["theme", "dark", "light", "auto"]  # "theme" = keep the theme's own value
 CLOCK_COLORS = ["primary", "secondary", "tertiary", "on_surface"]
 
-NOW_PLAYING = "billisdead/now-playing:card"  # the themes' player (plugins/now-playing)
+# Desktop widgets of the plugin shipped with the app (plugins/theme-widgets)
+PLAYER, CLOCK = "billisdead/theme-widgets:player", "billisdead/theme-widgets:clock"
 
 # None means "don't override, keep the theme's value".
 DEFAULTS = {
@@ -93,14 +94,14 @@ def overrides(fragment, opts):
     widgets, settings = dw.get("widget", {}), {}
     for wid, w in widgets.items():
         s = {}
-        if w.get("type") == "clock":
+        if w.get("type") in ("clock", CLOCK):
             base = w.get("settings", {}).get("format", "{:%H:%M}")
             fmt = patch_clock(base, opts["clock_12h"], opts["clock_seconds"])
             if fmt != base:
                 s["format"] = fmt
             if opts["clock_color"]:
                 s["color"] = opts["clock_color"]
-        elif w.get("type") in ("media_player", NOW_PLAYING) and opts["player_hide_when_idle"] is not None:
+        elif w.get("type") in ("media_player", PLAYER) and opts["player_hide_when_idle"] is not None:
             s["hide_when_no_media" if w["type"] == "media_player" else "hide_when_idle"] = opts["player_hide_when_idle"]
         if s:
             settings[wid] = {"settings": s}
@@ -148,13 +149,14 @@ if __name__ == "__main__":
     import tomllib
     frag = {"desktop_widgets": {"widget_order": ["c", "p", "d"], "widget": {
         "c": {"type": "clock", "settings": {"format": "{:%H:%M}"}},
-        "p": {"type": NOW_PLAYING}, "d": {"type": "sticker"}}}}
+        "p": {"type": PLAYER}, "d": {"type": "sticker"}, "k": {"type": CLOCK, "settings": {"format": "{:%H:%M}"}}}}}
     o = {**DEFAULTS, "clock_12h": True, "hidden_widgets": ["d"], "transitions": ["melt"], "theme_mode": "dark",
          "player_hide_when_idle": True}
     text = dump(overrides(frag, o))
     back = tomllib.loads(text)
     assert back["desktop_widgets"]["widget_order"] == ["c", "p"]
     assert back["desktop_widgets"]["widget"]["c"]["settings"]["format"] == "{:%I:%M %p}"
+    assert back["desktop_widgets"]["widget"]["k"]["settings"]["format"] == "{:%I:%M %p}"  # the plugin clock too
     assert back["desktop_widgets"]["widget"]["p"]["settings"]["hide_when_idle"] is True
     assert back["wallpaper"]["transition"] == ["melt"] and back["theme"]["mode"] == "dark"
     assert overrides(frag, DEFAULTS) == {}  # defaults change nothing

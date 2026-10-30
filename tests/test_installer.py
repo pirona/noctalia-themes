@@ -346,16 +346,16 @@ def test_plugin_installed_and_enabled():
     (fake / "noctalia").chmod(0o755)
     os.environ["PATH"] = str(fake)
     try:
-        bid = installer.apply(ROOT / "themes/batman")  # its player is the now-playing plugin widget
-        dst = installer.NOCTALIA_PLUGINS / "now-playing"
-        assert sha(dst / "card.luau") == sha(ROOT / "plugins/now-playing/card.luau")
-        assert "plugins enable billisdead/now-playing" in (fake / "calls.log").read_text()
-        (dst / "card.luau").write_text("-- stale copy, older than a VHS of Year One")
+        bid = installer.apply(ROOT / "themes/batman")  # its player and clock are theme-widgets plugin widgets
+        dst = installer.NOCTALIA_PLUGINS / "theme-widgets"
+        assert sha(dst / "player.luau") == sha(ROOT / "plugins/theme-widgets/player.luau")
+        assert "plugins enable billisdead/theme-widgets" in (fake / "calls.log").read_text()
+        (dst / "player.luau").write_text("-- stale copy, older than a VHS of Year One")
         installer.refresh(ROOT / "themes/batman")  # refresh brings the plugin up to date too
-        assert sha(dst / "card.luau") == sha(ROOT / "plugins/now-playing/card.luau")
+        assert sha(dst / "player.luau") == sha(ROOT / "plugins/theme-widgets/player.luau")
         calls = (fake / "calls.log").read_text().splitlines()
         # enabling makes Noctalia save its settings from memory: only once it has reloaded what we wrote
-        assert calls[-2:] == ["config-reload", "plugins enable billisdead/now-playing"]
+        assert calls[-2:] == ["config-reload", "plugins enable billisdead/theme-widgets"]
         assert not any("disable" in c for c in calls)
         installer.rollback(bid)
     finally:
@@ -407,7 +407,7 @@ def test_heal_stale_rewrite():
 def test_plugin_enabled_later():
     import json
     bid = installer.apply(ROOT / "themes/batman")  # Noctalia off (no binary): enabling is postponed
-    assert json.loads(installer.EXPECT.read_text())["pending"] == ["billisdead/now-playing"]
+    assert json.loads(installer.EXPECT.read_text())["pending"] == ["billisdead/theme-widgets"]
     fake = SANDBOX / "bin"
     fake.mkdir(exist_ok=True)
     (fake / "noctalia").write_text(FAKE_NOCTALIA)
@@ -415,7 +415,7 @@ def test_plugin_enabled_later():
     os.environ["PATH"] = str(fake)
     try:
         installer.heal()  # what the app runs when settings.toml changes or it gets the focus
-        assert (fake / "calls.log").read_text().splitlines()[-1] == "plugins enable billisdead/now-playing"
+        assert (fake / "calls.log").read_text().splitlines()[-1] == "plugins enable billisdead/theme-widgets"
         assert json.loads(installer.EXPECT.read_text())["pending"] == []
     finally:
         os.environ["PATH"] = ""
@@ -426,27 +426,32 @@ def test_glue_moves_group_together():
     for b in installer.list_backups():  # start theme-free
         if b["id"] == installer.current():
             installer.rollback(b["id"])
-    installer.apply(ROOT / "themes/batman-bw")
-    # Noctalia saves a dragged widget as a full table; the blot and date (same group) were never dragged
+    # The shipped themes draw each unit as one widget; the glue still serves themes that group several.
+    theme = SANDBOX / "themes" / "glue-test"
+    shutil.copytree(ROOT / "themes/batman-bw", theme, dirs_exist_ok=True)
+    meta = (theme / "theme.toml").read_text()
+    (theme / "theme.toml").write_text(meta.replace('"Quote" = ["bw-quote"]', '"Quote" = ["bw-clock", "bw-quote"]'))
+    installer.apply(theme)
+    # Noctalia saves a dragged widget as a full table; the quote (same group) was never dragged
     installer.STATE.write_text(installer.STATE.read_text() + """
 [desktop_widgets.widget.bw-clock]
-type = "clock"
+type = "billisdead/theme-widgets:clock"
 cx = 350.0
-cy = 110.0
+cy = 100.0
 """)
-    assert installer.glue_groups() == ["bw-blot", "bw-date"]
+    assert installer.glue_groups() == ["bw-quote"]
     state, frag = (tomllib.loads(f.read_text()) for f in (installer.STATE, installer.FRAGMENT))
     pos = installer._positions(state, frag)
-    assert pos["bw-blot"] == (350.0, 100.0)  # theme had it at (250, 150): same (+100, -50) as the clock
-    assert pos["bw-date"] == (350.0, 52.0)
+    qx, qy = (frag["desktop_widgets"]["widget"]["bw-quote"][k] for k in ("cx", "cy"))
+    assert pos["bw-quote"] == (qx + 100.0, qy - 50.0)  # clock moved (+100, -50) from (250, 150): same for the quote
     assert pos["bw-player"] == (240.0, 700.0)  # other groups untouched
     assert installer.glue_groups() == []  # idempotent: nothing moves twice
-    # now the blot is dragged: clock and date follow
-    installer.STATE.write_text(installer._set_position(installer.STATE.read_text(), "bw-blot", 250.0, 100.0))
-    assert installer.glue_groups() == ["bw-clock", "bw-date"]
+    # now the quote is dragged: the clock follows
+    installer.STATE.write_text(installer._set_position(installer.STATE.read_text(), "bw-quote", qx, qy))
+    assert installer.glue_groups() == ["bw-clock"]
     state = tomllib.loads(installer.STATE.read_text())["desktop_widgets"]["widget"]
-    assert (state["bw-clock"]["cx"], state["bw-clock"]["cy"]) == (250.0, 110.0)
-    assert state["bw-clock"]["type"] == "clock"  # the rest of Noctalia's table is kept
+    assert (state["bw-clock"]["cx"], state["bw-clock"]["cy"]) == (250.0, 150.0)
+    assert state["bw-clock"]["type"] == "billisdead/theme-widgets:clock"  # the rest of Noctalia's table is kept
     installer.rollback(installer.current())
 
 

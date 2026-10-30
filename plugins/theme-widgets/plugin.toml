@@ -1,0 +1,112 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Desktop widgets drawn with the active theme's frame, each a single widget so the editor moves it
+# as one piece: a player for any MPRIS source (through playerctl) and a clock.
+
+id = "billisdead/theme-widgets"
+name = "Theme Widgets"
+version = "0.4.0"
+plugin_api = 43
+author = "billisdead"
+license = "GPL-3.0-or-later"
+icon = "layout-dashboard"
+description = "Player and clock desktop widgets framed by the active theme's artwork."
+dependencies = ["playerctl"]
+tags = ["desktop", "media", "clock"]
+
+[[desktop_widget]]
+id = "player"
+entry = "player.luau"
+
+  # Folder written by tools/slice_frame.py (bands + frame.json); empty = no frame
+  [[desktop_widget.setting]]
+  key = "frame"
+  type = "folder"
+  label_key = "settings.frame.label"
+  default = ""
+
+  # Interior colour when the frame leaves it transparent
+  [[desktop_widget.setting]]
+  key = "fill"
+  type = "color"
+  label_key = "settings.fill.label"
+  default = "surface"
+
+  # A palette role is replaced by black or white on a frame with a fixed interior colour
+  [[desktop_widget.setting]]
+  key = "color"
+  type = "color"
+  label_key = "settings.color.label"
+  default = "on_surface"
+
+  [[desktop_widget.setting]]
+  key = "font_family"
+  type = "string"
+  label_key = "settings.font_family.label"
+  default = ""
+
+  [[desktop_widget.setting]]
+  key = "hide_when_idle"
+  type = "bool"
+  label_key = "settings.hide_when_idle.label"
+  default = false
+
+[[desktop_widget]]
+id = "clock"
+entry = "clock.luau"
+
+  # Folder written by tools/slice_frame.py (bands + frame.json); empty = no frame
+  [[desktop_widget.setting]]
+  key = "frame"
+  type = "folder"
+  label_key = "settings.frame.label"
+  default = ""
+
+  # Interior colour when the frame leaves it transparent
+  [[desktop_widget.setting]]
+  key = "fill"
+  type = "color"
+  label_key = "settings.fill.label"
+  default = "surface"
+
+  # A palette role is replaced by black or white on a frame with a fixed interior colour
+  [[desktop_widget.setting]]
+  key = "color"
+  type = "color"
+  label_key = "settings.color.label"
+  default = "on_surface"
+
+  [[desktop_widget.setting]]
+  key = "font_family"
+  type = "string"
+  label_key = "settings.font_family.label"
+  default = ""
+
+  # Noctalia clock style: "{:%H:%M}"
+  [[desktop_widget.setting]]
+  key = "format"
+  type = "string"
+  label_key = "settings.format.label"
+  default = "{:%H:%M}"
+
+  # Empty: no date line
+  [[desktop_widget.setting]]
+  key = "date_format"
+  type = "string"
+  label_key = "settings.date_format.label"
+  default = ""
+
+  [[desktop_widget.setting]]
+  key = "size"
+  type = "int"
+  label_key = "settings.size.label"
+  default = 56
+  min = 8
+  max = 200
+
+  [[desktop_widget.setting]]
+  key = "date_size"
+  type = "int"
+  label_key = "settings.date_size.label"
+  default = 20
+  min = 8
+  max = 100

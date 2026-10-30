@@ -14,6 +14,18 @@
     },
     "hide_when_idle": {
       "label": "Hide when nothing plays"
+    },
+    "format": {
+      "label": "Time format"
+    },
+    "date_format": {
+      "label": "Date format"
+    },
+    "size": {
+      "label": "Time size"
+    },
+    "date_size": {
+      "label": "Date size"
     }
   },
   "ui": {

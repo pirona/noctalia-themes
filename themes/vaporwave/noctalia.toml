@@ -57,7 +57,7 @@ background = false
 # Counterweight bottom-left: a fake Win95 CD player window, drawn with its content by one plugin widget
 # (metadata + cover only, no audio capture: stays in sync even over AirPlay).
 [desktop_widgets.widget.vw-player]
-type = "billisdead/now-playing:card"  # plugin shipped in plugins/now-playing, installed with the theme
+type = "billisdead/theme-widgets:player"  # plugin shipped in plugins/theme-widgets, installed with the theme
 output = "@OUTPUT@"
 cx = 230.0
 cy = 670.0

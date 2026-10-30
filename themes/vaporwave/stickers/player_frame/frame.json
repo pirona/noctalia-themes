@@ -15,5 +15,6 @@
     "right": "right-15df6680.png"
   },
   "overlap": 2,
+  "tol": 12,
   "fill": null
 }
