@@ -16,7 +16,8 @@ cd noctalia-themes
 
 `install.sh` checks that Python 3.11+, PyGObject, GTK 4 and libadwaita are importable (it prints the package
 command for Fedora, Debian/Ubuntu and Arch otherwise), builds the translations if `msgfmt` is available, and adds a
-launcher entry. It never uses `sudo` and can be run again at any time. `./install.sh --uninstall` removes the launcher
+launcher entry. It never uses `sudo` and can be run again at any time. The themes' music player also needs
+`playerctl` (`sudo dnf install playerctl`, `sudo apt install playerctl`, `sudo pacman -S playerctl`). `./install.sh --uninstall` removes the launcher
 entry; themes and backups are kept.
 
 Start “Noctalia Themes” from the launcher, or run `python3 app/main.py`.
@@ -34,8 +35,8 @@ Start “Noctalia Themes” from the launcher, or run `python3 app/main.py`.
 - **Update** (⟳ on the active theme): reinstalls stickers, palette and widgets without touching your settings.
 - **Backups**: dated list. “Restore” brings Noctalia back to that date, wallpaper included; the trash deletes a
   backup after confirmation (never the active theme's, its only way back).
-- **Widget groups stay together**: a theme groups widgets that form one visual unit (a player and its frame, a clock
-  and its ink blot). Noctalia's widget editor moves widgets one by one; when you close it, the app (if it is open)
+- **Widget groups stay together**: a theme groups widgets that form one visual unit (a clock, its date and its ink
+  blot). Noctalia's widget editor moves widgets one by one; when you close it, the app (if it is open)
   moves the rest of the group by the same offset. It also does it when its window gets the focus back.
 
 ### Preferences (menu → Preferences, or Ctrl+,)
@@ -43,7 +44,7 @@ Start “Noctalia Themes” from the launcher, or run `python3 app/main.py`.
 | Page | Settings |
 |---|---|
 | Wallpapers | transition effects (11), duration, fill mode |
-| Widgets | show/hide each widget group, dark/light/auto mode, clock 12 h / seconds / color, media player (blurred cover, hide when idle) |
+| Widgets | show/hide each widget group, dark/light/auto mode, clock 12 h / seconds / color, player (hide when nothing plays) |
 | App | confirm before applying, target screen, number of backups to keep + clean-up (confirmed, never the active theme's) |
 | Diagnostic | versions, active theme, screen, changed or overridden settings, paths, log tail, copy to clipboard |
 
@@ -81,9 +82,10 @@ rewritten with the same content in a different layout (arrays of tables become i
 | `~/.local/state/noctalia/settings.toml` | Noctalia | read; theme keys removed on apply, widget positions adjusted by the group glue |
 | `~/.local/share/noctalia-themes/` | the app, **0700** | installed theme copies, `backups/`, `current`, `glue.json`, `app.log` |
 | `~/.local/share/fonts/noctalia-themes/` | the app | theme fonts (fontconfig must see them) |
+| `~/.local/share/noctalia/plugins/now-playing/` | Noctalia, written by the app | the player plugin, when the theme uses it (a symlink there is left alone: developer checkout) |
 | `~/.config/noctalia-themes/settings.json` | the app, **0700** folder | app preferences |
 
-Each base folder follows XDG and can be overridden: `NOCTALIA_CONFIG_HOME`, `NOCTALIA_STATE_HOME`,
+Each base folder follows XDG and can be overridden: `NOCTALIA_CONFIG_HOME`, `NOCTALIA_STATE_HOME`, `NOCTALIA_DATA_HOME`,
 `NOCTALIA_THEMES_HOME`, `NOCTALIA_THEMES_FONTS`, `NOCTALIA_THEMES_CONFIG` (all defined in `app/paths.py`).
 `NOCTALIA_THEMES_OUTPUT` forces the screen the widgets go to.
 
@@ -109,6 +111,7 @@ Create a folder in `themes/`; the app needs no change:
 | `palette.json` | Noctalia palette: `dark` + `light`, 16 roles + a `terminal` block, strict `#RRGGBB` |
 | `noctalia.toml` | Noctalia config fragment; `@THEME_DIR@` becomes the installed path, `@OUTPUT@` the target screen: `NOCTALIA_THEMES_OUTPUT` if set, else the screen chosen in the preferences, else niri's focused screen, else the first enabled `wlr-randr` output |
 | `stickers/`, `wallpapers/` | **original** artwork; `wallpapers/SOURCES.md` for prompts and seeds |
+| player | optional: a `billisdead/now-playing:card` widget (plugin in `plugins/now-playing/`, installed and enabled with the theme) draws cover, title, artist and ⏮ ⏯ ⏭ for any MPRIS player inside your frame. Draw the frame at 2× with a flat or transparent interior, run `tools/slice_frame.py <frame.png>`, and point the widget's `frame` setting at the folder it writes (`fill`, `color`, `font_family` style the content) |
 | `fonts/` | optional `.ttf`/`.otf` (with their free license), installed with the theme and removed on rollback; widgets name them by family (`font_family`) |
 
 Preview: apply the theme, then `tools/preview.sh themes/<name>` (captures the desktop on an empty workspace; niri only).
@@ -173,6 +176,7 @@ python3 app/options.py           # preferences: overrides, clock format, TOML ke
 python3 tests/test_installer.py  # sandbox: round trip, invalid theme, failure, path tricks, screen, carried
                                  # settings, setup backup, preferences, clean-up, glue, wallpaper, permissions
 python3 tests/test_promote_bw.py # black and white thresholding
+python3 tests/test_slice_frame.py # player frames rebuild pixel for pixel from their bands
 pipx run ruff==0.12.0 check .    # lint + PEP 8 (config in pyproject.toml)
 ```
 
@@ -200,6 +204,9 @@ A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <l
 - The **theme's own** settings changed while it is active (a widget's position…) leave with it (the app warns);
   use “Save my setup” first to keep them.
 - No lock with Noctalia: a write it makes during the sub-second window of an apply would be lost.
+- The now-playing plugin is enabled through `noctalia msg`: apply the theme while Noctalia runs (otherwise enable
+  “Now Playing” once in its plugin settings). It stays installed after the theme leaves; with no widget it draws
+  nothing. It follows the player `playerctl` picks; no progress bar yet.
 
 ## Noctalia pitfalls
 
@@ -212,8 +219,10 @@ A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <l
 - A font installed while Noctalia runs is only seen after **restarting Noctalia** (fontconfig is read at start).
 - While the widget editor is open, Noctalia ignores changes to `settings.toml` and rewrites its own positions when
   the editor closes.
-- The media player only shows the cover if the player publishes a readable `mpris:artUrl`. A **Flatpak** player
-  based on Chromium/Electron writes it into **its own** private `/tmp`, which Noctalia cannot read. Fix:
-  `flatpak override --user --filesystem=/tmp <app-id>` then restart the player (undo: `--nofilesystem=/tmp`);
-  the trade-off is that the player sees the session's `/tmp`.
+- Noctalia's own `media_player` only shows the cover if it can read `mpris:artUrl`; a **Flatpak** or Chromium
+  player writes it into **its own** private `/tmp`. The themes use the now-playing plugin instead, which reads it
+  through the player's process (`/proc/<pid>/root`): no `flatpak override` needed.
+- Plugin UIs cannot put an image **under** other content: that is why frames are cut into four bands around the
+  player. Like stickers, the bands are cached by path (restart Noctalia after regenerating them).
+- Two widgets drawn as one (a frame sticker + a player) drift apart in the widget editor: one plugin widget cannot.
 - The audio visualizer reads the sound before the output: with AirPlay (~1.6 s of buffer) it runs ahead of what you hear.

@@ -275,10 +275,6 @@ msgstr ""
 msgid "Title, artist and cover of what is playing."
 msgstr ""
 
-#: app/preferences.py:196
-msgid "Blurred cover as background"
-msgstr ""
-
 #: app/preferences.py:197
 msgid "Hide when nothing plays"
 msgstr ""

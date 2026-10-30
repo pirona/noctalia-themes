@@ -11,7 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SANDBOX = Path(tempfile.mkdtemp(prefix="noctalia-themes-test-"))
 for var in ("NOCTALIA_CONFIG_HOME", "NOCTALIA_STATE_HOME", "NOCTALIA_THEMES_HOME", "NOCTALIA_THEMES_CONFIG",
-            "NOCTALIA_THEMES_FONTS"):
+            "NOCTALIA_THEMES_FONTS", "NOCTALIA_DATA_HOME"):
     os.environ[var] = str(SANDBOX / var)
 os.environ["NOCTALIA_THEMES_OUTPUT"] = "CRT-1985"
 os.environ["PATH"] = ""  # no noctalia binary: config-reload becomes a no-op
@@ -303,6 +303,8 @@ import json, sys
 from pathlib import Path
 db = Path(__file__).with_name("wallpaper.json")
 args = sys.argv[2:]
+with db.with_name("calls.log").open("a") as log:
+    log.write(" ".join(args) + "\\n")
 if args[0] == "wallpaper-get":
     print(json.loads(db.read_text()) if db.exists() else "")
 elif args[0] == "wallpaper-set":
@@ -337,30 +339,50 @@ def test_wallpaper_follows_backups():
         os.environ["PATH"] = ""
 
 
+def test_plugin_installed_and_enabled():
+    fake = SANDBOX / "bin"
+    fake.mkdir(exist_ok=True)
+    (fake / "noctalia").write_text(FAKE_NOCTALIA)
+    (fake / "noctalia").chmod(0o755)
+    os.environ["PATH"] = str(fake)
+    try:
+        bid = installer.apply(ROOT / "themes/batman")  # its player is the now-playing plugin widget
+        dst = installer.NOCTALIA_PLUGINS / "now-playing"
+        assert sha(dst / "card.luau") == sha(ROOT / "plugins/now-playing/card.luau")
+        assert "plugins enable billisdead/now-playing" in (fake / "calls.log").read_text()
+        (dst / "card.luau").write_text("-- stale copy, older than a VHS of Year One")
+        installer.refresh(ROOT / "themes/batman")  # refresh brings the plugin up to date too
+        assert sha(dst / "card.luau") == sha(ROOT / "plugins/now-playing/card.luau")
+        installer.rollback(bid)
+    finally:
+        os.environ["PATH"] = ""
+
+
 def test_glue_moves_group_together():
     for b in installer.list_backups():  # start theme-free
         if b["id"] == installer.current():
             installer.rollback(b["id"])
     installer.apply(ROOT / "themes/batman-bw")
-    # Noctalia saves a dragged widget as a full table; the block (its frame) was never dragged
+    # Noctalia saves a dragged widget as a full table; the blot and date (same group) were never dragged
     installer.STATE.write_text(installer.STATE.read_text() + """
-[desktop_widgets.widget.bw-player]
-type = "media_player"
-cx = 340.0
-cy = 652.0
+[desktop_widgets.widget.bw-clock]
+type = "clock"
+cx = 350.0
+cy = 110.0
 """)
-    assert installer.glue_groups() == ["bw-block"]
+    assert installer.glue_groups() == ["bw-blot", "bw-date"]
     state, frag = (tomllib.loads(f.read_text()) for f in (installer.STATE, installer.FRAGMENT))
     pos = installer._positions(state, frag)
-    assert pos["bw-block"] == (340.0, 650.0)  # theme had it at (240, 700): same (+100, -50) as the player
-    assert pos["bw-clock"] == (250.0, 160.0)  # other groups untouched
+    assert pos["bw-blot"] == (350.0, 100.0)  # theme had it at (250, 150): same (+100, -50) as the clock
+    assert pos["bw-date"] == (350.0, 52.0)
+    assert pos["bw-player"] == (240.0, 700.0)  # other groups untouched
     assert installer.glue_groups() == []  # idempotent: nothing moves twice
-    # now the frame is dragged: the player follows
-    installer.STATE.write_text(installer._set_position(installer.STATE.read_text(), "bw-block", 140.0, 650.0))
-    assert installer.glue_groups() == ["bw-player"]
+    # now the blot is dragged: clock and date follow
+    installer.STATE.write_text(installer._set_position(installer.STATE.read_text(), "bw-blot", 250.0, 100.0))
+    assert installer.glue_groups() == ["bw-clock", "bw-date"]
     state = tomllib.loads(installer.STATE.read_text())["desktop_widgets"]["widget"]
-    assert (state["bw-player"]["cx"], state["bw-player"]["cy"]) == (140.0, 652.0)
-    assert state["bw-player"]["type"] == "media_player"  # the rest of Noctalia's table is kept
+    assert (state["bw-clock"]["cx"], state["bw-clock"]["cy"]) == (250.0, 110.0)
+    assert state["bw-clock"]["type"] == "clock"  # the rest of Noctalia's table is kept
     installer.rollback(installer.current())
 
 
@@ -392,6 +414,7 @@ if __name__ == "__main__":
     test_fonts_installed_and_removed()
     test_real_settings_parse()
     test_wallpaper_follows_backups()
+    test_plugin_installed_and_enabled()
     test_glue_moves_group_together()
     test_private_dirs()
     print("OK", SANDBOX)

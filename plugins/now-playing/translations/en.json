@@ -1,0 +1,22 @@
+{
+  "settings": {
+    "color": {
+      "label": "Text colour"
+    },
+    "fill": {
+      "label": "Background colour"
+    },
+    "font_family": {
+      "label": "Font family"
+    },
+    "frame": {
+      "label": "Frame folder"
+    },
+    "hide_when_idle": {
+      "label": "Hide when nothing plays"
+    }
+  },
+  "ui": {
+    "nothing": "Nothing playing"
+  }
+}

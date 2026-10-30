@@ -1,0 +1,50 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Now playing card for the desktop: one widget for frame, cover, text and controls,
+# so the editor moves it as a single piece. Reads any MPRIS player through playerctl.
+
+id = "billisdead/now-playing"
+name = "Now Playing"
+version = "0.3.0"
+plugin_api = 43
+author = "billisdead"
+license = "GPL-3.0-or-later"
+icon = "music"
+description = "Desktop now-playing card for any MPRIS player, styled by the active theme."
+dependencies = ["playerctl"]
+tags = ["desktop", "media"]
+
+[[desktop_widget]]
+id = "card"
+entry = "card.luau"
+
+  # Folder written by tools/slice_frame.py (top/bottom/left/right.png + frame.json); empty = plain card
+  [[desktop_widget.setting]]
+  key = "frame"
+  type = "folder"
+  label_key = "settings.frame.label"
+  default = ""
+
+  # Interior colour when the frame leaves it transparent
+  [[desktop_widget.setting]]
+  key = "fill"
+  type = "color"
+  label_key = "settings.fill.label"
+  default = "surface"
+
+  [[desktop_widget.setting]]
+  key = "color"
+  type = "color"
+  label_key = "settings.color.label"
+  default = "on_surface"
+
+  [[desktop_widget.setting]]
+  key = "hide_when_idle"
+  type = "bool"
+  label_key = "settings.hide_when_idle.label"
+  default = false
+
+  [[desktop_widget.setting]]
+  key = "font_family"
+  type = "string"
+  label_key = "settings.font_family.label"
+  default = ""

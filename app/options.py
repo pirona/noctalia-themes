@@ -13,13 +13,15 @@ FILL_MODES = ["crop", "fit", "center", "stretch", "repeat", "span"]
 THEME_MODES = ["theme", "dark", "light", "auto"]  # "theme" = keep the theme's own value
 CLOCK_COLORS = ["primary", "secondary", "tertiary", "on_surface"]
 
+NOW_PLAYING = "billisdead/now-playing:card"  # the themes' player (plugins/now-playing)
+
 # None means "don't override, keep the theme's value".
 DEFAULTS = {
     "transitions": None, "transition_duration": None, "fill_mode": None,
     "theme_mode": "theme",
     "hidden_widgets": [],
     "clock_12h": None, "clock_seconds": None, "clock_color": None,
-    "player_art_background": None, "player_hide_when_idle": None,
+    "player_hide_when_idle": None,
     "max_backups": 10, "output": "", "confirm_apply": True,
 }
 
@@ -37,7 +39,7 @@ VALID = {
     "hidden_widgets": lambda v: isinstance(v, list) and all(isinstance(x, str) for x in v),
     "clock_12h": _tri, "clock_seconds": _tri,
     "clock_color": lambda v: v is None or v in CLOCK_COLORS,
-    "player_art_background": _tri, "player_hide_when_idle": _tri,
+    "player_hide_when_idle": _tri,
     "max_backups": lambda v: type(v) is int and 1 <= v <= 50,
     "output": lambda v: isinstance(v, str),
     "confirm_apply": lambda v: isinstance(v, bool),
@@ -98,11 +100,8 @@ def overrides(fragment, opts):
                 s["format"] = fmt
             if opts["clock_color"]:
                 s["color"] = opts["clock_color"]
-        elif w.get("type") == "media_player":
-            if opts["player_art_background"] is not None:
-                s["album_art_background"] = opts["player_art_background"]
-            if opts["player_hide_when_idle"] is not None:
-                s["hide_when_no_media"] = opts["player_hide_when_idle"]
+        elif w.get("type") in ("media_player", NOW_PLAYING) and opts["player_hide_when_idle"] is not None:
+            s["hide_when_no_media" if w["type"] == "media_player" else "hide_when_idle"] = opts["player_hide_when_idle"]
         if s:
             settings[wid] = {"settings": s}
     hidden = set(opts["hidden_widgets"])
@@ -149,14 +148,14 @@ if __name__ == "__main__":
     import tomllib
     frag = {"desktop_widgets": {"widget_order": ["c", "p", "d"], "widget": {
         "c": {"type": "clock", "settings": {"format": "{:%H:%M}"}},
-        "p": {"type": "media_player"}, "d": {"type": "sticker"}}}}
+        "p": {"type": NOW_PLAYING}, "d": {"type": "sticker"}}}}
     o = {**DEFAULTS, "clock_12h": True, "hidden_widgets": ["d"], "transitions": ["melt"], "theme_mode": "dark",
          "player_hide_when_idle": True}
     text = dump(overrides(frag, o))
     back = tomllib.loads(text)
     assert back["desktop_widgets"]["widget_order"] == ["c", "p"]
     assert back["desktop_widgets"]["widget"]["c"]["settings"]["format"] == "{:%I:%M %p}"
-    assert back["desktop_widgets"]["widget"]["p"]["settings"]["hide_when_no_media"] is True
+    assert back["desktop_widgets"]["widget"]["p"]["settings"]["hide_when_idle"] is True
     assert back["wallpaper"]["transition"] == ["melt"] and back["theme"]["mode"] == "dark"
     assert overrides(frag, DEFAULTS) == {}  # defaults change nothing
     assert back["desktop_widgets"]["widget"]["d"]["enabled"] is False

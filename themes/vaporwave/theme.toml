@@ -9,7 +9,7 @@ preview = "preview.webp"
 [widget_groups]
 "Clock" = ["vw-clock"]
 "Vertical katakana" = ["vw-katakana"]
-"CD player" = ["vw-player-frame", "vw-player"]
+"CD player" = ["vw-player"]
 "Dialog box" = ["vw-dialog"]
 
 # Shown instead when the UI language is French; group labels are keyed by their English label.

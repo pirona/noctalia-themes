@@ -15,7 +15,22 @@ from pathlib import Path
 import options
 import palette
 from i18n import _, localize
-from paths import BACKUPS, CONFIG, CURRENT, DATA, FONTS, FRAGMENT, GLUE, INSTALLED, OPTIONS, PALETTES, STATE, ensure_dir
+from paths import (
+    BACKUPS,
+    CONFIG,
+    CURRENT,
+    DATA,
+    FONTS,
+    FRAGMENT,
+    GLUE,
+    INSTALLED,
+    NOCTALIA_PLUGINS,
+    OPTIONS,
+    PALETTES,
+    PLUGINS,
+    STATE,
+    ensure_dir,
+)
 
 log = logging.getLogger("noctalia-themes")
 
@@ -379,6 +394,25 @@ def _install_fonts(pairs):
             pass  # fontconfig rescans on its own, just later
 
 
+def _install_plugins(fragment):
+    """Copy the app's plugins used by the theme's widgets where Noctalia loads local ones, and enable them.
+
+    Left in place on removal: an enabled plugin with no widget on the desktop draws nothing.
+    """
+    used = {w.get("type", "").split(":")[0] for w in fragment.get("desktop_widgets", {}).get("widget", {}).values()}
+    for manifest in sorted(PLUGINS.glob("*/plugin.toml")):
+        pid = tomllib.loads(manifest.read_text())["id"]
+        if pid not in used:
+            continue
+        dst = ensure_dir(NOCTALIA_PLUGINS) / manifest.parent.name
+        if not dst.is_symlink():  # a symlink is a developer checkout: keep it live
+            _swap_dir(manifest.parent, dst)
+        try:  # ponytail: needs Noctalia running; otherwise enable it once from its settings
+            subprocess.run(["noctalia", "msg", "plugins", "enable", pid], check=False, capture_output=True, timeout=10)
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            log.warning("could not enable plugin %s: Noctalia not reachable", pid)
+
+
 def refresh(theme_dir):
     """Update the active theme's files in place (stickers, palette, fragment).
 
@@ -401,6 +435,7 @@ def refresh(theme_dir):
     write_options(fragment, reload=False)  # options first: Noctalia never sees new fragment + stale options
     _atomic_copy(tmp, FRAGMENT)
     tmp.unlink()
+    _install_plugins(fragment)
     log.info("refreshed theme %s", meta["name"])
     _reload()
 
@@ -445,6 +480,7 @@ def apply(theme_dir, label=None):
             # ponytail: no lock with Noctalia; a write it makes between our read and replace is lost (sub-second window)
             (bdir / "stripped.toml").write_text(stripped)
             _atomic_copy(bdir / "stripped.toml", STATE)
+        _install_plugins(fragment)  # after our state write: enabling makes Noctalia save its own
         CURRENT.write_text(stamp)
     except Exception:
         rollback(stamp)  # leave the user exactly where they were

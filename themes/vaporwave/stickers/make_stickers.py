@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: GPL-3.0-or-later
 """Render the vaporwave stickers (original artwork). Run from anywhere: python3 make_stickers.py"""
+import sys
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
 HERE = Path(__file__).parent
+sys.path.insert(0, str(HERE.parents[2] / "tools"))
+from slice_frame import slice_frame  # noqa: E402
+
 CJK = "/usr/share/fonts/google-noto-sans-cjk-vf-fonts/NotoSansCJK-VF.ttc"
 S = 2  # 2x for crisp rendering at fractional scale
 PINK, CYAN = (255, 113, 206), (1, 205, 254)
@@ -79,5 +83,6 @@ def player_frame():
 if __name__ == "__main__":
     dialog()
     player_frame()
+    slice_frame(HERE / "player_frame.png", S)  # bands for the now-playing plugin
     assert Image.open(HERE / "dialog-loading.png").size == (380 * S, 170 * S)
     assert Image.open(HERE / "player_frame.png").getpixel((170 * S, 90 * S))[3] == 0  # hole is transparent
