@@ -205,7 +205,7 @@ A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <l
   use “Save my setup” first to keep them.
 - No lock with Noctalia: a write it makes during the sub-second window of an apply would be lost.
 - The now-playing plugin is enabled through `noctalia msg`: apply the theme while Noctalia runs (otherwise enable
-  “Now Playing” once in its plugin settings). It stays installed after the theme leaves; with no widget it draws
+  “Now Playing” once in its plugin settings; the app also retries when it gets the focus). It stays installed after the theme leaves; with no widget it draws
   nothing. It follows the player `playerctl` picks; no progress bar yet.
 
 ## Noctalia pitfalls
@@ -218,7 +218,10 @@ A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <l
 - Stickers are cached by path: to replace an image, give it a **new file name**.
 - A font installed while Noctalia runs is only seen after **restarting Noctalia** (fontconfig is read at start).
 - While the widget editor is open, Noctalia ignores changes to `settings.toml` and rewrites its own positions when
-  the editor closes.
+  the editor closes. The app closes the editor before applying, updating or restoring.
+- Some events (a `noctalia msg`, the editor closing) make Noctalia save its whole settings **from memory**; just after
+  the app changed `settings.toml`, that brings back the old desktop widgets. For 30 s after each write, a layout with
+  none of the expected widgets is put back (logged in `app.log`); after that, any layout is yours.
 - Noctalia's own `media_player` only shows the cover if it can read `mpris:artUrl`; a **Flatpak** or Chromium
   player writes it into **its own** private `/tmp`. The themes use the now-playing plugin instead, which reads it
   through the player's process (`/proc/<pid>/root`): no `flatpak override` needed.
