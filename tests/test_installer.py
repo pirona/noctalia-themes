@@ -354,7 +354,9 @@ def test_plugin_installed_and_enabled():
         installer.refresh(ROOT / "themes/batman")  # refresh brings the plugin up to date too
         assert sha(dst / "card.luau") == sha(ROOT / "plugins/now-playing/card.luau")
         calls = (fake / "calls.log").read_text().splitlines()
-        assert calls[-3:-1] == ["plugins disable billisdead/now-playing", "plugins enable billisdead/now-playing"]
+        # enabling makes Noctalia save its settings from memory: only once it has reloaded what we wrote
+        assert calls[-2:] == ["config-reload", "plugins enable billisdead/now-playing"]
+        assert not any("disable" in c for c in calls)
         installer.rollback(bid)
     finally:
         os.environ["PATH"] = ""

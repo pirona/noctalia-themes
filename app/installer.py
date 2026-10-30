@@ -394,25 +394,37 @@ def _install_fonts(pairs):
             pass  # fontconfig rescans on its own, just later
 
 
-def _install_plugins(fragment):
-    """Copy the app's plugins used by the theme's widgets where Noctalia loads local ones, and enable them.
+def _plugins_used(fragment):
+    """(folder, id) of the app's plugins that the theme's widgets use."""
+    used = {w.get("type", "").split(":")[0] for w in fragment.get("desktop_widgets", {}).get("widget", {}).values()}
+    found = ((m.parent, tomllib.loads(m.read_text())["id"]) for m in sorted(PLUGINS.glob("*/plugin.toml")))
+    return [(d, pid) for d, pid in found if pid in used]
 
+
+def _install_plugins(fragment):
+    """Copy the plugins the theme uses where Noctalia loads local ones.
+
+    Files are written over the old ones: Noctalia hot-reloads edited files (not a swapped folder).
     Left in place on removal: an enabled plugin with no widget on the desktop draws nothing.
     """
-    used = {w.get("type", "").split(":")[0] for w in fragment.get("desktop_widgets", {}).get("widget", {}).values()}
-    for manifest in sorted(PLUGINS.glob("*/plugin.toml")):
-        pid = tomllib.loads(manifest.read_text())["id"]
-        if pid not in used:
-            continue
-        dst = ensure_dir(NOCTALIA_PLUGINS) / manifest.parent.name
-        steps = [["enable", pid]]
+    for src, _pid in _plugins_used(fragment):
+        dst = ensure_dir(NOCTALIA_PLUGINS) / src.name
         if not dst.is_symlink():  # a symlink is a developer checkout: keep it live
-            if dst.exists():
-                steps.insert(0, ["disable", pid])  # Noctalia only hot-reloads edited files, not a swapped folder
-            _swap_dir(manifest.parent, dst)
+            shutil.copytree(src, dst, dirs_exist_ok=True)
+
+
+def _enable_plugins(fragment):
+    """Enable the theme's plugins not enabled yet. Call after _reload(): enabling makes Noctalia save its
+    settings from memory, which must already hold what we wrote (else it brings back what we removed)."""
+    try:
+        enabled = tomllib.loads(STATE.read_text()).get("plugins", {}).get("enabled", []) if STATE.exists() else []
+    except tomllib.TOMLDecodeError:
+        enabled = []
+    for _src, pid in _plugins_used(fragment):
+        if pid in enabled:
+            continue
         try:  # ponytail: needs Noctalia running; otherwise enable it once from its settings
-            for step in steps:
-                subprocess.run(["noctalia", "msg", "plugins", *step], check=False, capture_output=True, timeout=10)
+            subprocess.run(["noctalia", "msg", "plugins", "enable", pid], check=False, capture_output=True, timeout=10)
         except (FileNotFoundError, subprocess.TimeoutExpired):
             log.warning("could not enable plugin %s: Noctalia not reachable", pid)
 
@@ -442,6 +454,7 @@ def refresh(theme_dir):
     _install_plugins(fragment)
     log.info("refreshed theme %s", meta["name"])
     _reload()
+    _enable_plugins(fragment)
 
 
 def apply(theme_dir, label=None):
@@ -484,13 +497,14 @@ def apply(theme_dir, label=None):
             # ponytail: no lock with Noctalia; a write it makes between our read and replace is lost (sub-second window)
             (bdir / "stripped.toml").write_text(stripped)
             _atomic_copy(bdir / "stripped.toml", STATE)
-        _install_plugins(fragment)  # after our state write: enabling makes Noctalia save its own
+        _install_plugins(fragment)
         CURRENT.write_text(stamp)
     except Exception:
         rollback(stamp)  # leave the user exactly where they were
         raise
     log.info("applied theme %s (backup %s)", meta["name"], stamp)
     _reload()
+    _enable_plugins(fragment)
     return stamp
 
 
