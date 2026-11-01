@@ -77,22 +77,18 @@ local function setCover(path, forDest)
   render()
 end
 
--- Sandboxed players (Flatpak, Chromium) write art into a private /tmp: read it through their own root.
+-- Sandboxed players write art into a private /tmp: try the host, the bus owner's root, then each
+-- Flatpak sandbox root (the bus owner of a Flatpak app is its xdg-dbus-proxy, which lives on the host).
+local FIND_ART = [[
+pid=$(busctl --user call org.freedesktop.DBus /org/freedesktop/DBus org.freedesktop.DBus \
+  GetConnectionUnixProcessID s "org.mpris.MediaPlayer2.$3" 2>/dev/null | cut -d' ' -f2)
+for r in "" "/proc/$pid/root" $(flatpak ps --columns=child-pid 2>/dev/null | sed 's|.*|/proc/&/root|'); do
+  [ -f "$r$1" ] && exec cp -f "$r$1" "$2"
+done
+exit 1]]
 local function copyLocal(src, dest)
-  noctalia.runAsync({ "busctl", "--user", "call", "org.freedesktop.DBus", "/org/freedesktop/DBus",
-    "org.freedesktop.DBus", "GetConnectionUnixProcessID", "s", "org.mpris.MediaPlayer2." .. track.player },
-    function(r)
-      local pid = string.match(r.stdout or "", "u (%d+)")
-      local candidates = { src }
-      if pid then table.insert(candidates, "/proc/" .. pid .. "/root" .. src) end
-      for _, p in candidates do
-        if noctalia.fileExists(p) then
-          noctalia.runAsync({ "cp", "-f", p, dest }, function(c) setCover(c.exitCode == 0 and dest or nil, dest) end)
-          return
-        end
-      end
-      setCover(nil, dest)
-    end)
+  noctalia.runAsync({ "sh", "-c", FIND_ART, "sh", src, dest, track.player },
+    function(c) setCover(c.exitCode == 0 and dest or nil, dest) end)
 end
 
 local function resolveCover()
