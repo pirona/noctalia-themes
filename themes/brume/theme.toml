@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name = "Brume"
+description = "Fog and grain. Grey photographs with film grain, pale surfaces, a thin bar at the top, and one colour only: a muted red, for what needs attention. Inspired by hooxoo's desktop on noctalia.dev, original wallpapers."
+author = "Antoine Piron"
+palette = "brume"
+preview = "preview.webp"
+ink = "grain"  # wallpapers turn grey with a fixed film grain at promotion
+
+[locale.fr]
+description = "Brume et grain. Photos grises au grain argentique, surfaces pâles, barre fine en haut, et une seule couleur : un rouge éteint, pour ce qui demande l'attention. Inspiré du bureau de hooxoo sur noctalia.dev, fonds originaux."

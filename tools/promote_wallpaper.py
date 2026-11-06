@@ -7,17 +7,19 @@
 Env: WALLPAPER_DIR (default <Pictures>/wallpapers/<theme>, a folder Noctalia's picker can browse).
 Re-running with the same name replaces the image and its SOURCES.md entry.
 A comic-panel frame drawn by the model (light margin + border line) is trimmed off automatically.
-A theme with `ink = "black-and-white"` in theme.toml gets its wallpapers thresholded to pure ink and paper.
+A theme with `ink = "black-and-white"` in theme.toml gets its wallpapers thresholded to pure ink and paper;
+`ink = "grain"` turns them grey with a fixed film grain.
 """
 import json
 import os
+import random
 import re
 import shutil
 import sys
 import tomllib
 from pathlib import Path
 
-from PIL import Image, ImageFilter, ImageStat
+from PIL import Image, ImageChops, ImageFilter, ImageStat
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "app"))
@@ -91,6 +93,14 @@ def black_and_white(im, speck=60):
     return g.point(lambda v: 0 if v < 112 else 255 if v > 144 else (v - 112) * 255 // 32).convert("RGB")
 
 
+def grain(im, seed, amount=0.15):  # grain stddev matched to docs/inspiration/hooxoo.webp
+    """Grey, plus film grain baked in: seeded so a re-run gives the same file, softened so it reads as grain, not pixels."""
+    g = im.convert("L")
+    noise = Image.frombytes("L", g.size, random.Random(seed).randbytes(g.width * g.height))
+    noise = noise.filter(ImageFilter.GaussianBlur(0.5)).point(lambda v: round(128 + (v - 128) * amount))
+    return ImageChops.add(g, noise, offset=-128).convert("RGB")
+
+
 def promote(src, name, theme="vaporwave"):
     if not re.fullmatch(r"[a-z0-9-]+", name) or not re.fullmatch(r"[a-z0-9-]+", theme):
         raise SystemExit("name and theme must be lowercase [a-z0-9-]")  # both become paths
@@ -105,8 +115,11 @@ def promote(src, name, theme="vaporwave"):
     im = im.resize((round(w * scale), round(h * scale)), Image.LANCZOS)
     left, top = (im.width - tw) // 2, (im.height - th) // 2
     im = im.crop((left, top, left + tw, top + th))
-    if tomllib.loads((ROOT / "themes" / theme / "theme.toml").read_text()).get("ink") == "black-and-white":
+    ink = tomllib.loads((ROOT / "themes" / theme / "theme.toml").read_text()).get("ink")
+    if ink == "black-and-white":
         im = black_and_white(im)
+    elif ink == "grain":
+        im = grain(im, name)
 
     repo_dir.mkdir(parents=True, exist_ok=True)
     out = repo_dir / f"wall_{name}.webp"
