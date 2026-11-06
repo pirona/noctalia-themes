@@ -295,6 +295,16 @@ def _restore_wallpapers(saved, only_from=None):
             log.warning("could not restore wallpaper %s", path)  # the rest of the restore already succeeded
 
 
+def sync_greeter():
+    """One explicit greeter sync, for when auto_sync can't catch the change (it leaves with the theme's options)."""
+    if not (options.greeter_installed() and options.load()["greeter_sync"]):
+        return
+    try:  # don't wait: the helper may sit on a Polkit prompt
+        subprocess.Popen(["noctalia", "msg", "greeter-sync"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except OSError:
+        log.warning("could not start the greeter sync")
+
+
 def write_options(fragment=None, reload=True):
     """Write the preferences fragment for the active theme (or remove it when it changes nothing).
 
@@ -304,7 +314,7 @@ def write_options(fragment=None, reload=True):
         if not current() or not FRAGMENT.exists():
             return
         fragment = tomllib.loads(FRAGMENT.read_text())
-    text = options.dump(options.overrides(fragment, options.load()))
+    text = options.dump(options.overrides(fragment, options.load(), options.greeter_installed()))
     if not text.strip():
         OPTIONS.unlink(missing_ok=True)
     else:
@@ -563,6 +573,7 @@ def rollback(backup_id):
     _reload()
     # Leaving the theme: only its own wallpaper goes. Going back to an older backup: its wallpaper returns.
     _restore_wallpapers(manifest.get("wallpapers"), INSTALLED / tdir if removing and tdir else None)
+    sync_greeter()
 
 
 GLUE_TOLERANCE = 0.5  # logical pixels; below that a position counts as unchanged
@@ -802,6 +813,7 @@ def _restore_setup(bdir, manifest):
     log.info("restored setup %s", bdir.name)
     _reload()
     _restore_wallpapers(manifest.get("wallpapers"))
+    sync_greeter()
 
 
 if __name__ == "__main__":

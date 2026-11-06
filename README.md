@@ -45,10 +45,17 @@ Start “Noctalia Themes” from the launcher, or run `python3 app/main.py`.
 |---|---|
 | Wallpapers | transition effects (11), duration, fill mode |
 | Widgets | show/hide each widget group, dark/light/auto mode, clock 12 h / seconds / color, player (hide when nothing plays) |
-| App | confirm before applying, target screen, number of backups to keep + clean-up (confirmed, never the active theme's) |
+| App | confirm before applying, login screen follows the theme (only shown when Noctalia Greeter is installed), target screen, number of backups to keep + clean-up (confirmed, never the active theme's) |
 | Diagnostic | versions, active theme, screen, changed or overridden settings, paths, log tail, copy to clipboard |
 
 A preference left on “like the theme” writes nothing. Invalid values in the preferences file fall back to defaults.
+
+**Login screen.** With [Noctalia Greeter](https://github.com/noctalia-dev/noctalia-greeter) installed, the app sets
+`[shell.greeter_sync] auto_sync = true` while a theme is active, so Noctalia copies the wallpaper, colors, mode and
+shell font to the login screen on every change. When a theme leaves, the app runs one `noctalia msg greeter-sync`
+(its options leave with it). Each sync asks for an administrator password unless you allow it once with the
+greeter's own narrow Polkit rule: `sudo noctalia-greeter passwordless-sync enable "$USER"`. The login screen is the
+same for every account of the machine.
 
 ## How it works
 
@@ -207,6 +214,8 @@ A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <l
 - The theme-widgets plugin is enabled through `noctalia msg`: apply the theme while Noctalia runs (otherwise the app
   retries when it gets the focus, or enable “Theme Widgets” in Noctalia's plugin settings). It stays installed after
   the theme leaves; with no widget it draws nothing. The player follows the one `playerctl` picks; no progress bar.
+- The **login screen** only gets fonts installed system-wide: a theme font installed in your home (Kalam, for the
+  Batman themes) falls back to a default font there. Desktop widgets are not copied, only the look.
 
 ## Noctalia pitfalls
 
