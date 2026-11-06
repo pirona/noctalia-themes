@@ -216,6 +216,15 @@ class Preferences(Adw.PreferencesDialog):
         behaviour.add(confirm)
         page.add(behaviour)
 
+        if options.greeter_installed():  # nothing to sync without Noctalia Greeter
+            login = Adw.PreferencesGroup(title=_("Login screen"))
+            sync = Adw.SwitchRow(title=_("Follow the theme"),
+                                 subtitle=_("Noctalia copies the wallpaper, colors and font to Noctalia Greeter"),
+                                 active=self.opts["greeter_sync"])
+            sync.connect("notify::active", lambda r, _p: self._set("greeter_sync", r.get_active()))
+            login.add(sync)
+            page.add(login)
+
         screen = Adw.PreferencesGroup(title=_("Screen"), description=_("Screen the theme's widgets are shown on."))
         outputs = ["", *installer.list_outputs()]
         if self.opts["output"] and self.opts["output"] not in outputs:
@@ -328,6 +337,8 @@ class Preferences(Adw.PreferencesDialog):
             (_("Active theme"), _("{name} (backup {id})").format(name=active["theme"], id=active["id"])
              if active else _("none")),
             (_("Widgets screen"), output),
+            (_("Login screen"), (_("follows the theme") if self.opts["greeter_sync"] else _("not synced"))
+             if options.greeter_installed() else _("Noctalia Greeter not installed")),
             (_("Settings changed since apply"), ", ".join(installer.changes_since_apply())),
             (_("Preferences overridden by settings.toml"), ", ".join(installer.overridden_by_state())),
             (_("Noctalia config"), str(paths.CONFIG)),

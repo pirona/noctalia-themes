@@ -2,6 +2,7 @@
 """App preferences, and their translation into a Noctalia config fragment layered over the theme's."""
 import json
 import re
+import shutil
 from pathlib import Path
 
 import paths
@@ -24,6 +25,7 @@ DEFAULTS = {
     "clock_12h": None, "clock_seconds": None, "clock_color": None,
     "player_hide_when_idle": None,
     "max_backups": 10, "output": "", "confirm_apply": True,
+    "greeter_sync": True,
 }
 
 
@@ -44,6 +46,7 @@ VALID = {
     "max_backups": lambda v: type(v) is int and 1 <= v <= 50,
     "output": lambda v: isinstance(v, str),
     "confirm_apply": lambda v: isinstance(v, bool),
+    "greeter_sync": lambda v: isinstance(v, bool),
 }
 
 
@@ -79,9 +82,15 @@ def patch_clock(fmt, hour12=None, seconds=None):
     return fmt
 
 
-def overrides(fragment, opts):
+def greeter_installed():
+    return shutil.which("noctalia-greeter") is not None
+
+
+def overrides(fragment, opts, greeter=False):
     """Nested dict of the config keys the preferences change, given the theme's parsed fragment."""
     out = {}
+    if greeter and opts["greeter_sync"]:
+        out["shell"] = {"greeter_sync": {"auto_sync": True}}
     wall = {k: v for k, v in (("transition", opts["transitions"]),
                               ("transition_duration", opts["transition_duration"]),
                               ("fill_mode", opts["fill_mode"])) if v is not None}
@@ -160,6 +169,8 @@ if __name__ == "__main__":
     assert back["desktop_widgets"]["widget"]["p"]["settings"]["hide_when_idle"] is True
     assert back["wallpaper"]["transition"] == ["melt"] and back["theme"]["mode"] == "dark"
     assert overrides(frag, DEFAULTS) == {}  # defaults change nothing
+    assert tomllib.loads(dump(overrides(frag, DEFAULTS, greeter=True)))["shell"]["greeter_sync"]["auto_sync"]
+    assert "shell" not in overrides(frag, {**DEFAULTS, "greeter_sync": False}, greeter=True)
     assert back["desktop_widgets"]["widget"]["d"]["enabled"] is False
     assert patch_clock("{:%a %d %b  %H:%M}", seconds=True) == "{:%a %d %b  %H:%M:%S}"  # date kept
     assert patch_clock("{:%H:%M:%S}", hour12=True) == "{:%I:%M:%S %p}"
