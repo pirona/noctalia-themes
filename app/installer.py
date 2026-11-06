@@ -482,7 +482,7 @@ def apply(theme_dir, label=None):
     _close_editor()
     output = detect_output() if "@OUTPUT@" in (theme_dir / "noctalia.toml").read_text() else None
     if current():
-        rollback(current())  # snapshot must capture the untouched user state, not a themed one
+        rollback(current(), sync=False)  # snapshot must capture the untouched user state; auto_sync follows the new theme
     meta = tomllib.loads((theme_dir / "theme.toml").read_text())
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     bdir = ensure_dir(BACKUPS / stamp)
@@ -530,14 +530,14 @@ def apply(theme_dir, label=None):
     return stamp
 
 
-def rollback(backup_id):
+def rollback(backup_id, sync=True):
     bdir = BACKUPS / backup_id
     manifest = json.loads((bdir / "manifest.json").read_text())
     _close_editor()
     if manifest.get("kind") == "setup":
         return _restore_setup(bdir, manifest)
     if current() and current() != backup_id:
-        rollback(current())  # remove the active theme cleanly before going further back
+        rollback(current(), sync=False)  # remove the active theme cleanly before going further back
     removing = backup_id == current()
     tdir = _theme_dir_name(bdir)
     try:  # your settings changed meanwhile survive the removal; only the theme's own leave
@@ -573,7 +573,8 @@ def rollback(backup_id):
     _reload()
     # Leaving the theme: only its own wallpaper goes. Going back to an older backup: its wallpaper returns.
     _restore_wallpapers(manifest.get("wallpapers"), INSTALLED / tdir if removing and tdir else None)
-    sync_greeter()
+    if sync:  # once, at the end: Noctalia refuses a sync while another runs
+        sync_greeter()
 
 
 GLUE_TOLERANCE = 0.5  # logical pixels; below that a position counts as unchanged
