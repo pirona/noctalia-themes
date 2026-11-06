@@ -109,9 +109,9 @@ def build(prompt, seed, steps, width, height, name, theme="vaporwave", files=Non
     # Guard: the wallpaper style comes from the prompt alone; a LoRA slipped into the workflow would change it.
     if any("lora" in n["class_type"].lower() for n in g.values()):
         raise SystemExit("LoRA node found in workflow: refusing")
-    for key, name in (files or {}).items():
+    for key, fname in (files or {}).items():
         cls, field = LOADERS[key]
-        g[key]["inputs"][field] = name
+        g[key]["inputs"][field] = fname
     g["prompt"]["inputs"]["text"] = prompt
     g["noise"]["inputs"]["noise_seed"] = seed
     g["sched"]["inputs"].update(steps=steps, width=width, height=height)

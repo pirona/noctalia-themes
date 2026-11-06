@@ -4,20 +4,24 @@
 
   tools/promote_wallpaper.py ~/Pictures/noctalia-vaporwave-renders/03-corridor-forest_s20111211_00001_.png corridor
   tools/promote_wallpaper.py --theme batman <render.png> <name>
+  tools/promote_wallpaper.py --theme brume --ink pixel <render.png> <name>-pixel
 Env: WALLPAPER_DIR (default <Pictures>/wallpapers/<theme>, a folder Noctalia's picker can browse).
 Re-running with the same name replaces the image and its SOURCES.md entry.
 A comic-panel frame drawn by the model (light margin + border line) is trimmed off automatically.
-A theme with `ink = "black-and-white"` in theme.toml gets its wallpapers thresholded to pure ink and paper.
+A theme with `ink = "black-and-white"` in theme.toml gets its wallpapers thresholded to pure ink and paper;
+`ink = "grain"` turns them grey with a fixed film grain, `ink = "pixel"` into fine grey pixel art (2 px pixels,
+ordered dither, 6 greys). `--ink <mode>` overrides the theme's for one promotion (e.g. a pixel variant of a wallpaper).
 """
 import json
 import os
+import random
 import re
 import shutil
 import sys
 import tomllib
 from pathlib import Path
 
-from PIL import Image, ImageFilter, ImageStat
+from PIL import Image, ImageChops, ImageFilter, ImageStat
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "app"))
@@ -91,7 +95,32 @@ def black_and_white(im, speck=60):
     return g.point(lambda v: 0 if v < 112 else 255 if v > 144 else (v - 112) * 255 // 32).convert("RGB")
 
 
-def promote(src, name, theme="vaporwave"):
+def grain(im, seed, amount=0.15):  # grain stddev matched to docs/inspiration/hooxoo.webp
+    """Grey, plus film grain baked in: seeded so a re-run gives the same file, softened so it reads as grain, not pixels."""
+    g = im.convert("L")
+    noise = Image.frombytes("L", g.size, random.Random(seed).randbytes(g.width * g.height))
+    noise = noise.filter(ImageFilter.GaussianBlur(0.5)).point(lambda v: round(128 + (v - 128) * amount))
+    return ImageChops.add(g, noise, offset=-128).convert("RGB")
+
+
+BAYER4 = ((0, 8, 2, 10), (12, 4, 14, 6), (3, 11, 1, 9), (15, 7, 13, 5))
+
+
+def pixel(im, px=2, levels=6, lo=0x1C, hi=0xE6):
+    """Fine pixel art: big pixels, an ordered dither between a few greys spanning the palette's darkest to lightest."""
+    w, h = im.size
+    g = im.convert("L").resize((w // px, h // px), Image.LANCZOS)
+    gw = g.width
+    step = (hi - lo) / (levels - 1)
+    grey = [round(lo + q * step) for q in range(levels)]
+    out = bytearray(g.tobytes())
+    for i, v in enumerate(out):
+        t = (BAYER4[(i // gw) & 3][(i % gw) & 3] + 0.5) / 16 - 0.5
+        out[i] = grey[min(max(round((v - lo) / step + t), 0), levels - 1)]
+    return Image.frombytes("L", g.size, bytes(out)).resize((w, h), Image.NEAREST).convert("RGB")
+
+
+def promote(src, name, theme="vaporwave", ink=None):
     if not re.fullmatch(r"[a-z0-9-]+", name) or not re.fullmatch(r"[a-z0-9-]+", theme):
         raise SystemExit("name and theme must be lowercase [a-z0-9-]")  # both become paths
     src = Path(src).expanduser()
@@ -105,12 +134,17 @@ def promote(src, name, theme="vaporwave"):
     im = im.resize((round(w * scale), round(h * scale)), Image.LANCZOS)
     left, top = (im.width - tw) // 2, (im.height - th) // 2
     im = im.crop((left, top, left + tw, top + th))
-    if tomllib.loads((ROOT / "themes" / theme / "theme.toml").read_text()).get("ink") == "black-and-white":
+    ink = ink or tomllib.loads((ROOT / "themes" / theme / "theme.toml").read_text()).get("ink")
+    if ink == "black-and-white":
         im = black_and_white(im)
+    elif ink == "grain":
+        im = grain(im, name)
+    elif ink == "pixel":
+        im = pixel(im)
 
     repo_dir.mkdir(parents=True, exist_ok=True)
     out = repo_dir / f"wall_{name}.webp"
-    im.save(out, "WEBP", quality=92, method=6)
+    im.save(out, "WEBP", lossless=ink == "pixel", quality=92, method=6)  # lossy WebP smears a dither
 
     sources = repo_dir / "SOURCES.md"
     text = sources.read_text() if sources.exists() else (
@@ -130,9 +164,9 @@ def promote(src, name, theme="vaporwave"):
 
 if __name__ == "__main__":
     args = sys.argv[1:]
-    theme = "vaporwave"
-    if args[:1] == ["--theme"]:
-        theme, args = args[1], args[2:]
-    if len(args) != 2:
+    opts = {"--theme": "vaporwave", "--ink": None}
+    while args[:1] and args[0] in opts and len(args) > 1:
+        opts[args[0]], args = args[1], args[2:]
+    if len(args) != 2 or opts["--ink"] not in (None, "black-and-white", "grain", "pixel"):
         raise SystemExit(__doc__)
-    promote(args[0], args[1], theme)
+    promote(args[0], args[1], opts["--theme"], opts["--ink"])

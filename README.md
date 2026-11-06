@@ -2,7 +2,7 @@
 
 Decorative themes for [Noctalia](https://docs.noctalia.dev/noctalia/) v5 (tested on 5.3.0 with niri), with a small
 GTK 4 / libadwaita app to apply and remove them safely. Themes: **Vaporwave**, **Batman — Year One**,
-**Batman — Black and White**. License: GPL-3.0-or-later.
+**Batman — Black and White**, **Brume** (grey fog, film grain or fine pixel art, thin top bar). License: GPL-3.0-or-later.
 
 The app is in English, with a French translation picked from your locale.
 
@@ -105,7 +105,7 @@ Create a folder in `themes/`; the app needs no change:
 
 | File | Role |
 |---|---|
-| `theme.toml` | `name`, `description`, `author`, `palette` (file name, `[A-Za-z0-9_-]+`), `preview` (optional) |
+| `theme.toml` | `name`, `description`, `author`, `palette` (file name, `[A-Za-z0-9_-]+`), `preview` (optional), `ink` (optional: `"black-and-white"` thresholds wallpapers to pure ink and paper, `"grain"` turns them grey with a fixed film grain, `"pixel"` into fine grey pixel art, all at promotion; `--ink` overrides it for one wallpaper) |
 | `[widget_groups]` in `theme.toml` | optional: show/hide labels; the widgets of a group toggle and move together |
 | `[locale.<lang>]` in `theme.toml` | optional: `name`, `description` and `[locale.<lang>.widget_groups]` (English label → translation) |
 | `palette.json` | Noctalia palette: `dark` + `light`, 16 roles + a `terminal` block, strict `#RRGGBB` |

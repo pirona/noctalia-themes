@@ -1,0 +1,31 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Noctalia config fragment, installed as ~/.config/noctalia/zz-theme.toml.
+
+[theme]
+source = "custom"
+custom_palette = "brume"
+mode = "light"
+shell_mode = "light"  # pale surfaces, like paper in fog
+
+# Thin, flat, edge to edge at the top: the bar is a line, not an object.
+[bar.default]
+position = "top"
+thickness = 30
+radius = 0
+radius_top_left = 0
+radius_top_right = 0
+radius_bottom_left = 0
+radius_bottom_right = 0
+margin_ends = 0
+margin_edge = 0
+concave_edge_corners = false
+contact_shadow = false
+
+[wallpaper]
+transition = ["fade"]  # fog thickening, then lifting
+transition_duration = 2400
+edge_smoothness = 0.3
+
+# An empty desktop: the photograph is the whole composition.
+[desktop_widgets]
+enabled = false
