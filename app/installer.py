@@ -482,7 +482,7 @@ def apply(theme_dir, label=None):
     _close_editor()
     output = detect_output() if "@OUTPUT@" in (theme_dir / "noctalia.toml").read_text() else None
     if current():
-        rollback(current(), sync=False)  # snapshot must capture the untouched user state; auto_sync follows the new theme
+        rollback(current(), sync=False)  # snapshot the untouched user state; auto_sync follows the new theme
     meta = tomllib.loads((theme_dir / "theme.toml").read_text())
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     bdir = ensure_dir(BACKUPS / stamp)
