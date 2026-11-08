@@ -339,6 +339,26 @@ def test_wallpaper_follows_backups():
         os.environ["PATH"] = ""
 
 
+def test_theme_wallpaper_remembered():
+    fake = SANDBOX / "bin"
+    fake.mkdir(exist_ok=True)
+    (fake / "noctalia").write_text(FAKE_NOCTALIA)
+    (fake / "noctalia").chmod(0o755)
+    os.environ["PATH"] = str(fake)
+    try:
+        installer.apply(ROOT / "themes/vaporwave")
+        walls = installer.wallpapers(ROOT / "themes/vaporwave")
+        assert installer.current_wallpapers() == {"": str(walls[0])}  # first visit: the theme's first wallpaper
+        installer.set_wallpaper(walls[-1])  # a sunset picked over breakfast
+        installer.apply(ROOT / "themes/brume")
+        assert installer.current_wallpapers() == {"": str(installer.wallpapers(ROOT / "themes/brume")[0])}
+        installer.apply(ROOT / "themes/vaporwave")
+        assert installer.current_wallpapers() == {"": str(walls[-1])}  # back to the one left there
+        installer.rollback(installer.current())
+    finally:
+        os.environ["PATH"] = ""
+
+
 def test_plugin_installed_and_enabled():
     fake = SANDBOX / "bin"
     fake.mkdir(exist_ok=True)
@@ -483,6 +503,7 @@ if __name__ == "__main__":
     test_fonts_installed_and_removed()
     test_real_settings_parse()
     test_wallpaper_follows_backups()
+    test_theme_wallpaper_remembered()
     test_plugin_installed_and_enabled()
     test_heal_stale_rewrite()
     test_plugin_enabled_later()
