@@ -350,10 +350,14 @@ def test_theme_wallpaper_remembered():
         walls = installer.wallpapers(ROOT / "themes/vaporwave")
         assert installer.current_wallpapers() == {"": str(walls[0])}  # first visit: the theme's first wallpaper
         installer.set_wallpaper(walls[-1])  # a sunset picked over breakfast
-        installer.apply(ROOT / "themes/brume")
-        assert installer.current_wallpapers() == {"": str(installer.wallpapers(ROOT / "themes/brume")[0])}
+        installer.apply(ROOT / "themes/brume")  # its fragment never names its folder: the manifest does
+        fog = installer.wallpapers(ROOT / "themes/brume")
+        assert installer.current_wallpapers() == {"": str(fog[0])}
+        installer.set_wallpaper(fog[-1])
         installer.apply(ROOT / "themes/vaporwave")
         assert installer.current_wallpapers() == {"": str(walls[-1])}  # back to the one left there
+        installer.apply(ROOT / "themes/brume")
+        assert installer.current_wallpapers() == {"": str(fog[-1])}
         installer.rollback(installer.current())
     finally:
         os.environ["PATH"] = ""

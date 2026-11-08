@@ -186,7 +186,12 @@ def _put(table, path, value):
 
 
 def _theme_dir_name(bdir):
-    """Folder name of the theme a backup was made for, read from its installed fragment."""
+    """Folder name of the theme a backup was made for: from its manifest, else (older backups) its fragment."""
+    try:
+        if name := json.loads((bdir / "manifest.json").read_text()).get("theme_dir"):
+            return name
+    except (OSError, ValueError):
+        pass
     frag = bdir / "fragment.toml"
     m = re.search(re.escape(str(INSTALLED)) + r"/([A-Za-z0-9_-]+)", frag.read_text()) if frag.exists() else None
     return m.group(1) if m else None
@@ -519,7 +524,8 @@ def apply(theme_dir, label=None):
     palette_dst = PALETTES / f"{meta['palette']}.json"
     fonts = _fonts(theme_dir)
     targets = [palette_dst, FRAGMENT, OPTIONS] + [dst for _src, dst in fonts]
-    manifest = {"theme": meta["name"], "date": stamp, "label": label or _("Before “{name}”").format(name=meta["name"]),
+    manifest = {"theme": meta["name"], "theme_dir": theme_dir.name,
+                "date": stamp, "label": label or _("Before “{name}”").format(name=meta["name"]),
                 "state_existed": STATE.exists(), "files": {}, "wallpapers": current_wallpapers()}
     # Snapshot first, before anything is written.
     if STATE.exists():
