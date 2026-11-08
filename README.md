@@ -2,7 +2,7 @@
 
 Decorative themes for [Noctalia](https://docs.noctalia.dev/noctalia/) v5 (tested on 5.3.0 with niri), with a small
 GTK 4 / libadwaita app to apply and remove them safely. Themes: **Vaporwave**, **Batman — Year One**,
-**Batman — Black and White**, **Brume** (grey fog, film grain or fine pixel art, thin top bar). License: GPL-3.0-or-later.
+**Batman — Black and White**, **Brume** (grey fog in fine pixel art, thin top bar). License: GPL-3.0-or-later.
 
 The app is in English, with a French translation picked from your locale.
 
