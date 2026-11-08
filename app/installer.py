@@ -305,6 +305,7 @@ def _walls():
 
 def _remember_wallpaper(tdir):
     """Note the theme's wallpaper on screen as it leaves, to show it again next time."""
+    # ponytail: one wallpaper per theme, shown on every screen; per-output memory if multi-screen ever matters
     shown = next((p for p in current_wallpapers().values() if p.startswith(str(INSTALLED / tdir) + "/")), None)
     if shown:
         ensure_dir(WALLS.parent)
@@ -554,8 +555,8 @@ def apply(theme_dir, label=None):
     log.info("applied theme %s (backup %s)", meta["name"], stamp)
     _reload()
     _remember_pending(_enable_plugins(fragment))
+    _show_theme_wallpaper(theme_dir)  # before heal(): a `noctalia msg` can make it save stale settings too
     heal()  # enabling may have made Noctalia save stale settings right away
-    _show_theme_wallpaper(theme_dir)
     return stamp
 
 
