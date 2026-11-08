@@ -31,6 +31,7 @@ from paths import (
     PALETTES,
     PLUGINS,
     STATE,
+    WALLS,
     ensure_dir,
 )
 
@@ -295,6 +296,34 @@ def _restore_wallpapers(saved, only_from=None):
             log.warning("could not restore wallpaper %s", path)  # the rest of the restore already succeeded
 
 
+def _walls():
+    try:
+        return json.loads(WALLS.read_text())
+    except (OSError, ValueError):
+        return {}
+
+
+def _remember_wallpaper(tdir):
+    """Note the theme's wallpaper on screen as it leaves, to show it again next time."""
+    # ponytail: one wallpaper per theme, shown on every screen; per-output memory if multi-screen ever matters
+    shown = next((p for p in current_wallpapers().values() if p.startswith(str(INSTALLED / tdir) + "/")), None)
+    if shown:
+        ensure_dir(WALLS.parent)
+        WALLS.write_text(json.dumps(_walls() | {tdir: shown}, indent=2))
+
+
+def _show_theme_wallpaper(theme_dir):
+    """The wallpaper last shown with this theme, else its first one."""
+    walls = wallpapers(theme_dir)
+    if not walls:
+        return
+    last = Path(_walls().get(theme_dir.name, ""))
+    try:
+        set_wallpaper(last if last in walls else walls[0])
+    except (OSError, subprocess.SubprocessError):
+        log.warning("could not set the theme's wallpaper")  # the theme itself is applied
+
+
 def sync_greeter():
     """One explicit greeter sync, for when auto_sync can't catch the change (it leaves with the theme's options)."""
     if not (options.greeter_installed() and options.load()["greeter_sync"]):
@@ -526,6 +555,7 @@ def apply(theme_dir, label=None):
     log.info("applied theme %s (backup %s)", meta["name"], stamp)
     _reload()
     _remember_pending(_enable_plugins(fragment))
+    _show_theme_wallpaper(theme_dir)  # before heal(): a `noctalia msg` can make it save stale settings too
     heal()  # enabling may have made Noctalia save stale settings right away
     return stamp
 
@@ -540,6 +570,8 @@ def rollback(backup_id, sync=True):
         rollback(current(), sync=False)  # remove the active theme cleanly before going further back
     removing = backup_id == current()
     tdir = _theme_dir_name(bdir)
+    if removing and tdir:
+        _remember_wallpaper(tdir)  # before the state restore can change it
     try:  # your settings changed meanwhile survive the removal; only the theme's own leave
         carry = _user_changes(backup_id)[0] if backup_id == current() else {}
     except (OSError, tomllib.TOMLDecodeError):
