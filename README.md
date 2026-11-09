@@ -14,13 +14,22 @@ cd noctalia-themes
 ./install.sh
 ```
 
-`install.sh` checks that Python 3.11+, PyGObject, GTK 4 and libadwaita are importable (it prints the package
-command for Fedora, Debian/Ubuntu and Arch otherwise), builds the translations if `msgfmt` is available, and adds a
-launcher entry. It never uses `sudo` and can be run again at any time. The themes' music player also needs
-`playerctl` (`sudo dnf install playerctl`, `sudo apt install playerctl`, `sudo pacman -S playerctl`). `./install.sh --uninstall` removes the launcher
-entry; themes and backups are kept.
+`install.sh` checks that Python 3.11+, PyGObject, GTK 4.12+ and libadwaita 1.5+ are importable (it prints the
+package command for Fedora, Debian/Ubuntu and Arch otherwise). It then copies the app, its themes and plugin to
+`~/.local/share/noctalia-themes/app/`, so the clone can move or go, and adds:
 
-Start “Noctalia Themes” from the launcher, or run `python3 app/main.py`.
+- a `noctalia-themes` command in `~/.local/bin/`;
+- a launcher entry with its icon (`~/.local/share/applications/`, `~/.local/share/icons/hicolor/`);
+- an AppStream entry (`~/.local/share/metainfo/`), read by software centers.
+
+It also notes what is missing but optional: Noctalia older than 5.3, `playerctl` (the themes' music player stays
+empty without it), `pkexec` when Noctalia Greeter is installed, and `msgfmt` (the app is then in English only).
+It never uses `sudo`. Run it again after a `git pull` to update: the new copy replaces the old one in one move.
+
+`./install.sh --uninstall` removes the app, the command, the launcher, the icon and the AppStream entry. Backups,
+imported themes and preferences are kept; a theme still applied stays applied, so remove it from the app first.
+
+Start “Noctalia Themes” from the launcher, run `noctalia-themes`, or `python3 app/main.py` from the clone.
 
 ## Use
 
@@ -177,6 +186,7 @@ python3 app/options.py           # preferences: overrides, clock format, TOML ke
 python3 tests/test_installer.py  # sandbox: round trip, invalid theme, failure, path tricks, screen, carried
                                  # settings, setup backup, preferences, clean-up, glue, wallpaper, permissions
 python3 tests/test_package.py    # theme packages: pack, import, replace, remove, and every refused trap
+python3 tests/test_install.py    # install.sh in a temporary HOME: install twice, the copy's paths, uninstall
 python3 tests/test_promote_bw.py # black and white thresholding
 python3 tests/test_slice_frame.py # player frames rebuild pixel for pixel from their bands
 pipx run ruff==0.12.0 check .    # lint + PEP 8 (config in pyproject.toml)
@@ -184,7 +194,8 @@ pipx run ruff==0.12.0 check .    # lint + PEP 8 (config in pyproject.toml)
 
 Layout: `app/paths.py` (every path), `app/i18n.py` (translations), `app/installer.py` (logic, no GTK, testable),
 `app/options.py` (preferences → TOML fragment), `app/package.py` (theme packages + CLI), `app/window.py` (main window), `app/preferences.py` (preferences
-dialog), `app/main.py` (application, actions, shortcuts), `app/palette.py` (palette validation).
+dialog), `app/main.py` (application, actions, shortcuts), `app/palette.py` (palette validation), `data/`
+(icon, AppStream metainfo).
 
 Translations: strings are English in the code, wrapped in `_()`. After changing them:
 

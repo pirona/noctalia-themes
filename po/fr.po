@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: noctalia-themes\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 15:04+0100\n"
+"POT-Creation-Date: 2026-11-09 17:28+0100\n"
 "PO-Revision-Date: 2026-10-28 09:00+0100\n"
 "Last-Translator: Antoine Piron\n"
 "Language-Team: French\n"
@@ -15,24 +15,16 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
 #: app/installer.py:161
-msgid ""
-"No screen found (neither niri nor wlr-randr answered). Set "
-"NOCTALIA_THEMES_OUTPUT, e.g. eDP-1."
-msgstr ""
-"Aucun écran détecté (ni niri ni wlr-randr). Définis NOCTALIA_THEMES_OUTPUT, "
-"ex. eDP-1."
+msgid "No screen found (neither niri nor wlr-randr answered). Set NOCTALIA_THEMES_OUTPUT, e.g. eDP-1."
+msgstr "Aucun écran détecté (ni niri ni wlr-randr). Définis NOCTALIA_THEMES_OUTPUT, ex. eDP-1."
 
 #: app/installer.py:175
 msgid "(unreadable configuration: cannot check what would be lost)"
 msgstr "(configuration illisible : impossible de vérifier ce qui serait perdu)"
 
 #: app/installer.py:446
-msgid ""
-"This backup is the only way back from the active theme: remove the theme "
-"first."
-msgstr ""
-"Cette sauvegarde est le seul retour possible pour le thème actif : retire le "
-"thème d'abord."
+msgid "This backup is the only way back from the active theme: remove the theme first."
+msgstr "Cette sauvegarde est le seul retour possible pour le thème actif : retire le thème d'abord."
 
 #: app/installer.py:557
 #, python-brace-format
@@ -57,15 +49,15 @@ msgstr "Mon setup, avec « {name} »"
 msgid "My setup, without a theme"
 msgstr "Mon setup, sans thème"
 
-#: app/main.py:57 app/window.py:85
+#: app/main.py:60 app/window.py:85
 msgid "Noctalia Themes"
 msgstr "Thèmes Noctalia"
 
-#: app/main.py:59
+#: app/main.py:62
 msgid "Decorative themes for Noctalia v5, with guaranteed rollback."
 msgstr "Thèmes décoratifs pour Noctalia v5, avec retour arrière garanti."
 
-#: app/main.py:60
+#: app/main.py:63
 msgid "Support on Ko-fi"
 msgstr "Soutenir sur Ko-fi"
 
@@ -107,8 +99,7 @@ msgstr "theme.toml est absent ou illisible."
 #: app/package.py:155
 #, python-brace-format
 msgid "“{name}” is a built-in theme and cannot be replaced."
-msgstr ""
-"« {name} » est un thème livré avec l’appli : il ne peut pas être remplacé."
+msgstr "« {name} » est un thème livré avec l’appli : il ne peut pas être remplacé."
 
 #: app/package.py:159
 #, python-brace-format
@@ -295,12 +286,8 @@ msgstr "Certains réglages sont ignorés"
 
 #: app/preferences.py:159
 #, python-brace-format
-msgid ""
-"Your Noctalia configuration (settings.toml) already sets them and wins: "
-"{keys}. Change them in Noctalia, or remove the theme and apply it again."
-msgstr ""
-"Ta configuration Noctalia (settings.toml) les définit déjà et l'emporte : "
-"{keys}. Change-les dans Noctalia, ou retire le thème puis ré-applique-le."
+msgid "Your Noctalia configuration (settings.toml) already sets them and wins: {keys}. Change them in Noctalia, or remove the theme and apply it again."
+msgstr "Ta configuration Noctalia (settings.toml) les définit déjà et l'emporte : {keys}. Change-les dans Noctalia, ou retire le thème puis ré-applique-le."
 
 #: app/preferences.py:164
 msgid "Display"
@@ -376,8 +363,7 @@ msgstr "Suivre le thème"
 
 #: app/preferences.py:222
 msgid "Noctalia copies the wallpaper, colors and font to Noctalia Greeter"
-msgstr ""
-"Noctalia recopie le fond, les couleurs et la police sur Noctalia Greeter"
+msgstr "Noctalia recopie le fond, les couleurs et la police sur Noctalia Greeter"
 
 #: app/preferences.py:228
 msgid "Screen"
@@ -400,11 +386,8 @@ msgid "Backups"
 msgstr "Sauvegardes"
 
 #: app/preferences.py:240
-msgid ""
-"Nothing is deleted automatically. The active theme's backup is never deleted."
-msgstr ""
-"Rien n'est supprimé automatiquement. La sauvegarde du thème actif n'est "
-"jamais supprimée."
+msgid "Nothing is deleted automatically. The active theme's backup is never deleted."
+msgstr "Rien n'est supprimé automatiquement. La sauvegarde du thème actif n'est jamais supprimée."
 
 #: app/preferences.py:242
 msgid "Backups to keep"
@@ -430,9 +413,7 @@ msgstr[1] "Supprimer les {n} sauvegardes les plus anciennes ?"
 
 #: app/preferences.py:273
 msgid "They can no longer be restored. The active theme's backup is kept."
-msgstr ""
-"Elles ne pourront plus être restaurées. La sauvegarde du thème actif est "
-"conservée."
+msgstr "Elles ne pourront plus être restaurées. La sauvegarde du thème actif est conservée."
 
 #: app/preferences.py:274 app/window.py:309
 msgid "Cancel"
@@ -547,6 +528,7 @@ msgstr "(pas encore de journal)"
 msgid "Diagnostic copied"
 msgstr "Diagnostic copié"
 
+#. Translators: strftime format of a backup date
 #: app/window.py:27
 msgid "%Y-%m-%d at %H:%M"
 msgstr "%d/%m/%Y à %H:%M"
@@ -679,12 +661,8 @@ msgid "Remove “{name}”?"
 msgstr "Retirer « {name} » ?"
 
 #: app/window.py:276
-msgid ""
-"The imported theme leaves the list. Your backups are kept; import its .zip "
-"again to get it back."
-msgstr ""
-"Le thème importé quitte la liste. Tes sauvegardes sont gardées ; réimporte "
-"son .zip pour le retrouver."
+msgid "The imported theme leaves the list. Your backups are kept; import its .zip again to get it back."
+msgstr "Le thème importé quitte la liste. Tes sauvegardes sont gardées ; réimporte son .zip pour le retrouver."
 
 #: app/window.py:277
 msgid "Remove"
@@ -696,15 +674,8 @@ msgid "“{name}” removed"
 msgstr "« {name} » retiré"
 
 #: app/window.py:284
-msgid ""
-"Every apply first saves your Noctalia configuration; removing the theme "
-"restores it and keeps the settings you changed meanwhile. “Save my setup” "
-"(menu) copies everything as is, active theme and wallpaper included."
-msgstr ""
-"Chaque application enregistre d'abord ta configuration Noctalia ; retirer le "
-"thème la restaure en gardant tes réglages modifiés entre-temps. "
-"« Sauvegarder mon setup » (menu) copie tout tel quel, thème actif et fond "
-"d'écran compris."
+msgid "Every apply first saves your Noctalia configuration; removing the theme restores it and keeps the settings you changed meanwhile. “Save my setup” (menu) copies everything as is, active theme and wallpaper included."
+msgstr "Chaque application enregistre d'abord ta configuration Noctalia ; retirer le thème la restaure en gardant tes réglages modifiés entre-temps. « Sauvegarder mon setup » (menu) copie tout tel quel, thème actif et fond d'écran compris."
 
 #: app/window.py:289
 msgid "No backup yet"
@@ -765,12 +736,10 @@ msgstr "Appliquer « {name} » ?"
 #: app/window.py:358
 msgid ""
 "Your current configuration is saved first.\n"
-"Settings you change in Noctalia while the theme is active are kept when you "
-"remove it; only the theme's own leave with it."
+"Settings you change in Noctalia while the theme is active are kept when you remove it; only the theme's own leave with it."
 msgstr ""
 "Ta configuration actuelle est sauvegardée d'abord.\n"
-"Tes réglages modifiés dans Noctalia pendant que le thème est actif sont "
-"conservés quand tu le retires ; seuls ceux du thème partent avec lui."
+"Tes réglages modifiés dans Noctalia pendant que le thème est actif sont conservés quand tu le retires ; seuls ceux du thème partent avec lui."
 
 #: app/window.py:364
 #, python-brace-format
@@ -804,18 +773,13 @@ msgstr "Restaurer ton setup du {date} ?"
 
 #: app/window.py:382
 msgid ""
-"All of Noctalia goes back exactly to this setup: active theme, widgets, bar, "
-"dock, wallpaper. Your current configuration is replaced entirely: save it "
-"first if you want to come back to it.\n"
+"All of Noctalia goes back exactly to this setup: active theme, widgets, bar, dock, wallpaper. Your current configuration is replaced entirely: save it first if you want to come back to it.\n"
 "\n"
 "If the restored theme has its own fonts, restart Noctalia so it sees them."
 msgstr ""
-"Tout Noctalia revient exactement à ce setup : thème actif, widgets, barre, "
-"dock, fond d'écran. Ta configuration actuelle est remplacée en entier : "
-"sauvegarde-la d'abord si tu veux pouvoir y revenir.\n"
+"Tout Noctalia revient exactement à ce setup : thème actif, widgets, barre, dock, fond d'écran. Ta configuration actuelle est remplacée en entier : sauvegarde-la d'abord si tu veux pouvoir y revenir.\n"
 "\n"
-"Si le thème restauré a ses propres polices, redémarre Noctalia pour qu'il "
-"les voie."
+"Si le thème restauré a ses propres polices, redémarre Noctalia pour qu'il les voie."
 
 #: app/window.py:387
 msgid "Setup restored"
@@ -827,10 +791,8 @@ msgid "Restore the backup from {date}?"
 msgstr "Restaurer la sauvegarde du {date} ?"
 
 #: app/window.py:389
-msgid ""
-"Noctalia's current configuration will be replaced by the one from that date."
-msgstr ""
-"La configuration actuelle de Noctalia sera remplacée par celle de cette date."
+msgid "Noctalia's current configuration will be replaced by the one from that date."
+msgstr "La configuration actuelle de Noctalia sera remplacée par celle de cette date."
 
 #: app/window.py:392
 msgid "Backup restored"
@@ -843,9 +805,7 @@ msgstr "Supprimer la sauvegarde du {date} ?"
 
 #: app/window.py:396
 msgid "It can no longer be restored. Other backups are not touched."
-msgstr ""
-"Elle ne pourra plus être restaurée. Les autres sauvegardes ne sont pas "
-"touchées."
+msgstr "Elle ne pourra plus être restaurée. Les autres sauvegardes ne sont pas touchées."
 
 #: app/window.py:398
 msgid "Backup deleted"
