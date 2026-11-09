@@ -39,12 +39,15 @@ class App(Adw.Application):
         settings = Gtk.Settings.get_default()
         if settings.get_property("gtk-icon-theme-name") == "hicolor":
             settings.set_property("gtk-icon-theme-name", "Adwaita")
+        display = Gdk.Display.get_default()
+        Gtk.IconTheme.get_for_display(display).add_search_path(str(paths.ROOT / "data" / "icons"))  # run from git
+        Gtk.Window.set_default_icon_name(APP_ID)
         css = Gtk.CssProvider()
         css.load_from_string(".drop-zone { border: 2px dashed alpha(currentColor, 0.35); border-radius: 12px;"
                              " padding: 24px 12px; }"
                              " .drop-zone.drop-hover { border-color: @accent_color;"
                              " background: alpha(@accent_color, 0.1); }")
-        Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css,
+        Gtk.StyleContext.add_provider_for_display(display, css,
                                                   Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
     def _window(self):
@@ -54,7 +57,7 @@ class App(Adw.Application):
         self._window().present()
 
     def _about(self, *_a):
-        about = Adw.AboutDialog(application_name=_("Noctalia Themes"), application_icon="preferences-desktop-theme",
+        about = Adw.AboutDialog(application_name=_("Noctalia Themes"), application_icon=APP_ID,
                                 version=VERSION, developer_name="Antoine Piron", license_type=Gtk.License.GPL_3_0,
                                 comments=_("Decorative themes for Noctalia v5, with guaranteed rollback."))
         about.add_link(_("Support on Ko-fi"), DONATE_URL)
