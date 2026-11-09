@@ -674,3 +674,9 @@ msgstr "Elle ne pourra plus être restaurée. Les autres sauvegardes ne sont pas
 #: app/window.py:318
 msgid "Backup deleted"
 msgstr "Sauvegarde supprimée"
+
+msgid "Support on Ko-fi ☕"
+msgstr "Soutenir sur Ko-fi ☕"
+
+msgid "Support on Ko-fi"
+msgstr "Soutenir sur Ko-fi"
