@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Test fixture only (not shipped): plugin widgets, a font and widget groups, like a full theme.
+name = "Ink Test"
+description = "All ink, no hero: the theme the tests wear."
+author = "Antoine Piron"
+version = "1.0.0"
+license = "GPL-3.0-or-later"
+format = 1
+palette = "ink-test"
+
+[widget_groups]
+"Clock" = ["bw-clock"]
+"Player" = ["bw-player"]
+"Quote" = ["bw-quote"]

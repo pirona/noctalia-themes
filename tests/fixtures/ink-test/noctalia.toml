@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Test fixture: two plugin widgets and a sticker, files referenced but not needed by the tests.
+
+[theme]
+source = "custom"
+custom_palette = "ink-test"
+mode = "dark"
+
+[wallpaper]
+transition = ["fade"]
+
+[desktop_widgets]
+enabled = true
+widget_order = ["bw-clock", "bw-player", "bw-quote"]
+
+[desktop_widgets.widget.bw-clock]
+type = "billisdead/theme-widgets:clock"
+output = "@OUTPUT@"
+cx = 250.0
+cy = 150.0
+box_width = 400.0
+box_height = 180.0
+rotation = 0.0
+
+[desktop_widgets.widget.bw-clock.settings]
+background = false
+font_family = "Kalam"
+format = "{:%H:%M}"
+
+[desktop_widgets.widget.bw-player]
+type = "billisdead/theme-widgets:player"
+output = "@OUTPUT@"
+cx = 240.0
+cy = 700.0
+box_width = 380.0
+box_height = 170.0
+rotation = 0.0
+
+[desktop_widgets.widget.bw-player.settings]
+background = false
+font_family = "Kalam"
+
+[desktop_widgets.widget.bw-quote]
+type = "sticker"
+output = "@OUTPUT@"
+cx = 1270.0
+cy = 770.0
+box_width = 440.0
+box_height = 76.0
+rotation = 0.03
+
+[desktop_widgets.widget.bw-quote.settings]
+image_path = "@THEME_DIR@/stickers/quote.png"
+background = false

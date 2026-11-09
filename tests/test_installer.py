@@ -19,6 +19,8 @@ sys.path.insert(0, str(ROOT / "app"))
 import installer  # noqa: E402
 import options  # noqa: E402
 
+INK = ROOT / "tests/fixtures/ink-test"  # full-featured theme: plugin widgets, font, groups
+
 STATE_SAMPLE = '''config_version = 15
 
 [bar.default]
@@ -195,12 +197,12 @@ def test_user_settings_survive_removal_and_switch():
     user += f'\n[wallpaper.monitors.eDP-1]\npath = "{theme_wall}"\n'  # a theme wallpaper: leaves with it
     installer.STATE.write_text(user)
     assert st["bar"]["default"]["end"] == ["status", "tray"]
-    installer.apply(ROOT / "themes/batman")  # switch: removes vaporwave first
+    installer.apply(INK)  # switch: removes vaporwave first
     after = tomllib.loads(installer.STATE.read_text())
     assert after["bar"]["default"]["position"] == "bottom" and after["dock"]["position"] == "left"
     assert after["bar"]["default"]["end"] == ["tray"]
     assert "monitors" not in after.get("wallpaper", {})
-    assert installer.current_theme()["theme"] == "Batman — Year One"
+    assert installer.current_theme()["theme"] == "Ink Test"
     installer.rollback(installer.current())  # removal: still there, theme gone
     gone = tomllib.loads(installer.STATE.read_text())
     assert gone["bar"]["default"]["position"] == "bottom" and gone["dock"]["position"] == "left"
@@ -211,7 +213,7 @@ def test_user_settings_survive_removal_and_switch():
 
 def test_setup_backup_restores_everything():
     installer.STATE.write_text(STATE_SAMPLE)
-    installer.apply(ROOT / "themes/batman")
+    installer.apply(INK)
     installer.STATE.write_text(installer.STATE.read_text() + '\n[dock]\nposition = "left"\n')
     files = {p: sha(p) for p in [installer.STATE, installer.FRAGMENT, *installer.CONFIG.rglob("*.*")]}
     font = installer.FONTS / "Kalam-Regular.ttf"
@@ -222,7 +224,7 @@ def test_setup_backup_restores_everything():
     assert sid not in installer.excess_backups(0)  # pruning never takes a saved setup
     installer.rollback(sid)
     assert {p: sha(p) for p in files} == files  # byte for byte, theme fragment and widgets included
-    assert installer.current() == theme_bid and installer.current_theme()["theme"] == "Batman — Year One"
+    assert installer.current() == theme_bid and installer.current_theme()["theme"] == "Ink Test"
     assert font.exists() and not (installer.CONFIG / "palettes/vaporwave.json").exists()
     installer.rollback(theme_bid)  # the theme still comes off cleanly afterwards
     assert installer.current() is None
@@ -284,8 +286,8 @@ def test_excess_backups_spare_active():
 
 def test_fonts_installed_and_removed():
     font = installer.FONTS / "Kalam-Regular.ttf"
-    bid = installer.apply(ROOT / "themes/batman")
-    assert sha(font) == sha(ROOT / "themes/batman/fonts/Kalam-Regular.ttf")
+    bid = installer.apply(INK)
+    assert sha(font) == sha(INK / "fonts/Kalam-Regular.ttf")
     installer.rollback(bid)
     assert not font.exists()  # created by the theme: gone on rollback
 
@@ -370,12 +372,12 @@ def test_plugin_installed_and_enabled():
     (fake / "noctalia").chmod(0o755)
     os.environ["PATH"] = str(fake)
     try:
-        bid = installer.apply(ROOT / "themes/batman")  # its player and clock are theme-widgets plugin widgets
+        bid = installer.apply(INK)  # its player and clock are theme-widgets plugin widgets
         dst = installer.NOCTALIA_PLUGINS / "theme-widgets"
         assert sha(dst / "player.luau") == sha(ROOT / "plugins/theme-widgets/player.luau")
         assert "plugins enable billisdead/theme-widgets" in (fake / "calls.log").read_text()
-        (dst / "player.luau").write_text("-- stale copy, older than a VHS of Year One")
-        installer.refresh(ROOT / "themes/batman")  # refresh brings the plugin up to date too
+        (dst / "player.luau").write_text("-- stale copy, older than a VHS of the first test run")
+        installer.refresh(INK)  # refresh brings the plugin up to date too
         assert sha(dst / "player.luau") == sha(ROOT / "plugins/theme-widgets/player.luau")
         calls = (fake / "calls.log").read_text().splitlines()
         # enabling makes Noctalia save its settings from memory: only once it has reloaded what we wrote
@@ -403,7 +405,7 @@ def test_heal_stale_rewrite():
         if b["id"] == installer.current():
             installer.rollback(b["id"])
     clean = installer.STATE.read_text()
-    bid = installer.apply(ROOT / "themes/batman-bw")
+    bid = installer.apply(INK)
     themed = installer.STATE.read_text()
     # Noctalia saves from memory before reloading: the pre-theme widgets come back, the theme's are hidden
     installer.STATE.write_text(themed + STALE)
@@ -430,7 +432,7 @@ def test_heal_stale_rewrite():
 
 def test_plugin_enabled_later():
     import json
-    bid = installer.apply(ROOT / "themes/batman")  # Noctalia off (no binary): enabling is postponed
+    bid = installer.apply(INK)  # Noctalia off (no binary): enabling is postponed
     assert json.loads(installer.EXPECT.read_text())["pending"] == ["billisdead/theme-widgets"]
     fake = SANDBOX / "bin"
     fake.mkdir(exist_ok=True)
@@ -452,7 +454,7 @@ def test_glue_moves_group_together():
             installer.rollback(b["id"])
     # The shipped themes draw each unit as one widget; the glue still serves themes that group several.
     theme = SANDBOX / "themes" / "glue-test"
-    shutil.copytree(ROOT / "themes/batman-bw", theme, dirs_exist_ok=True)
+    shutil.copytree(INK, theme, dirs_exist_ok=True)
     meta = (theme / "theme.toml").read_text()
     (theme / "theme.toml").write_text(meta.replace('"Quote" = ["bw-quote"]', '"Quote" = ["bw-clock", "bw-quote"]'))
     installer.apply(theme)
