@@ -1,14 +1,14 @@
 # SOME DESCRIPTIVE TITLE.
 # Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the noctalia-themes package.
+# This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
 #
 #, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: noctalia-themes\n"
+"Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 14:55+0100\n"
+"POT-Creation-Date: 2026-11-09 15:04+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -19,37 +19,41 @@ msgstr ""
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
 #: app/installer.py:161
-msgid "No screen found (neither niri nor wlr-randr answered). Set NOCTALIA_THEMES_OUTPUT, e.g. eDP-1."
+msgid ""
+"No screen found (neither niri nor wlr-randr answered). Set "
+"NOCTALIA_THEMES_OUTPUT, e.g. eDP-1."
 msgstr ""
 
 #: app/installer.py:175
 msgid "(unreadable configuration: cannot check what would be lost)"
 msgstr ""
 
-#: app/installer.py:393
-msgid "This backup is the only way back from the active theme: remove the theme first."
+#: app/installer.py:446
+msgid ""
+"This backup is the only way back from the active theme: remove the theme "
+"first."
 msgstr ""
 
-#: app/installer.py:504
+#: app/installer.py:557
 #, python-brace-format
 msgid "“{name}” is not the active theme: use apply."
 msgstr ""
 
-#: app/installer.py:536
+#: app/installer.py:591
 #, python-brace-format
 msgid "Before “{name}”"
 msgstr ""
 
-#: app/installer.py:684
+#: app/installer.py:741
 msgid "Close Noctalia's widget editor, then try again."
 msgstr ""
 
-#: app/installer.py:813
+#: app/installer.py:870
 #, python-brace-format
 msgid "My setup, with “{name}”"
 msgstr ""
 
-#: app/installer.py:814
+#: app/installer.py:871
 msgid "My setup, without a theme"
 msgstr ""
 
@@ -290,7 +294,9 @@ msgstr ""
 
 #: app/preferences.py:159
 #, python-brace-format
-msgid "Your Noctalia configuration (settings.toml) already sets them and wins: {keys}. Change them in Noctalia, or remove the theme and apply it again."
+msgid ""
+"Your Noctalia configuration (settings.toml) already sets them and wins: "
+"{keys}. Change them in Noctalia, or remove the theme and apply it again."
 msgstr ""
 
 #: app/preferences.py:164
@@ -305,7 +311,7 @@ msgstr ""
 msgid "Appearance"
 msgstr ""
 
-#: app/preferences.py:176 app/preferences.py:336
+#: app/preferences.py:176 app/preferences.py:345
 msgid "Mode"
 msgstr ""
 
@@ -357,7 +363,7 @@ msgstr ""
 msgid "The “Undo” toast is offered either way"
 msgstr ""
 
-#: app/preferences.py:220 app/preferences.py:340
+#: app/preferences.py:220 app/preferences.py:349
 msgid "Login screen"
 msgstr ""
 
@@ -390,7 +396,8 @@ msgid "Backups"
 msgstr ""
 
 #: app/preferences.py:240
-msgid "Nothing is deleted automatically. The active theme's backup is never deleted."
+msgid ""
+"Nothing is deleted automatically. The active theme's backup is never deleted."
 msgstr ""
 
 #: app/preferences.py:242
@@ -458,76 +465,80 @@ msgstr ""
 msgid "unavailable"
 msgstr ""
 
-#: app/preferences.py:335
+#: app/preferences.py:329
+msgid "Noctalia Greeter not installed"
+msgstr ""
+
+#: app/preferences.py:331
+msgid "not synced"
+msgstr ""
+
+#: app/preferences.py:334
+#, python-brace-format
+msgid "theme's login wallpaper: {name}"
+msgstr ""
+
+#: app/preferences.py:334
+msgid "follows the theme"
+msgstr ""
+
+#: app/preferences.py:344
 msgid "Active palette"
 msgstr ""
 
-#: app/preferences.py:337
+#: app/preferences.py:346
 msgid "Active theme"
 msgstr ""
 
-#: app/preferences.py:337
+#: app/preferences.py:346
 #, python-brace-format
 msgid "{name} (backup {id})"
 msgstr ""
 
-#: app/preferences.py:338
+#: app/preferences.py:347
 msgid "none"
 msgstr ""
 
-#: app/preferences.py:339
+#: app/preferences.py:348
 msgid "Widgets screen"
 msgstr ""
 
-#: app/preferences.py:340
-msgid "follows the theme"
-msgstr ""
-
-#: app/preferences.py:340
-msgid "not synced"
-msgstr ""
-
-#: app/preferences.py:341
-msgid "Noctalia Greeter not installed"
-msgstr ""
-
-#: app/preferences.py:342
+#: app/preferences.py:350
 msgid "Settings changed since apply"
 msgstr ""
 
-#: app/preferences.py:343
+#: app/preferences.py:351
 msgid "Preferences overridden by settings.toml"
 msgstr ""
 
-#: app/preferences.py:344
+#: app/preferences.py:352
 msgid "Noctalia config"
 msgstr ""
 
-#: app/preferences.py:345
+#: app/preferences.py:353
 msgid "Noctalia state"
 msgstr ""
 
-#: app/preferences.py:346
+#: app/preferences.py:354
 msgid "App preferences"
 msgstr ""
 
-#: app/preferences.py:347
+#: app/preferences.py:355
 msgid "Installed themes and backups"
 msgstr ""
 
-#: app/preferences.py:353
+#: app/preferences.py:361
 msgid "(empty)"
 msgstr ""
 
-#: app/preferences.py:355
+#: app/preferences.py:363
 msgid "(no log yet)"
 msgstr ""
 
-#: app/preferences.py:360
+#: app/preferences.py:368
 msgid "Diagnostic copied"
 msgstr ""
 
-#. Translators: strftime format of a backup date
 #: app/window.py:27
 msgid "%Y-%m-%d at %H:%M"
 msgstr ""
@@ -660,7 +671,9 @@ msgid "Remove “{name}”?"
 msgstr ""
 
 #: app/window.py:276
-msgid "The imported theme leaves the list. Your backups are kept; import its .zip again to get it back."
+msgid ""
+"The imported theme leaves the list. Your backups are kept; import its .zip "
+"again to get it back."
 msgstr ""
 
 #: app/window.py:277
@@ -673,7 +686,10 @@ msgid "“{name}” removed"
 msgstr ""
 
 #: app/window.py:284
-msgid "Every apply first saves your Noctalia configuration; removing the theme restores it and keeps the settings you changed meanwhile. “Save my setup” (menu) copies everything as is, active theme and wallpaper included."
+msgid ""
+"Every apply first saves your Noctalia configuration; removing the theme "
+"restores it and keeps the settings you changed meanwhile. “Save my setup” "
+"(menu) copies everything as is, active theme and wallpaper included."
 msgstr ""
 
 #: app/window.py:289
@@ -735,7 +751,8 @@ msgstr ""
 #: app/window.py:358
 msgid ""
 "Your current configuration is saved first.\n"
-"Settings you change in Noctalia while the theme is active are kept when you remove it; only the theme's own leave with it."
+"Settings you change in Noctalia while the theme is active are kept when you "
+"remove it; only the theme's own leave with it."
 msgstr ""
 
 #: app/window.py:364
@@ -770,7 +787,9 @@ msgstr ""
 
 #: app/window.py:382
 msgid ""
-"All of Noctalia goes back exactly to this setup: active theme, widgets, bar, dock, wallpaper. Your current configuration is replaced entirely: save it first if you want to come back to it.\n"
+"All of Noctalia goes back exactly to this setup: active theme, widgets, bar, "
+"dock, wallpaper. Your current configuration is replaced entirely: save it "
+"first if you want to come back to it.\n"
 "\n"
 "If the restored theme has its own fonts, restart Noctalia so it sees them."
 msgstr ""
@@ -785,7 +804,8 @@ msgid "Restore the backup from {date}?"
 msgstr ""
 
 #: app/window.py:389
-msgid "Noctalia's current configuration will be replaced by the one from that date."
+msgid ""
+"Noctalia's current configuration will be replaced by the one from that date."
 msgstr ""
 
 #: app/window.py:392

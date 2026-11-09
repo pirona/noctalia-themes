@@ -3,6 +3,7 @@
 import hashlib
 import os
 import shutil
+import stat
 import sys
 import tempfile
 import tomllib
@@ -490,6 +491,43 @@ def test_private_dirs():
     assert paths.SETTINGS.parent.stat().st_mode & 0o777 == 0o700
 
 
+def test_login_wallpaper_synced():
+    fake = SANDBOX / "bin"
+    fake.mkdir(exist_ok=True)
+    for tool, script in (("noctalia", FAKE_NOCTALIA), ("noctalia-greeter", "#!/bin/sh\n")):
+        (fake / tool).write_text(script)
+        (fake / tool).chmod(0o755)
+    os.environ["PATH"] = str(fake)
+    calls, popen = [], installer.subprocess.Popen
+
+    def record(cmd, **kw):  # greeter syncs are only recorded: no Polkit prompt in a test
+        if cmd[0] == "pkexec" or cmd[1:] == ["msg", "greeter-sync"]:
+            return calls.append(cmd)
+        return popen(cmd, **kw)
+    installer.subprocess.Popen = record
+    installer.GREETER_STAGING = SANDBOX / "greeter-sync"
+    try:
+        theme = ROOT / "themes/vaporwave"
+        installer.apply(theme)
+        assert tomllib.loads(installer.OPTIONS.read_text())["shell"]["greeter_sync"]["auto_sync"] is False
+        assert calls[-1] == ["pkexec", installer.GREETER_HELPER, "--sync", str(installer.GREETER_STAGING)]
+        sync = tomllib.loads((installer.GREETER_STAGING / "sync.toml").read_text())["appearance"]
+        assert sync["wallpaper"]["path"] == "/var/lib/noctalia-greeter/wallpaper.webp"
+        assert sha(installer.GREETER_STAGING / "wallpaper.webp") == sha(theme / "wallpapers/wall_elevator-sky.webp")
+        assert len(sync["palette"]) == 16 and sync["palette"]["on_surface_variant"].startswith("#")
+        assert stat.S_IMODE(installer.GREETER_STAGING.stat().st_mode) == 0o700
+        installer.rollback(installer.current())  # theme gone: Noctalia's own sync takes the login screen back
+        assert calls[-1] == ["noctalia", "msg", "greeter-sync"]
+        before = len(calls)
+        installer.apply(INK)  # no login wallpaper: auto_sync follows the desktop, as before
+        assert tomllib.loads(installer.OPTIONS.read_text())["shell"]["greeter_sync"]["auto_sync"] is True
+        assert calls[before:] == []  # Noctalia syncs on its own, the app stays out of it
+        installer.rollback(installer.current())
+    finally:
+        installer.subprocess.Popen = popen
+        os.environ["PATH"] = ""
+
+
 if __name__ == "__main__":
     test_strip()
     test_apply_rollback_roundtrip()
@@ -513,6 +551,7 @@ if __name__ == "__main__":
     test_plugin_installed_and_enabled()
     test_heal_stale_rewrite()
     test_plugin_enabled_later()
+    test_login_wallpaper_synced()
     test_glue_moves_group_together()
     test_private_dirs()
     print("OK", SANDBOX)

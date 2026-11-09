@@ -337,26 +337,79 @@ def _show_theme_wallpaper(theme_dir):
         log.warning("could not set the theme's wallpaper")  # the theme itself is applied
 
 
+GREETER_HELPER = "/usr/bin/noctalia-greeter-apply-appearance"
+# The only staging path the helper accepts, owned by us, 0700; Polkit lets the helper run without a password.
+GREETER_STAGING = Path(f"/run/user/{os.getuid()}/noctalia-greeter-sync")
+GREETER_DATA = "/var/lib/noctalia-greeter"  # where the helper copies the staged wallpaper
+
+
+def login_wallpaper(theme_dir):
+    """The wallpaper a theme declares for the login screen, or None."""
+    name = tomllib.loads((Path(theme_dir) / "theme.toml").read_text()).get("login_wallpaper")
+    wall = Path(theme_dir) / "wallpapers" / Path(str(name)).name if name else None
+    return wall if wall and wall.is_file() else None
+
+
+def active_dir():
+    """Installed copy of the active theme, or None."""
+    tdir = _theme_dir_name(BACKUPS / current()) if current() else None
+    return INSTALLED / tdir if tdir else None
+
+
+def _stage_greeter(theme_dir, wall):
+    """Write the greeter payload (palette, mode, the theme's login wallpaper) into the staging folder."""
+    mode = options.load()["theme_mode"]
+    if mode not in ("light", "dark"):  # "theme" or "auto": the theme's own mode, dark when it leaves it open
+        mode = tomllib.loads((theme_dir / "noctalia.toml").read_text()).get("theme", {}).get("mode", "dark")
+    roles = json.loads((theme_dir / "palette.json").read_text())["light" if mode == "light" else "dark"]
+    pal = {re.sub(r"(?<!^)([A-Z])", r"_\1", k[1:]).lower(): v  # mOnSurface -> on_surface
+           for k, v in roles.items() if k.startswith("m") and isinstance(v, str)}
+    name = f"wallpaper{wall.suffix.lower()}"
+    payload = {"appearance": {"scheme": "Synced", "theme_mode": "light" if mode == "light" else "dark",
+                              "palette": pal,
+                              "wallpaper": {"path": f"{GREETER_DATA}/{name}",
+                                            "fill_mode": options.load()["fill_mode"] or "crop"}}}
+    if GREETER_STAGING.exists():
+        shutil.rmtree(GREETER_STAGING)  # a previous run's files: the helper refuses anything unexpected
+    GREETER_STAGING.mkdir(mode=0o700)
+    shutil.copyfile(wall, GREETER_STAGING / name)
+    (GREETER_STAGING / "sync.toml").write_text(options.dump(payload))
+    for f in GREETER_STAGING.iterdir():
+        f.chmod(0o600)  # the helper refuses group-writable files (umask 002)
+
+
 def sync_greeter():
-    """One explicit greeter sync, for when auto_sync can't catch the change (it leaves with the theme's options)."""
+    """One explicit greeter sync: the theme's login wallpaper if it has one, else Noctalia's own sync."""
     if not (options.greeter_installed() and options.load()["greeter_sync"]):
         return
+    theme_dir = active_dir()
+    wall = login_wallpaper(theme_dir) if theme_dir else None
+    cmd = ["noctalia", "msg", "greeter-sync"]
+    if wall:
+        try:
+            _stage_greeter(theme_dir, wall)
+        except (OSError, KeyError, ValueError) as e:
+            log.warning("could not stage the login screen: %s", e)
+            return
+        cmd = ["pkexec", GREETER_HELPER, "--sync", str(GREETER_STAGING)]
     try:  # don't wait: the helper may sit on a Polkit prompt
-        subprocess.Popen(["noctalia", "msg", "greeter-sync"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except OSError:
         log.warning("could not start the greeter sync")
 
 
-def write_options(fragment=None, reload=True):
+def write_options(fragment=None, reload=True, theme_dir=None):
     """Write the preferences fragment for the active theme (or remove it when it changes nothing).
 
-    `fragment` is the theme fragment the options apply to; by default the installed one.
+    `fragment` and `theme_dir` are the theme the options apply to; by default the installed one.
     """
     if fragment is None:
         if not current() or not FRAGMENT.exists():
             return
         fragment = tomllib.loads(FRAGMENT.read_text())
-    text = options.dump(options.overrides(fragment, options.load(), options.greeter_installed()))
+    theme_dir = theme_dir or active_dir()
+    login = bool(theme_dir and login_wallpaper(theme_dir))
+    text = options.dump(options.overrides(fragment, options.load(), options.greeter_installed(), login))
     if not text.strip():
         OPTIONS.unlink(missing_ok=True)
     else:
@@ -509,13 +562,15 @@ def refresh(theme_dir):
     tmp.write_text(text)
     _atomic_copy(theme_dir / "palette.json", PALETTES / f"{meta['palette']}.json")
     _install_fonts(_fonts(theme_dir))  # ponytail: a font added after apply isn't in the backup, so rollback keeps it
-    write_options(fragment, reload=False)  # options first: Noctalia never sees new fragment + stale options
+    write_options(fragment, reload=False, theme_dir=theme_dir)  # before the fragment: never new + stale options
     _atomic_copy(tmp, FRAGMENT)
     tmp.unlink()
     _install_plugins(fragment)
     log.info("refreshed theme %s", meta["name"])
     _reload()
     _remember_pending(_enable_plugins(fragment))
+    if login_wallpaper(theme_dir):
+        sync_greeter()
 
 
 def apply(theme_dir, label=None):
@@ -553,7 +608,7 @@ def apply(theme_dir, label=None):
         ensure_dir(palette_dst.parent)
         _atomic_copy(theme_dir / "palette.json", palette_dst)
         _install_fonts(fonts)  # before the fragment: widgets must find their font on first load
-        write_options(fragment, reload=False)
+        write_options(fragment, reload=False, theme_dir=theme_dir)
         (bdir / "fragment.toml").write_text(fragment_text)
         _atomic_copy(bdir / "fragment.toml", FRAGMENT)
         if stripped is not None:
@@ -571,6 +626,8 @@ def apply(theme_dir, label=None):
     _remember_pending(_enable_plugins(fragment))
     _show_theme_wallpaper(theme_dir)  # before heal(): a `noctalia msg` can make it save stale settings too
     heal()  # enabling may have made Noctalia save stale settings right away
+    if login_wallpaper(theme_dir):
+        sync_greeter()  # auto_sync is off for this theme: it would push the desktop wallpaper
     return stamp
 
 

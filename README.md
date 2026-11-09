@@ -59,6 +59,12 @@ shell font to the login screen on every change. When a theme leaves, the app run
 greeter's own narrow Polkit rule: `sudo noctalia-greeter passwordless-sync enable "$USER"`. The login screen is the
 same for every account of the machine.
 
+A theme can pick its own login wallpaper (`login_wallpaper` in `theme.toml`, e.g. a calmer image than the desktop's).
+Then the app turns `auto_sync` off while the theme is active, and on apply or refresh writes what the greeter
+expects into `/run/user/<uid>/noctalia-greeter-sync/` (the theme's colors and mode, plus that wallpaper) and hands it
+to the greeter's helper, `pkexec noctalia-greeter-apply-appearance --sync`, the same path and Polkit rule Noctalia
+uses. Changing the desktop wallpaper then leaves the login screen alone. The shell font is not copied this way.
+
 ## How it works
 
 Noctalia loads its layers in this order, the last one wins:

@@ -7,6 +7,7 @@ license = "GPL-3.0-or-later"
 format = 1
 palette = "brume"
 preview = "preview.webp"
+login_wallpaper = "wall_lone-peak-pixel.webp"  # shown on the Noctalia Greeter login screen
 ink = "pixel"  # wallpapers become fine pixel art at promotion (2 px pixels, ordered dither, 6 greys)
 
 [locale.fr]
