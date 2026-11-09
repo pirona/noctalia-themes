@@ -7,6 +7,7 @@ license = "GPL-3.0-or-later"
 format = 1
 palette = "vaporwave"        # palette.json is installed as palettes/<palette>.json
 preview = "preview.webp"
+login_wallpaper = "wall_elevator-sky.webp"  # shown on the Noctalia Greeter login screen
 
 # Labels for the app's show/hide switches; a group toggles its widgets together and the app keeps them glued.
 [widget_groups]

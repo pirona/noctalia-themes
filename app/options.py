@@ -86,11 +86,14 @@ def greeter_installed():
     return shutil.which("noctalia-greeter") is not None
 
 
-def overrides(fragment, opts, greeter=False):
-    """Nested dict of the config keys the preferences change, given the theme's parsed fragment."""
+def overrides(fragment, opts, greeter=False, login=False):
+    """Nested dict of the config keys the preferences change, given the theme's parsed fragment.
+
+    `login`: the theme has its own login wallpaper, synced by the app; auto_sync would push the desktop one.
+    """
     out = {}
     if greeter and opts["greeter_sync"]:
-        out["shell"] = {"greeter_sync": {"auto_sync": True}}
+        out["shell"] = {"greeter_sync": {"auto_sync": not login}}
     wall = {k: v for k, v in (("transition", opts["transitions"]),
                               ("transition_duration", opts["transition_duration"]),
                               ("fill_mode", opts["fill_mode"])) if v is not None}
@@ -170,6 +173,8 @@ if __name__ == "__main__":
     assert back["wallpaper"]["transition"] == ["melt"] and back["theme"]["mode"] == "dark"
     assert overrides(frag, DEFAULTS) == {}  # defaults change nothing
     assert tomllib.loads(dump(overrides(frag, DEFAULTS, greeter=True)))["shell"]["greeter_sync"]["auto_sync"]
+    login = tomllib.loads(dump(overrides(frag, DEFAULTS, True, login=True)))
+    assert login["shell"]["greeter_sync"]["auto_sync"] is False
     assert "shell" not in overrides(frag, {**DEFAULTS, "greeter_sync": False}, greeter=True)
     assert back["desktop_widgets"]["widget"]["d"]["enabled"] is False
     assert patch_clock("{:%a %d %b  %H:%M}", seconds=True) == "{:%a %d %b  %H:%M:%S}"  # date kept

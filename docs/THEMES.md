@@ -23,7 +23,7 @@ list (never while it is active; your backups stay).
 
 | File | Role |
 |---|---|
-| `theme.toml` | `format` (`1`), `name`, `description`, `author`, `version`, `license` (SPDX id), `palette` (file name, `[A-Za-z0-9_-]+`; **the folder name** in a package), `preview` (optional), `ink` (optional: `"black-and-white"` thresholds wallpapers to pure ink and paper, `"grain"` turns them grey with a fixed film grain, `"pixel"` into fine grey pixel art, all at promotion; `--ink` overrides it for one wallpaper) |
+| `theme.toml` | `format` (`1`), `name`, `description`, `author`, `version`, `license` (SPDX id), `palette` (file name, `[A-Za-z0-9_-]+`; **the folder name** in a package), `preview` (optional), `login_wallpaper` (optional: a file name of `wallpapers/`, shown on the Noctalia Greeter login screen instead of the desktop wallpaper), `ink` (optional: `"black-and-white"` thresholds wallpapers to pure ink and paper, `"grain"` turns them grey with a fixed film grain, `"pixel"` into fine grey pixel art, all at promotion; `--ink` overrides it for one wallpaper) |
 | `[widget_groups]` in `theme.toml` | optional: show/hide labels; the widgets of a group toggle and move together |
 | `[locale.<lang>]` in `theme.toml` | optional: `name`, `description` and `[locale.<lang>.widget_groups]` (English label → translation) |
 | `palette.json` | Noctalia palette: `dark` + `light`, 16 roles + a `terminal` block, strict `#RRGGBB` |

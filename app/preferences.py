@@ -324,6 +324,15 @@ class Preferences(Adw.PreferencesDialog):
         except (OSError, subprocess.SubprocessError):
             return _("unavailable")
 
+    def _login_screen(self):
+        if not options.greeter_installed():
+            return _("Noctalia Greeter not installed")
+        if not self.opts["greeter_sync"]:
+            return _("not synced")
+        theme = installer.active_dir()
+        wall = installer.login_wallpaper(theme) if theme else None
+        return _("theme's login wallpaper: {name}").format(name=wall.name) if wall else _("follows the theme")
+
     def _diagnostic(self):
         active = installer.current_theme()
         try:
@@ -337,8 +346,7 @@ class Preferences(Adw.PreferencesDialog):
             (_("Active theme"), _("{name} (backup {id})").format(name=active["theme"], id=active["id"])
              if active else _("none")),
             (_("Widgets screen"), output),
-            (_("Login screen"), (_("follows the theme") if self.opts["greeter_sync"] else _("not synced"))
-             if options.greeter_installed() else _("Noctalia Greeter not installed")),
+            (_("Login screen"), self._login_screen()),
             (_("Settings changed since apply"), ", ".join(installer.changes_since_apply())),
             (_("Preferences overridden by settings.toml"), ", ".join(installer.overridden_by_state())),
             (_("Noctalia config"), str(paths.CONFIG)),
