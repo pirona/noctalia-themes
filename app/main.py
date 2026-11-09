@@ -10,7 +10,7 @@ import gi
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 import paths  # noqa: E402
-from gi.repository import Adw, Gio, Gtk  # noqa: E402
+from gi.repository import Adw, Gdk, Gio, Gtk  # noqa: E402
 from i18n import _  # noqa: E402
 from window import Window  # noqa: E402
 
@@ -39,6 +39,13 @@ class App(Adw.Application):
         settings = Gtk.Settings.get_default()
         if settings.get_property("gtk-icon-theme-name") == "hicolor":
             settings.set_property("gtk-icon-theme-name", "Adwaita")
+        css = Gtk.CssProvider()
+        css.load_from_string(".drop-zone { border: 2px dashed alpha(currentColor, 0.35); border-radius: 12px;"
+                             " padding: 24px 12px; }"
+                             " .drop-zone.drop-hover { border-color: @accent_color;"
+                             " background: alpha(@accent_color, 0.1); }")
+        Gtk.StyleContext.add_provider_for_display(Gdk.Display.get_default(), css,
+                                                  Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
     def _window(self):
         return self.get_active_window() or Window(self)

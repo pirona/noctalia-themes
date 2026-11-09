@@ -26,11 +26,13 @@ from paths import (
     FRAGMENT,
     GLUE,
     INSTALLED,
+    LIBRARY,
     NOCTALIA_PLUGINS,
     OPTIONS,
     PALETTES,
     PLUGINS,
     STATE,
+    THEMES,
     WALLS,
     ensure_dir,
 )
@@ -42,12 +44,18 @@ log = logging.getLogger("noctalia-themes")
 OWNED_TABLES = ("desktop_widgets",)
 
 
-def list_themes(root):
+def list_themes(root=None):
+    """Themes of `root`, or the shipped ones then the imported ones; an unreadable theme.toml is skipped."""
     themes = []
-    for d in sorted(Path(root).glob("*/theme.toml")):
-        meta = tomllib.loads(d.read_text())
-        meta["dir"] = d.parent
-        themes.append(localize(meta))
+    for r in [Path(root)] if root else [THEMES, LIBRARY]:
+        for d in sorted(r.glob("*/theme.toml")):
+            try:
+                meta = tomllib.loads(d.read_text())
+            except (OSError, tomllib.TOMLDecodeError):
+                log.warning("skipped unreadable theme %s", d.parent)
+                continue
+            meta["dir"], meta["imported"] = d.parent, r == LIBRARY
+            themes.append(localize(meta))
     return themes
 
 

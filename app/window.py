@@ -11,6 +11,7 @@ gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
 import installer  # noqa: E402
 import options  # noqa: E402
+import package  # noqa: E402
 import paths  # noqa: E402
 from gi.repository import Adw, Gdk, GdkPixbuf, Gio, GLib, Gtk  # noqa: E402
 from i18n import _, ngettext  # noqa: E402
@@ -135,7 +136,7 @@ class Window(Adw.ApplicationWindow):
         while child := self.content.get_first_child():
             self.content.remove(child)
         active = installer.current_theme()
-        themes = installer.list_themes(paths.THEMES)
+        themes = installer.list_themes()
         theme = next((t for t in themes if active and t["name"] == active["theme"]), None)
         name = theme["title"] if theme else active["theme"] if active else ""
         self.banner.set_title(_("“{name}” is applied").format(name=name) if active else "")
@@ -147,7 +148,7 @@ class Window(Adw.ApplicationWindow):
         self.content.append(self._backups_group(active))
 
     def open_preferences(self):
-        themes, active = installer.list_themes(paths.THEMES), installer.current_theme()
+        themes, active = installer.list_themes(), installer.current_theme()
         theme = next((t for t in themes if active and t["name"] == active["theme"]), themes[0] if themes else None)
         Preferences(self, theme).present(self)
 
@@ -195,11 +196,87 @@ class Window(Adw.ApplicationWindow):
                 row.add_suffix(Gtk.Label(label=_("Active"), valign=Gtk.Align.CENTER,
                                          css_classes=["success", "caption-heading"]))
             else:
+                if theme["imported"]:
+                    trash = Gtk.Button(icon_name="user-trash-symbolic", valign=Gtk.Align.CENTER, css_classes=["flat"],
+                                       tooltip_text=_("Remove this imported theme"))
+                    trash.connect("clicked", lambda _b, t=theme: self._confirm_forget(t))
+                    row.add_suffix(trash)
                 btn = Gtk.Button(label=_("Apply"), valign=Gtk.Align.CENTER, css_classes=["suggested-action"])
                 btn.connect("clicked", lambda _b, t=theme: self._confirm_apply(t))
                 row.add_suffix(btn)
+            if theme["imported"]:
+                row.add_prefix(Gtk.Label(label=_("Imported"), valign=Gtk.Align.CENTER, css_classes=["dim-label",
+                                                                                                    "caption"]))
             group.add(row)
+        group.add(self._drop_zone())
         return group
+
+    def _drop_zone(self):
+        """Dashed field: drop a theme .zip on it, or click it to pick one."""
+        box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6, halign=Gtk.Align.CENTER)
+        box.append(Gtk.Image(icon_name="document-open-symbolic", pixel_size=32, css_classes=["dim-label"]))
+        box.append(Gtk.Label(label=_("Drop a theme .zip here, or click to choose one"), wrap=True,
+                             justify=Gtk.Justification.CENTER))
+        zone = Gtk.Button(child=box, css_classes=["drop-zone", "flat"], margin_top=12,
+                          tooltip_text=_("Add a theme package (.zip)"))
+        zone.connect("clicked", lambda *_a: self._choose_zip())
+        target = Gtk.DropTarget.new(Gdk.FileList, Gdk.DragAction.COPY)
+        target.connect("enter", lambda *_a: zone.add_css_class("drop-hover") or Gdk.DragAction.COPY)
+        target.connect("leave", lambda *_a: zone.remove_css_class("drop-hover"))
+        target.connect("drop", self._on_drop)
+        zone.add_controller(target)
+        return zone
+
+    def _on_drop(self, _target, files, _x, _y):
+        paths_ = [f.get_path() for f in files.get_files() if f.get_path()]
+        if len(paths_) != 1:
+            self.toasts.add_toast(Adw.Toast(title=_("Drop one theme .zip at a time.")))
+            return False
+        GLib.idle_add(self._import, paths_[0])  # after the drop returns: the dialog must not block the drag
+        return True
+
+    def _choose_zip(self):
+        zips = Gtk.FileFilter(name=_("Theme packages (.zip)"))
+        zips.add_suffix("zip")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(zips)
+        dialog = Gtk.FileDialog(title=_("Add a theme"), filters=filters, default_filter=zips)
+
+        def done(d, result):
+            try:
+                self._import(d.open_finish(result).get_path())
+            except GLib.Error:
+                pass  # cancelled
+
+        dialog.open(self, None, done)
+
+    def _import(self, path):
+        try:
+            folder, meta = package.read_zip(path)
+        except ValueError as e:
+            self._fail(_("This file is not a valid theme"), str(e))
+            return GLib.SOURCE_REMOVE
+        name = meta.get("name", folder)
+
+        def do():
+            self._run(lambda: package.import_zip(path), _("“{name}” added: apply it from the list").format(name=name))
+
+        old = package.existing(folder)
+        if old:
+            self._ask(_("Replace “{name}”?").format(name=name),
+                      _("Installed version: {old}. Version in the file: {new}.").format(
+                          old=old.get("version", "?"), new=meta.get("version", "?")),
+                      _("Replace"), Adw.ResponseAppearance.SUGGESTED, do)
+        else:
+            do()
+        return GLib.SOURCE_REMOVE
+
+    def _confirm_forget(self, theme):
+        self._ask(_("Remove “{name}”?").format(name=theme["title"]),
+                  _("The imported theme leaves the list. Your backups are kept; import its .zip again to get it back."),
+                  _("Remove"), Adw.ResponseAppearance.DESTRUCTIVE,
+                  lambda: self._run(lambda: package.remove(theme["dir"].name),
+                                    _("“{name}” removed").format(name=theme["title"])))
 
     def _backups_group(self, active):
         group = Adw.PreferencesGroup(
@@ -243,10 +320,7 @@ class Window(Adw.ApplicationWindow):
             result = action()
         except Exception as e:  # show any failure instead of crashing the UI
             log.exception("operation failed")
-            err = Adw.AlertDialog(heading=_("The operation failed"),
-                                  body=_("Your configuration was left as it was.") + f"\n\n{e}")
-            err.add_response("close", _("Close"))
-            err.present(self)
+            self._fail(_("The operation failed"), _("Your configuration was left as it was.") + f"\n\n{e}")
             self.refresh()
             return
         toast = Adw.Toast(title=success, timeout=8)
@@ -255,6 +329,11 @@ class Window(Adw.ApplicationWindow):
             toast.connect("button-clicked", lambda *_a: undo(result))
         self.toasts.add_toast(toast)
         self.refresh()
+
+    def _fail(self, heading, body):
+        err = Adw.AlertDialog(heading=heading, body=body)
+        err.add_response("close", _("Close"))
+        err.present(self)
 
     @staticmethod
     def _lost_warning():
