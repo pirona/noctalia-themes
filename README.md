@@ -25,6 +25,8 @@ Start “Noctalia Themes” from the launcher, or run `python3 app/main.py`.
 ## Use
 
 - **Apply**: button on the theme's row, after confirmation. A toast offers “Undo” for 8 s.
+- **Add a theme**: drop its `.zip` on the dashed field (see [Add a theme](#add-a-theme)); the trash on an
+  imported theme removes it from the list.
 - **Remove**: the banner at the top as soon as a theme is active, one click. The configuration from before the theme
   comes back **with the settings you changed meanwhile** (bar, dock, plugins…); only the theme's own settings leave
   with it (keys it sets, its widgets, a wallpaper from its folder). If you changed some of the theme's own settings,
@@ -87,7 +89,7 @@ rewritten with the same content in a different layout (arrays of tables become i
 |---|---|---|
 | `~/.config/noctalia/zz-theme.toml`, `zzz-theme-options.toml`, `palettes/<name>.json` | Noctalia, written by the app | the active theme and preferences |
 | `~/.local/state/noctalia/settings.toml` | Noctalia | read; theme keys removed on apply, widget positions adjusted by the group glue |
-| `~/.local/share/noctalia-themes/` | the app, **0700** | installed theme copies, `backups/`, `current`, `glue.json`, `app.log` |
+| `~/.local/share/noctalia-themes/` | the app, **0700** | installed theme copies, `library/` (imported themes), `backups/`, `current`, `glue.json`, `app.log` |
 | `~/.local/share/fonts/noctalia-themes/` | the app | theme fonts (fontconfig must see them) |
 | `~/.local/share/noctalia/plugins/theme-widgets/` | Noctalia, written by the app | the player and clock plugin, when the theme uses it (a symlink there is left alone: developer checkout) |
 | `~/.config/noctalia-themes/settings.json` | the app, **0700** folder | app preferences |
@@ -108,23 +110,9 @@ Each base folder follows XDG and can be overridden: `NOCTALIA_CONFIG_HOME`, `NOC
 
 ## Add a theme
 
-Create a folder in `themes/`; the app needs no change:
-
-| File | Role |
-|---|---|
-| `theme.toml` | `name`, `description`, `author`, `palette` (file name, `[A-Za-z0-9_-]+`), `preview` (optional), `ink` (optional: `"black-and-white"` thresholds wallpapers to pure ink and paper, `"grain"` turns them grey with a fixed film grain, `"pixel"` into fine grey pixel art, all at promotion; `--ink` overrides it for one wallpaper) |
-| `[widget_groups]` in `theme.toml` | optional: show/hide labels; the widgets of a group toggle and move together |
-| `[locale.<lang>]` in `theme.toml` | optional: `name`, `description` and `[locale.<lang>.widget_groups]` (English label → translation) |
-| `palette.json` | Noctalia palette: `dark` + `light`, 16 roles + a `terminal` block, strict `#RRGGBB` |
-| `noctalia.toml` | Noctalia config fragment; `@THEME_DIR@` becomes the installed path, `@OUTPUT@` the target screen: `NOCTALIA_THEMES_OUTPUT` if set, else the screen chosen in the preferences, else niri's focused screen, else the first enabled `wlr-randr` output |
-| `stickers/`, `wallpapers/` | **original** artwork; `wallpapers/SOURCES.md` for prompts and seeds |
-| player, clock | optional: `billisdead/theme-widgets:player` (cover, title, artist, ⏮ ⏯ ⏭ for any MPRIS player) and `billisdead/theme-widgets:clock` (`format`, `date_format`, `size`, `date_size`) draw inside your frame as **one** widget each (plugin in `plugins/theme-widgets/`, installed and enabled with the theme). Draw the frame at 2× with a flat or transparent interior, run `tools/slice_frame.py <frame.png>` (`--tol 24` for a paper grain, flattened under the text), point the widget's `frame` setting at the folder it writes; `fill`, `color`, `font_family` style the content, and on a frame with a fixed interior colour an unreadable colour role becomes black or white. Set `background = false` |
-| `fonts/` | optional `.ttf`/`.otf` (with their free license), installed with the theme and removed on rollback; widgets name them by family (`font_family`) |
-
-Preview: apply the theme, then `tools/preview.sh themes/<name>` (captures the desktop on an empty workspace; niri only).
-Without `preview.webp`, the app shows the palette's colors. Start from `themes/vaporwave/`.
-
-Wallpapers: see [Generate wallpapers with ComfyUI](#generate-wallpapers-with-comfyui).
+Drag a theme package (`.zip`) onto the dashed field under the theme list, or click the field to pick one. To make
+one, see **[Making a theme](docs/THEMES.md)**: folder layout, `app/package.py new | check | pack`, and the rules an
+imported theme must follow (looks only: no commands, no files outside the theme).
 
 ## Generate wallpapers with ComfyUI
 
@@ -182,13 +170,14 @@ python3 app/palette.py           # color format + contrast >= 4.5:1 (Noctalia si
 python3 app/options.py           # preferences: overrides, clock format, TOML keys, validation
 python3 tests/test_installer.py  # sandbox: round trip, invalid theme, failure, path tricks, screen, carried
                                  # settings, setup backup, preferences, clean-up, glue, wallpaper, permissions
+python3 tests/test_package.py    # theme packages: pack, import, replace, remove, and every refused trap
 python3 tests/test_promote_bw.py # black and white thresholding
 python3 tests/test_slice_frame.py # player frames rebuild pixel for pixel from their bands
 pipx run ruff==0.12.0 check .    # lint + PEP 8 (config in pyproject.toml)
 ```
 
 Layout: `app/paths.py` (every path), `app/i18n.py` (translations), `app/installer.py` (logic, no GTK, testable),
-`app/options.py` (preferences → TOML fragment), `app/window.py` (main window), `app/preferences.py` (preferences
+`app/options.py` (preferences → TOML fragment), `app/package.py` (theme packages + CLI), `app/window.py` (main window), `app/preferences.py` (preferences
 dialog), `app/main.py` (application, actions, shortcuts), `app/palette.py` (palette validation).
 
 Translations: strings are English in the code, wrapped in `_()`. After changing them:

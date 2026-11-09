@@ -2,6 +2,9 @@
 name = "Vaporwave"
 description = "Pink, cyan and purple neon, a nostalgic fake loading window and a Windows 95 style CD player. A tribute to vaporwave, original artwork."
 author = "Antoine Piron"
+version = "1.0.0"
+license = "GPL-3.0-or-later"
+format = 1
 palette = "vaporwave"        # palette.json is installed as palettes/<palette>.json
 preview = "preview.webp"
 

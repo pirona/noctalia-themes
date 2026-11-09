@@ -2,6 +2,9 @@
 name = "Brume"
 description = "Fog in fine pixel art: grey landscapes in six greys, pale surfaces, a thin bar at the top, and one colour only: a muted red, for what needs attention. Inspired by hooxoo's desktop on noctalia.dev, original wallpapers."
 author = "Antoine Piron"
+version = "1.0.0"
+license = "GPL-3.0-or-later"
+format = 1
 palette = "brume"
 preview = "preview.webp"
 ink = "pixel"  # wallpapers become fine pixel art at promotion (2 px pixels, ordered dither, 6 greys)

@@ -35,6 +35,7 @@ STATE = _base("NOCTALIA_STATE_HOME", "XDG_STATE_HOME", ".local/state") / "noctal
 # The app's own files. DATA holds copies of settings.toml (which may carry tokens): private.
 DATA = _base("NOCTALIA_THEMES_HOME", "XDG_DATA_HOME", ".local/share") / "noctalia-themes"
 INSTALLED = DATA / "themes"  # stable copy of the active theme, referenced by Noctalia
+LIBRARY = DATA / "library"  # themes imported from .zip packages
 BACKUPS = DATA / "backups"
 CURRENT = DATA / "current"  # backup id of the applied theme
 GLUE = DATA / "glue.json"  # widget positions at the last glue pass
