@@ -1,8 +1,8 @@
 # noctalia-themes
 
 Decorative themes for [Noctalia](https://docs.noctalia.dev/noctalia/) v5 (tested on 5.3.0 with niri), with a small
-GTK 4 / libadwaita app to apply and remove them safely. Themes: **Vaporwave**, **Batman — Year One**,
-**Batman — Black and White**, **Brume** (grey fog in fine pixel art, thin top bar). License: GPL-3.0-or-later.
+GTK 4 / libadwaita app to apply and remove them safely. Themes: **Vaporwave**,
+**Brume** (grey fog in fine pixel art, thin top bar). License: GPL-3.0-or-later.
 
 The app is in English, with a French translation picked from your locale.
 
@@ -203,8 +203,7 @@ A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <l
 - The theme-widgets plugin is enabled through `noctalia msg`: apply the theme while Noctalia runs (otherwise the app
   retries when it gets the focus, or enable “Theme Widgets” in Noctalia's plugin settings). It stays installed after
   the theme leaves; with no widget it draws nothing. The player follows the one `playerctl` picks; no progress bar.
-- The **login screen** only gets fonts installed system-wide: a theme font installed in your home (Kalam, for the
-  Batman themes) falls back to a default font there. Desktop widgets are not copied, only the look.
+- The **login screen** only gets fonts installed system-wide: a theme font installed in your home falls back to a default font there. Desktop widgets are not copied, only the look.
 
 ## Noctalia pitfalls
 

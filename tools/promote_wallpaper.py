@@ -3,7 +3,6 @@
 """Promote a validated render from the buffer: crop to screen, WebP, wall_ prefix, SOURCES.md, Noctalia folder.
 
   tools/promote_wallpaper.py ~/Pictures/noctalia-vaporwave-renders/03-corridor-forest_s20111211_00001_.png corridor
-  tools/promote_wallpaper.py --theme batman <render.png> <name>
   tools/promote_wallpaper.py --theme brume --ink pixel <render.png> <name>-pixel
 Env: WALLPAPER_DIR (default <Pictures>/wallpapers/<theme>, a folder Noctalia's picker can browse).
 Re-running with the same name replaces the image and its SOURCES.md entry.
@@ -95,7 +94,7 @@ def black_and_white(im, speck=60):
     return g.point(lambda v: 0 if v < 112 else 255 if v > 144 else (v - 112) * 255 // 32).convert("RGB")
 
 
-def grain(im, seed, amount=0.15):  # grain stddev matched to docs/inspiration/hooxoo.webp
+def grain(im, seed, amount=0.15):  # grain stddev matched by eye to a reference desktop
     """Grey, plus film grain baked in: seeded so a re-run gives the same file, softened so it reads as grain, not pixels."""
     g = im.convert("L")
     noise = Image.frombytes("L", g.size, random.Random(seed).randbytes(g.width * g.height))
