@@ -16,6 +16,7 @@ from window import Window  # noqa: E402
 
 APP_ID = "com.billisdead.NoctaliaThemes"
 VERSION = "0.1.0"
+DONATE_URL = "https://ko-fi.com/billisdead"
 
 
 class App(Adw.Application):
@@ -23,6 +24,7 @@ class App(Adw.Application):
         super().__init__(application_id=APP_ID, flags=Gio.ApplicationFlags.DEFAULT_FLAGS)
         for name, cb, accels in (("quit", lambda *_a: self.quit(), ["<primary>q"]),
                                  ("about", self._about, []),
+                                 ("donate", self._donate, []),
                                  ("preferences", lambda *_a: self._window().open_preferences(), ["<primary>comma"]),
                                  ("save-setup", lambda *_a: self._window().save_setup(), ["<primary>s"]),
                                  ("open-backups", self._open_backups, [])):
@@ -45,10 +47,15 @@ class App(Adw.Application):
         self._window().present()
 
     def _about(self, *_a):
-        Adw.AboutDialog(application_name=_("Noctalia Themes"), application_icon="preferences-desktop-theme",
-                        version=VERSION, developer_name="Antoine Piron", license_type=Gtk.License.GPL_3_0,
-                        comments=_("Decorative themes for Noctalia v5, with guaranteed rollback.")
-                        ).present(self.get_active_window())
+        about = Adw.AboutDialog(application_name=_("Noctalia Themes"), application_icon="preferences-desktop-theme",
+                                version=VERSION, developer_name="Antoine Piron", license_type=Gtk.License.GPL_3_0,
+                                comments=_("Decorative themes for Noctalia v5, with guaranteed rollback."))
+        about.add_link(_("Support on Ko-fi"), DONATE_URL)
+        about.present(self.get_active_window())
+
+    def _donate(self, *_a):
+        # The browser opens the page: the app itself still never touches the network.
+        Gtk.UriLauncher.new(DONATE_URL).launch(self.get_active_window(), None, None, None)
 
     def _open_backups(self, *_a):
         paths.ensure_dir(paths.BACKUPS)

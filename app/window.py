@@ -87,6 +87,7 @@ class Window(Adw.ApplicationWindow):
         menu.append(_("Save my setup"), "app.save-setup")
         menu.append(_("Preferences"), "app.preferences")
         menu.append(_("Open the backups folder"), "app.open-backups")
+        menu.append(_("Support on Ko-fi ☕"), "app.donate")
         menu.append(_("About"), "app.about")
         menu.append(_("Quit"), "app.quit")
         header = Adw.HeaderBar()
