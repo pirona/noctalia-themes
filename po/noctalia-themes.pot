@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: noctalia-themes\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 08:17+0100\n"
+"POT-Creation-Date: 2026-11-10 08:33+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,48 +18,53 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: app/capture.py:123
+#: app/capture.py:134
 #, python-brace-format
 msgid "{key}: can run a program, left out"
 msgstr ""
 
-#: app/capture.py:136
+#: app/capture.py:147
 #, python-brace-format
 msgid "{key}: points to a file that cannot come along, left out"
 msgstr ""
 
-#: app/capture.py:150
+#: app/capture.py:163
 #, python-brace-format
 msgid "Your palette ({source}) has no file to copy: the theme starts with Brume's colors. Edit palette.json to recolor it."
 msgstr ""
 
-#: app/capture.py:159
+#: app/capture.py:166
+#, python-brace-format
+msgid "Your palette ({name}) fails the app's checks ({errors}): the theme starts with Brume's colors. Edit palette.json to recolor it."
+msgstr ""
+
+#: app/capture.py:175
 msgid "The wallpaper on screen could not be copied (missing, or not WebP, PNG or JPEG)."
 msgstr ""
 
-#: app/capture.py:176
+#: app/capture.py:192
 msgid "Your pinned dock apps stay yours: not part of the theme."
 msgstr ""
 
-#: app/capture.py:179
+#: app/capture.py:195
 msgid "The bar's widget layout is left out (widgets are set up outside the theme); its looks (size, font, colors) come along."
 msgstr ""
 
-#: app/capture.py:187
+#: app/capture.py:203
 #, python-brace-format
 msgid "Widget {id} ({type}) comes from a third-party plugin: left out."
 msgstr ""
 
-#: app/capture.py:199
+#: app/capture.py:215
 msgid "Give the theme a name."
 msgstr ""
 
-#: app/capture.py:201
+#: app/capture.py:217
 #, python-brace-format
 msgid "A theme already uses the folder “{folder}”: choose another name."
 msgstr ""
 
-#: app/capture.py:215
+#: app/capture.py:231
 #, python-brace-format
 msgid "Captured from {author}'s desktop on {day}."
 msgstr ""

@@ -100,14 +100,15 @@ class _Capture:
         src = Path(value).expanduser()
         if not src.is_absolute() or not src.exists():
             return None
+        src, installed = src.resolve(), INSTALLED.resolve()  # "…/x/../../.." must not walk out of the theme
         if src not in self.copied:
             try:  # from an installed theme: same place in the new one (stickers/x.png, a frame folder)
-                rel = Path(*src.relative_to(INSTALLED).parts[1:])
+                rel = Path(*src.relative_to(installed).parts[1:])
             except ValueError:
                 rel = Path("stickers") / src.name
-            if not rel.parts or (src.is_dir() and INSTALLED not in src.parents):
+            if not rel.parts or (src.is_dir() and installed not in src.parents):
                 return None  # a folder from elsewhere could be your whole home: never copied
-            allowed = package.EXTENSIONS if INSTALLED in src.parents else IMAGES
+            allowed = package.EXTENSIONS if installed in src.parents else IMAGES
             if src.is_file() and src.suffix.lower() not in allowed:
                 return None
             dst, n = self.root / rel, 1
@@ -153,12 +154,17 @@ def _palette(cap, theme):
     found = {"custom": PALETTES / f"{theme.get('custom_palette')}.json",
              "community": STATE.parent / "community-palettes" / f"{theme.get('community_palette')}.json"}.get(source)
     try:
-        if found and found.is_file() and not palette.check(found):
-            return found
+        errors = palette.check(found) if found and found.is_file() else None
     except (OSError, ValueError, KeyError, TypeError):
-        pass
-    cap.note(_("Your palette ({source}) has no file to copy: the theme starts with Brume's colors. "
-               "Edit palette.json to recolor it.").format(source=source))
+        errors = ["unreadable"]
+    if errors == []:
+        return found
+    if errors is None:
+        cap.note(_("Your palette ({source}) has no file to copy: the theme starts with Brume's colors. "
+                   "Edit palette.json to recolor it.").format(source=source))
+    else:
+        cap.note(_("Your palette ({name}) fails the app's checks ({errors}): the theme starts with Brume's colors. "
+                   "Edit palette.json to recolor it.").format(name=found.stem, errors="; ".join(errors[:3])))
     return THEMES / "brume" / "palette.json"
 
 
