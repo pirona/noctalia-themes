@@ -36,6 +36,8 @@ Start “Noctalia Themes” from the launcher, run `noctalia-themes`, or `python
 - **Apply**: button on the theme's row, after confirmation. A toast offers “Undo” for 8 s.
 - **Add a theme**: drop its `.zip` on the dashed field (see [Add a theme](#add-a-theme)); the trash on an
   imported theme removes it from the list.
+- **Export a theme**: the save icon on any theme's row writes it as a `.zip` to share; the app runs the import
+  checks first and lists what to fix if they fail.
 - **Remove**: the banner at the top as soon as a theme is active, one click. The configuration from before the theme
   comes back **with the settings you changed meanwhile** (bar, dock, plugins…); only the theme's own settings leave
   with it (keys it sets, its widgets, a wallpaper from its folder). If you changed some of the theme's own settings,

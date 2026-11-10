@@ -50,6 +50,15 @@ assert brume.name == "brume-1.0.0.zip"
 with zipfile.ZipFile(brume) as z:
     assert all(n.startswith("brume/") for n in z.namelist()) and "brume/theme.toml" in z.namelist()
 
+# Export to a chosen file (the app's "Save as"): no temp file left, and the result imports back.
+(SANDBOX / "export").mkdir()
+chosen = package.pack(skeleton, SANDBOX / "export" / "for-a-friend.zip")
+assert chosen.is_file() and not list(chosen.parent.glob("*.part")), list(chosen.parent.iterdir())
+assert package.archive_name(skeleton) == "disco-inferno-1.0.0.zip"
+package.import_zip(chosen)
+assert (LIBRARY / "disco-inferno" / "theme.toml").is_file()
+package.remove("disco-inferno")
+
 # A built-in theme can't be replaced by a package.
 refused(brume, "built-in")
 
@@ -77,6 +86,13 @@ assert [t["name"] for t in installer.list_themes(LIBRARY)] == ["Fog"]
 def fragment_with(extra):
     return lambda rel, data: (as_fog(rel, data) + extra.encode()) if rel == "noctalia.toml" else as_fog(rel, data)
 
+
+# Duplicates of an imported theme: identical files are spotted (the app then skips the question), a changed one is not.
+assert package.same_files(fog, "fog")
+assert not package.same_files(rezip(brume, "fog", fragment_with("\n# a bar of soap, not a theme change\n")), "fog")
+assert not package.same_files(rezip(brume, "fog", as_fog, {"fog/wallpapers/extra.webp": b"RIFF"}), "fog")
+assert [package.compare_versions(*v) for v in (("1.10.0", "1.9.2"), ("1.0.0", "1.0.0"), ("0.9", "1.0"),
+                                                ("beta", "1.0"))] == [1, 0, -1, 1]
 
 # Traps: each must be refused and leave the library as it was.
 refused(rezip(brume, "fog2", as_fog, {"stowaway/theme.toml": "x"}), "one theme folder")

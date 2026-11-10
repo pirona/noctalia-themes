@@ -14,7 +14,8 @@ python3 app/package.py pack ~/my-themes/night-swim  # writes night-swim-1.0.0.zi
 
 Then drag the `.zip` onto the dashed field under the theme list (or click the field to pick it). The theme appears
 with an “Imported” label; apply it like any other. To try changes, raise `version`, pack again and drop the new
-`.zip`: the app asks before replacing the installed copy. The trash on an imported theme's row removes it from the
+`.zip`: the app asks before replacing the installed copy. Without a terminal, the save icon on a theme's row
+does the same as `pack` (checks, then “Save as”). The trash on an imported theme's row removes it from the
 list (never while it is active; your backups stay).
 
 ## Folder layout

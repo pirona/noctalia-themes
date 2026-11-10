@@ -9,7 +9,7 @@
   <summary>Apply and remove Noctalia themes, with rollback</summary>
   <summary xml:lang="fr">Appliquer et retirer des thèmes Noctalia, avec retour arrière</summary>
   <developer id="com.billisdead">
-    <name>Antoine Piron</name>
+    <name>billisdead</name>
   </developer>
   <description>
     <p>
@@ -24,6 +24,7 @@
   </description>
   <launchable type="desktop-id">com.billisdead.NoctaliaThemes.desktop</launchable>
   <url type="homepage">https://github.com/pirona/noctalia-themes</url>
+  <url type="contact">https://billisdead.com</url>
   <url type="donation">https://ko-fi.com/billisdead</url>
   <categories>
     <category>Settings</category>

@@ -4,7 +4,7 @@
 
   python3 app/package.py new <folder>      create a commented theme skeleton
   python3 app/package.py check <folder>    run the same checks as an import
-  python3 app/package.py pack <folder> [out_dir]   write <name>-<version>.zip
+  python3 app/package.py pack <folder> [out]   write <name>-<version>.zip (out: a folder or a .zip path)
 An imported theme comes from anywhere: its Noctalia fragment is held to an allowlist (see docs/THEMES.md).
 """
 import re
@@ -148,6 +148,31 @@ def existing(folder):
     return tomllib.loads(toml.read_text()) if toml.is_file() else None
 
 
+def same_files(zip_path, folder):
+    """True if a package holds exactly the files of the library theme in `folder` (authoring scripts aside)."""
+    d = LIBRARY / folder
+    installed = {f.relative_to(d).as_posix(): f for f in d.rglob("*")
+                 if f.is_file() and not _authoring(f.relative_to(d))}
+    with zipfile.ZipFile(zip_path) as zf:
+        packed = {i.filename.partition("/")[2]: i for i in zf.infolist()  # partition: a stray top-level file
+                  if not i.is_dir() and not _authoring(Path(i.filename))}
+        return packed.keys() == installed.keys() and all(
+            zf.read(i) == installed[rel].read_bytes() for rel, i in packed.items())
+
+
+def compare_versions(new, old):
+    """-1, 0 or 1 as `new` is older, equal or newer than `old` ("1.10.0" > "1.9.2"); text compared if not numbers."""
+    def key(v):
+        try:
+            return tuple(int(p) for p in str(v).split("."))
+        except ValueError:
+            return (str(v),)
+    a, b = key(new), key(old)
+    if type(a[0]) is not type(b[0]):
+        a, b = (str(new),), (str(old),)
+    return (a > b) - (a < b)
+
+
 def import_zip(zip_path):
     """Check a package and install it into the library (replacing a theme of the same folder). Returns metadata."""
     folder, meta = read_zip(zip_path)
@@ -183,18 +208,31 @@ def remove(folder):
     installer.log.info("removed imported theme %s", folder)
 
 
-def pack(theme_dir, out_dir="."):
-    """Check a theme folder, then zip it as <folder>-<version>.zip. Returns the archive path."""
+def archive_name(theme_dir):
+    """<folder>-<version>.zip, the name a package is offered under."""
+    d = Path(theme_dir)
+    return f"{d.name}-{tomllib.loads((d / 'theme.toml').read_text()).get('version', '1.0.0')}.zip"
+
+
+def pack(theme_dir, out="."):
+    """Check a theme folder, then zip it to `out` (a file, or a folder for <folder>-<version>.zip).
+    Written beside the target then renamed: a failure never leaves a half-written package. Returns the path."""
     d = Path(theme_dir).resolve()
     errors = check(d)
     if errors:
         raise ValueError("\n".join(errors))
-    meta = tomllib.loads((d / "theme.toml").read_text())
-    out = Path(out_dir) / f"{d.name}-{meta['version']}.zip"
-    with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
-        for f in sorted(d.rglob("*")):
-            if f.is_file() and not _authoring(f.relative_to(d)):
-                zf.write(f, f"{d.name}/{f.relative_to(d)}")
+    out = Path(out)
+    if out.is_dir():
+        out = out / archive_name(d)
+    part = out.with_name(out.name + ".part")
+    try:
+        with zipfile.ZipFile(part, "w", zipfile.ZIP_DEFLATED) as zf:
+            for f in sorted(d.rglob("*")):
+                if f.is_file() and not _authoring(f.relative_to(d)):
+                    zf.write(f, f"{d.name}/{f.relative_to(d)}")
+        part.replace(out)
+    finally:
+        part.unlink(missing_ok=True)
     return out
 
 
