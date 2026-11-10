@@ -3,12 +3,14 @@
 
 The theme is built in a temporary folder, packed, then imported like any package: it passes the same checks.
 """
+import hashlib
 import json
 import re
 import shutil
 import subprocess
 import tempfile
 import tomllib
+import unicodedata
 from datetime import date
 from pathlib import Path
 
@@ -84,7 +86,10 @@ def dump(table, path=()):
 
 
 def slug(name):
-    return re.sub(r"[^a-z0-9_-]+", "-", name.lower()).strip("-_")[:64] or "my-theme"
+    """Folder name: accents dropped (Été → ete); a name with no Latin letters gets a short stable hash."""
+    latin = unicodedata.normalize("NFKD", name.casefold()).encode("ascii", "ignore").decode()
+    return (re.sub(r"[^a-z0-9_-]+", "-", latin).strip("-_")[:64]
+            or "theme-" + hashlib.sha256(name.strip().encode()).hexdigest()[:8])
 
 
 class _Capture:

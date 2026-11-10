@@ -142,6 +142,11 @@ assert w["vw-clock"]["output"] == "@OUTPUT@"
 assert (tdir / "stickers" / "dialog-loading.png").is_file() and any((tdir / "stickers" / "player_frame").iterdir())
 assert (tdir / "palette.json").read_text() == (ROOT / "themes" / "vaporwave" / "palette.json").read_text(), notes
 
+# Folder names: accents dropped, other scripts get a stable hash instead of a shared "my-theme".
+assert capture.slug("Été brûlant") == "ete-brulant" and capture.slug("Straße") == "strasse"
+cat, dog = capture.slug("夜の猫"), capture.slug("夜の犬")
+assert cat == capture.slug("夜の猫") != dog and cat.startswith("theme-") and package.FOLDER.fullmatch(cat), cat
+
 # The TOML writer round-trips what a theme holds, odd keys included.
 sample = {"a": {"my.widget": {"x": 1.5, "on": True, "s": 'quote " and é', "l": [1, [2, "b"]], "t": [{"k": 1}]}}}
 assert tomllib.loads(capture.dump(sample)) == sample
