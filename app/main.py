@@ -27,6 +27,7 @@ class App(Adw.Application):
                                  ("donate", self._donate, []),
                                  ("preferences", lambda *_a: self._window().open_preferences(), ["<primary>comma"]),
                                  ("save-setup", lambda *_a: self._window().save_setup(), ["<primary>s"]),
+                                 ("create-theme", lambda *_a: self._window().create_from_desktop(), ["<primary>n"]),
                                  ("open-backups", self._open_backups, [])):
             action = Gio.SimpleAction.new(name, None)
             action.connect("activate", cb)

@@ -3,6 +3,13 @@
 A theme is one folder: a palette, a Noctalia config fragment, and its own artwork. Shipped themes live in
 `themes/`; anyone else's arrive as a **package**, a `.zip` holding that one folder, dropped on the app.
 
+## Fastest: from your desktop
+
+Set Noctalia up the way you like (palette, wallpaper, bar, dock, desktop widgets), then choose **Create a theme
+from my desktop** in the app's menu. The new theme lands in the list as imported; the save icon on its row exports
+it. What cannot travel in a theme (bar widget layout, pinned apps, third-party plugin widgets, commands) is left
+out and listed. A built-in or wallpaper-generated palette has no file: the theme then starts with Brume's colors.
+
 ## In four commands
 
 ```bash

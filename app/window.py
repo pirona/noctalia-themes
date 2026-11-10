@@ -9,6 +9,7 @@ import gi
 
 gi.require_version("Gtk", "4.0")
 gi.require_version("Adw", "1")
+import capture  # noqa: E402
 import installer  # noqa: E402
 import options  # noqa: E402
 import package  # noqa: E402
@@ -86,6 +87,7 @@ class Window(Adw.ApplicationWindow):
 
         menu = Gio.Menu()
         menu.append(_("Save my setup"), "app.save-setup")
+        menu.append(_("Create a theme from my desktop"), "app.create-theme")
         menu.append(_("Preferences"), "app.preferences")
         menu.append(_("Open the backups folder"), "app.open-backups")
         menu.append(_("Support on Ko-fi ☕"), "app.donate")
@@ -307,6 +309,54 @@ class Window(Adw.ApplicationWindow):
             self.toasts.add_toast(Adw.Toast(title=_("Exported to {path}").format(path=out), timeout=8))
 
         dialog.save(self, None, done)
+
+    def create_from_desktop(self):
+        """Ask for a name, then capture the desktop into a new imported theme."""
+        rows = {key: Adw.EntryRow(title=title, text=text) for key, title, text in (
+            ("name", _("Name"), ""), ("author", _("Author"), GLib.get_user_name()),
+            ("description", _("Description (optional)"), ""), ("license", _("License (SPDX id)"), "GPL-3.0-or-later"))}
+        box = Gtk.ListBox(selection_mode=Gtk.SelectionMode.NONE, css_classes=["boxed-list"])
+        for row in rows.values():
+            box.append(row)
+        dialog = Adw.AlertDialog(heading=_("Create a theme from my desktop"), extra_child=box, body=_(
+            "The palette, the wallpaper on screen, the looks of the bar and dock, and the desktop widgets with "
+            "their stickers are copied into a new theme. Only share artwork you may redistribute."))
+        dialog.add_response("cancel", _("Cancel"))
+        dialog.add_response("ok", _("Create"))
+        dialog.set_response_appearance("ok", Adw.ResponseAppearance.SUGGESTED)
+        dialog.set_response_enabled("ok", False)
+        dialog.set_close_response("cancel")
+        rows["name"].connect("changed", lambda r: dialog.set_response_enabled("ok", bool(r.get_text().strip())))
+        dialog.connect("response", lambda _d, r: r == "ok" and self._create(
+            *(rows[k].get_text() for k in ("name", "author", "description")), rows["license"].get_text().strip()
+            or "GPL-3.0-or-later"))
+        dialog.present(self)
+
+    def _create(self, name, author, description, license_id):
+        try:
+            tdir, notes = capture.create(name, author, description, license_id)
+        except Exception as e:  # any capture failure: say why, nothing was imported
+            log.exception("could not create a theme from the desktop")
+            return self._fail(_("The theme could not be created"), str(e))
+        self.refresh()
+        theme = next((t for t in installer.list_themes() if t["dir"] == tdir), None)
+        body = _("It is in the list, marked “Imported”: apply it, or export it as a .zip to share.")
+        if notes:
+            body += "\n\n" + _("Left out:") + "\n" + "\n".join(f"• {n}" for n in notes)
+        done = Adw.AlertDialog(heading=_("“{name}” created").format(name=name.strip()), body=body)
+        done.add_response("folder", _("Open the folder"))
+        done.add_response("export", _("Export…"))
+        done.add_response("close", _("Close"))
+        done.set_default_response("close")
+        done.set_close_response("close")
+
+        def answer(_d, r):
+            if r == "folder":
+                Gtk.FileLauncher.new(Gio.File.new_for_path(str(tdir))).launch(self, None, None, None)
+            elif r == "export" and theme:
+                self._export(theme)
+        done.connect("response", answer)
+        done.present(self)
 
     def _confirm_forget(self, theme):
         self._ask(_("Remove “{name}”?").format(name=theme["title"]),
