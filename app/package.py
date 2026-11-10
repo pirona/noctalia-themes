@@ -154,7 +154,7 @@ def same_files(zip_path, folder):
     installed = {f.relative_to(d).as_posix(): f for f in d.rglob("*")
                  if f.is_file() and not _authoring(f.relative_to(d))}
     with zipfile.ZipFile(zip_path) as zf:
-        packed = {i.filename.split("/", 1)[1]: i for i in zf.infolist()
+        packed = {i.filename.partition("/")[2]: i for i in zf.infolist()  # partition: a stray top-level file
                   if not i.is_dir() and not _authoring(Path(i.filename))}
         return packed.keys() == installed.keys() and all(
             zf.read(i) == installed[rel].read_bytes() for rel, i in packed.items())
