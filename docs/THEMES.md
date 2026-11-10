@@ -3,6 +3,9 @@
 A theme is one folder: a palette, a Noctalia config fragment, and its own artwork. Shipped themes live in
 `themes/`; anyone else's arrive as a **package**, a `.zip` holding that one folder, dropped on the app.
 
+This page is the reference. For a step-by-step walk-through, read
+[Packaging a theme, from A to Z](PACKAGING.md) ([en français](PACKAGING.fr.md)).
+
 ## Fastest: from your desktop
 
 Set Noctalia up the way you like (palette, wallpaper, bar, dock, desktop widgets), then choose **Create a theme
