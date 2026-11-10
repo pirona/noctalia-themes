@@ -132,7 +132,8 @@ Each base folder follows XDG and can be overridden: `NOCTALIA_CONFIG_HOME`, `NOC
 
 Drag a theme package (`.zip`) onto the dashed field under the theme list, or click the field to pick one. To make
 one, see **[Making a theme](docs/THEMES.md)**: folder layout, `app/package.py new | check | pack`, and the rules an
-imported theme must follow (looks only: no commands, no files outside the theme).
+imported theme must follow (looks only: no commands, no files outside the theme). New to packaging? **[Packaging a theme, from A
+to Z](docs/PACKAGING.md)** ([en français](docs/PACKAGING.fr.md)) walks through it step by step.
 
 ## Generate wallpapers with ComfyUI
 
