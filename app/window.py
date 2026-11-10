@@ -186,6 +186,10 @@ class Window(Adw.ApplicationWindow):
         for theme in themes:
             row = _row(theme["title"], theme["description"])
             row.add_prefix(_preview(theme))
+            export = Gtk.Button(icon_name="document-save-as-symbolic", valign=Gtk.Align.CENTER, css_classes=["flat"],
+                                tooltip_text=_("Export as a .zip to share"))
+            export.connect("clicked", lambda _b, t=theme: self._export(t))
+            row.add_suffix(export)
             if active and active["theme"] == theme["name"]:
                 update = Gtk.Button(icon_name="view-refresh-symbolic", valign=Gtk.Align.CENTER, css_classes=["flat"],
                                     tooltip_text=_("Update (stickers, palette, widgets) without touching "
@@ -262,14 +266,47 @@ class Window(Adw.ApplicationWindow):
             self._run(lambda: package.import_zip(path), _("“{name}” added: apply it from the list").format(name=name))
 
         old = package.existing(folder)
-        if old:
+        if old and package.same_files(path, folder):
+            self.toasts.add_toast(Adw.Toast(title=_("“{name}” is already installed, identical: nothing to do.").format(
+                name=name), timeout=8))
+        elif old:
+            new_v, old_v = meta.get("version", "?"), old.get("version", "?")
+            order = package.compare_versions(new_v, old_v)
+            note = (_("The file holds an older version than the installed one.") if order < 0 else
+                    _("Same version number, but the files differ.") if order == 0 else "")
             self._ask(_("Replace “{name}”?").format(name=name),
-                      _("Installed version: {old}. Version in the file: {new}.").format(
-                          old=old.get("version", "?"), new=meta.get("version", "?")),
-                      _("Replace"), Adw.ResponseAppearance.SUGGESTED, do)
+                      _("Installed version: {old}. Version in the file: {new}.").format(old=old_v, new=new_v)
+                      + (f"\n\n{note}" if note else ""),
+                      _("Replace"), Adw.ResponseAppearance.SUGGESTED if order > 0 else
+                      Adw.ResponseAppearance.DESTRUCTIVE, do)
         else:
             do()
         return GLib.SOURCE_REMOVE
+
+    def _export(self, theme):
+        try:
+            name = package.archive_name(theme["dir"])
+        except (OSError, ValueError) as e:
+            return self._fail(_("This theme cannot be exported"), str(e))
+        zips = Gtk.FileFilter(name=_("Theme packages (.zip)"))
+        zips.add_suffix("zip")
+        filters = Gio.ListStore.new(Gtk.FileFilter)
+        filters.append(zips)
+        dialog = Gtk.FileDialog(title=_("Export “{name}”").format(name=theme["title"]), initial_name=name,
+                                filters=filters, default_filter=zips)
+
+        def done(d, result):
+            try:
+                path = d.save_finish(result).get_path()
+            except GLib.Error:
+                return  # cancelled
+            try:
+                out = package.pack(theme["dir"], path)
+            except (OSError, ValueError) as e:
+                return self._fail(_("This theme cannot be exported"), str(e))
+            self.toasts.add_toast(Adw.Toast(title=_("Exported to {path}").format(path=out), timeout=8))
+
+        dialog.save(self, None, done)
 
     def _confirm_forget(self, theme):
         self._ask(_("Remove “{name}”?").format(name=theme["title"]),

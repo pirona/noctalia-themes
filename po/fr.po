@@ -4,9 +4,9 @@ msgid ""
 msgstr ""
 "Project-Id-Version: noctalia-themes\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-09 17:28+0100\n"
+"POT-Creation-Date: 2026-11-09 18:07+0100\n"
 "PO-Revision-Date: 2026-10-28 09:00+0100\n"
-"Last-Translator: Antoine Piron\n"
+"Last-Translator: billisdead\n"
 "Language-Team: French\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -96,21 +96,21 @@ msgstr "L’archive doit contenir un seul dossier de thème."
 msgid "theme.toml is missing or unreadable."
 msgstr "theme.toml est absent ou illisible."
 
-#: app/package.py:155
+#: app/package.py:180
 #, python-brace-format
 msgid "“{name}” is a built-in theme and cannot be replaced."
 msgstr "« {name} » est un thème livré avec l’appli : il ne peut pas être remplacé."
 
-#: app/package.py:159
+#: app/package.py:184
 #, python-brace-format
 msgid "Another imported theme is already named “{name}”."
 msgstr "Un autre thème importé s’appelle déjà « {name} »."
 
-#: app/package.py:167
+#: app/package.py:192
 msgid "This theme cannot be imported:"
 msgstr "Ce thème ne peut pas être importé :"
 
-#: app/package.py:181
+#: app/package.py:206
 #, python-brace-format
 msgid "No imported theme “{name}”."
 msgstr "Aucun thème importé « {name} »."
@@ -381,7 +381,7 @@ msgstr "Écran cible"
 msgid "Automatic (focused screen)"
 msgstr "Automatique (écran actif)"
 
-#: app/preferences.py:239 app/window.py:283
+#: app/preferences.py:239 app/window.py:320
 msgid "Backups"
 msgstr "Sauvegardes"
 
@@ -415,11 +415,11 @@ msgstr[1] "Supprimer les {n} sauvegardes les plus anciennes ?"
 msgid "They can no longer be restored. The active theme's backup is kept."
 msgstr "Elles ne pourront plus être restaurées. La sauvegarde du thème actif est conservée."
 
-#: app/preferences.py:274 app/window.py:309
+#: app/preferences.py:274 app/window.py:346
 msgid "Cancel"
 msgstr "Annuler"
 
-#: app/preferences.py:275 app/window.py:397
+#: app/preferences.py:275 app/window.py:434
 msgid "Delete"
 msgstr "Supprimer"
 
@@ -587,153 +587,184 @@ msgstr "Thèmes"
 msgid "No theme found"
 msgstr "Aucun thème trouvé"
 
-#: app/window.py:191
+#: app/window.py:190
+msgid "Export as a .zip to share"
+msgstr "Exporter en .zip pour le partager"
+
+#: app/window.py:195
 msgid "Update (stickers, palette, widgets) without touching your settings"
 msgstr "Mettre à jour (stickers, palette, widgets) sans toucher à tes réglages"
 
-#: app/window.py:194
+#: app/window.py:198
 #, python-brace-format
 msgid "“{name}” updated"
 msgstr "« {name} » mis à jour"
 
-#: app/window.py:196
+#: app/window.py:200
 msgid "Active"
 msgstr "Actif"
 
-#: app/window.py:201
+#: app/window.py:205
 msgid "Remove this imported theme"
 msgstr "Retirer ce thème importé"
 
-#: app/window.py:204 app/window.py:361
+#: app/window.py:208 app/window.py:398
 msgid "Apply"
 msgstr "Appliquer"
 
-#: app/window.py:208
+#: app/window.py:212
 msgid "Imported"
 msgstr "Importé"
 
-#: app/window.py:218
+#: app/window.py:222
 msgid "Drop a theme .zip here, or click to choose one"
 msgstr "Dépose un thème .zip ici, ou clique pour en choisir un"
 
-#: app/window.py:221
+#: app/window.py:225
 msgid "Add a theme package (.zip)"
 msgstr "Ajouter un paquet de thème (.zip)"
 
-#: app/window.py:233
+#: app/window.py:237
 msgid "Drop one theme .zip at a time."
 msgstr "Un seul thème .zip à la fois."
 
-#: app/window.py:239
+#: app/window.py:243 app/window.py:291
 msgid "Theme packages (.zip)"
 msgstr "Paquets de thème (.zip)"
 
-#: app/window.py:243
+#: app/window.py:247
 msgid "Add a theme"
 msgstr "Ajouter un thème"
 
-#: app/window.py:257
+#: app/window.py:261
 msgid "This file is not a valid theme"
 msgstr "Ce fichier n’est pas un thème valide"
 
-#: app/window.py:262
+#: app/window.py:266
 #, python-brace-format
 msgid "“{name}” added: apply it from the list"
 msgstr "« {name} » ajouté : applique-le depuis la liste"
 
-#: app/window.py:266
+#: app/window.py:270
+#, python-brace-format
+msgid "“{name}” is already installed, identical: nothing to do."
+msgstr "« {name} » est déjà installé, à l’identique : rien à faire."
+
+#: app/window.py:275
+msgid "The file holds an older version than the installed one."
+msgstr "Le fichier contient une version plus ancienne que celle installée."
+
+#: app/window.py:276
+msgid "Same version number, but the files differ."
+msgstr "Même numéro de version, mais les fichiers diffèrent."
+
+#: app/window.py:277
 #, python-brace-format
 msgid "Replace “{name}”?"
 msgstr "Remplacer « {name} » ?"
 
-#: app/window.py:267
+#: app/window.py:278
 #, python-brace-format
 msgid "Installed version: {old}. Version in the file: {new}."
 msgstr "Version installée : {old}. Version du fichier : {new}."
 
-#: app/window.py:269
+#: app/window.py:280
 msgid "Replace"
 msgstr "Remplacer"
 
-#: app/window.py:275
+#: app/window.py:290 app/window.py:306
+msgid "This theme cannot be exported"
+msgstr "Ce thème ne peut pas être exporté"
+
+#: app/window.py:295
+#, python-brace-format
+msgid "Export “{name}”"
+msgstr "Exporter « {name} »"
+
+#: app/window.py:307
+#, python-brace-format
+msgid "Exported to {path}"
+msgstr "Exporté dans {path}"
+
+#: app/window.py:312
 #, python-brace-format
 msgid "Remove “{name}”?"
 msgstr "Retirer « {name} » ?"
 
-#: app/window.py:276
+#: app/window.py:313
 msgid "The imported theme leaves the list. Your backups are kept; import its .zip again to get it back."
 msgstr "Le thème importé quitte la liste. Tes sauvegardes sont gardées ; réimporte son .zip pour le retrouver."
 
-#: app/window.py:277
+#: app/window.py:314
 msgid "Remove"
 msgstr "Retirer"
 
-#: app/window.py:279
+#: app/window.py:316
 #, python-brace-format
 msgid "“{name}” removed"
 msgstr "« {name} » retiré"
 
-#: app/window.py:284
+#: app/window.py:321
 msgid "Every apply first saves your Noctalia configuration; removing the theme restores it and keeps the settings you changed meanwhile. “Save my setup” (menu) copies everything as is, active theme and wallpaper included."
 msgstr "Chaque application enregistre d'abord ta configuration Noctalia ; retirer le thème la restaure en gardant tes réglages modifiés entre-temps. « Sauvegarder mon setup » (menu) copie tout tel quel, thème actif et fond d'écran compris."
 
-#: app/window.py:289
+#: app/window.py:326
 msgid "No backup yet"
 msgstr "Aucune sauvegarde pour l'instant"
 
-#: app/window.py:292 app/window.py:386 app/window.py:391
+#: app/window.py:329 app/window.py:423 app/window.py:428
 msgid "Restore"
 msgstr "Restaurer"
 
-#: app/window.py:296
+#: app/window.py:333
 msgid "Delete this backup"
 msgstr "Supprimer cette sauvegarde"
 
-#: app/window.py:299
+#: app/window.py:336
 msgid "Only way back from the active theme: remove the theme first"
 msgstr "Seul retour possible pour le thème actif : retire le thème d'abord"
 
-#: app/window.py:323
+#: app/window.py:360
 msgid "The operation failed"
 msgstr "L'opération a échoué"
 
-#: app/window.py:323
+#: app/window.py:360
 msgid "Your configuration was left as it was."
 msgstr "Ta configuration a été laissée telle qu'avant."
 
-#: app/window.py:328
+#: app/window.py:365
 msgid "Undo"
 msgstr "Annuler"
 
-#: app/window.py:335
+#: app/window.py:372
 msgid "Close"
 msgstr "Fermer"
 
-#: app/window.py:343
+#: app/window.py:380
 #, python-brace-format
 msgid "… and {n} more"
 msgid_plural "… and {n} more"
 msgstr[0] "… et {n} autre"
 msgstr[1] "… et {n} autres"
 
-#: app/window.py:346
+#: app/window.py:383
 msgid "Your settings changed meanwhile are kept:"
 msgstr "Tes réglages modifiés entre-temps sont conservés :"
 
-#: app/window.py:348
+#: app/window.py:385
 msgid "Theme settings changed meanwhile, which leave with it:"
 msgstr "Réglages du thème modifiés entre-temps, qui partent avec lui :"
 
-#: app/window.py:352
+#: app/window.py:389
 msgid "Setup saved: you can restore it from the backups"
 msgstr "Setup sauvegardé : tu peux le restaurer depuis les sauvegardes"
 
-#: app/window.py:357
+#: app/window.py:394
 #, python-brace-format
 msgid "Apply “{name}”?"
 msgstr "Appliquer « {name} » ?"
 
-#: app/window.py:358
+#: app/window.py:395
 msgid ""
 "Your current configuration is saved first.\n"
 "Settings you change in Noctalia while the theme is active are kept when you remove it; only the theme's own leave with it."
@@ -741,37 +772,37 @@ msgstr ""
 "Ta configuration actuelle est sauvegardée d'abord.\n"
 "Tes réglages modifiés dans Noctalia pendant que le thème est actif sont conservés quand tu le retires ; seuls ceux du thème partent avec lui."
 
-#: app/window.py:364
+#: app/window.py:401
 #, python-brace-format
 msgid "“{name}” applied"
 msgstr "« {name} » appliqué"
 
-#: app/window.py:366
+#: app/window.py:403
 msgid "Original configuration restored"
 msgstr "Configuration d'origine restaurée"
 
-#: app/window.py:371
+#: app/window.py:408
 msgid "Theme removed, original configuration restored"
 msgstr "Thème retiré, configuration d'origine restaurée"
 
-#: app/window.py:375
+#: app/window.py:412
 msgid "Remove the theme?"
 msgstr "Retirer le thème ?"
 
-#: app/window.py:375
+#: app/window.py:412
 msgid "Your original configuration will be restored."
 msgstr "Ta configuration d'origine va être restaurée."
 
-#: app/window.py:376
+#: app/window.py:413
 msgid "Remove anyway"
 msgstr "Retirer quand même"
 
-#: app/window.py:381
+#: app/window.py:418
 #, python-brace-format
 msgid "Restore your setup from {date}?"
 msgstr "Restaurer ton setup du {date} ?"
 
-#: app/window.py:382
+#: app/window.py:419
 msgid ""
 "All of Noctalia goes back exactly to this setup: active theme, widgets, bar, dock, wallpaper. Your current configuration is replaced entirely: save it first if you want to come back to it.\n"
 "\n"
@@ -781,32 +812,32 @@ msgstr ""
 "\n"
 "Si le thème restauré a ses propres polices, redémarre Noctalia pour qu'il les voie."
 
-#: app/window.py:387
+#: app/window.py:424
 msgid "Setup restored"
 msgstr "Setup restauré"
 
-#: app/window.py:388
+#: app/window.py:425
 #, python-brace-format
 msgid "Restore the backup from {date}?"
 msgstr "Restaurer la sauvegarde du {date} ?"
 
-#: app/window.py:389
+#: app/window.py:426
 msgid "Noctalia's current configuration will be replaced by the one from that date."
 msgstr "La configuration actuelle de Noctalia sera remplacée par celle de cette date."
 
-#: app/window.py:392
+#: app/window.py:429
 msgid "Backup restored"
 msgstr "Sauvegarde restaurée"
 
-#: app/window.py:395
+#: app/window.py:432
 #, python-brace-format
 msgid "Delete the backup from {date}?"
 msgstr "Supprimer la sauvegarde du {date} ?"
 
-#: app/window.py:396
+#: app/window.py:433
 msgid "It can no longer be restored. Other backups are not touched."
 msgstr "Elle ne pourra plus être restaurée. Les autres sauvegardes ne sont pas touchées."
 
-#: app/window.py:398
+#: app/window.py:435
 msgid "Backup deleted"
 msgstr "Sauvegarde supprimée"
