@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 name = "Brume"
 description = "Fog in fine pixel art: grey landscapes in six greys, pale surfaces, a thin bar at the top, and one colour only: a muted red, for what needs attention. Inspired by hooxoo's desktop on noctalia.dev, original wallpapers."
-author = "Antoine Piron"
+author = "billisdead"
 version = "1.0.0"
 license = "GPL-3.0-or-later"
 format = 1

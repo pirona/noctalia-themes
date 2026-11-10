@@ -58,8 +58,9 @@ class App(Adw.Application):
 
     def _about(self, *_a):
         about = Adw.AboutDialog(application_name=_("Noctalia Themes"), application_icon=APP_ID,
-                                version=VERSION, developer_name="Antoine Piron", license_type=Gtk.License.GPL_3_0,
+                                version=VERSION, developer_name="billisdead", license_type=Gtk.License.GPL_3_0,
                                 comments=_("Decorative themes for Noctalia v5, with guaranteed rollback."))
+        about.add_link("billisdead.com", "https://billisdead.com")
         about.add_link(_("Support on Ko-fi"), DONATE_URL)
         about.present(self.get_active_window())
 
