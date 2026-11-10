@@ -38,6 +38,9 @@ Start “Noctalia Themes” from the launcher, run `noctalia-themes`, or `python
   imported theme removes it from the list.
 - **Export a theme**: the save icon on any theme's row writes it as a `.zip` to share; the app runs the import
   checks first and lists what to fix if they fail.
+- **Create a theme from my desktop** (menu, Ctrl+N): copies the palette, the wallpaper on screen, the looks of the
+  bar and dock, and the desktop widgets with their stickers into a new imported theme, ready to export. Left out, and
+  listed: the bar's widget layout, pinned dock apps, third-party plugin widgets, anything that runs a program.
 - **Remove**: the banner at the top as soon as a theme is active, one click. The configuration from before the theme
   comes back **with the settings you changed meanwhile** (bar, dock, plugins…); only the theme's own settings leave
   with it (keys it sets, its widgets, a wallpaper from its folder). If you changed some of the theme's own settings,
@@ -188,6 +191,7 @@ python3 app/options.py           # preferences: overrides, clock format, TOML ke
 python3 tests/test_installer.py  # sandbox: round trip, invalid theme, failure, path tricks, screen, carried
                                  # settings, setup backup, preferences, clean-up, glue, wallpaper, permissions
 python3 tests/test_package.py    # theme packages: pack, import, replace, remove, and every refused trap
+python3 tests/test_capture.py    # create from the desktop: what comes along, what is left out, a real theme round trip
 python3 tests/test_install.py    # install.sh in a temporary HOME: install twice, the copy's paths, uninstall
 python3 tests/test_promote_bw.py # black and white thresholding
 python3 tests/test_slice_frame.py # player frames rebuild pixel for pixel from their bands
@@ -195,7 +199,7 @@ pipx run ruff==0.12.0 check .    # lint + PEP 8 (config in pyproject.toml)
 ```
 
 Layout: `app/paths.py` (every path), `app/i18n.py` (translations), `app/installer.py` (logic, no GTK, testable),
-`app/options.py` (preferences → TOML fragment), `app/package.py` (theme packages + CLI), `app/window.py` (main window), `app/preferences.py` (preferences
+`app/options.py` (preferences → TOML fragment), `app/package.py` (theme packages + CLI), `app/capture.py` (create a theme from the desktop), `app/window.py` (main window), `app/preferences.py` (preferences
 dialog), `app/main.py` (application, actions, shortcuts), `app/palette.py` (palette validation), `data/`
 (icon, AppStream metainfo).
 
