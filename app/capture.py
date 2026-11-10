@@ -6,6 +6,7 @@ The theme is built in a temporary folder, packed, then imported like any package
 import json
 import re
 import shutil
+import subprocess
 import tempfile
 import tomllib
 from datetime import date
@@ -22,6 +23,7 @@ BAR_LAYOUT = ("start", "center", "end", "capsule_group")
 THEME_SOURCE = ("source", "custom_palette", "community_palette", "builtin", "wallpaper_scheme", "templates")
 WALLPAPER_PLACE = ("directory", "default", "last", "monitors")  # where your own wallpapers are, not a look
 WALL_TYPES = (".webp", ".png", ".jpg", ".jpeg")
+IMAGES = (*WALL_TYPES, ".svg")  # all a sticker from outside a theme may be: no text file leaves your home
 PLUGIN = re.compile(r"([\w.-]+/[\w.-]+):[\w-]+")
 
 
@@ -35,13 +37,20 @@ def _merge(dst, src):
 
 
 def current_config():
-    """What you set in Noctalia, merged in its own order: config/*.toml alphabetically, then the state file."""
+    """What you set in Noctalia, merged in its own order: config/*.toml alphabetically, then the state file.
+    Desktop widgets come from Noctalia itself when it answers: a widget deleted in its editor stays deleted."""
     merged = {}
     for f in [*sorted(CONFIG.glob("*.toml")), STATE]:
         try:
             _merge(merged, tomllib.loads(f.read_text()))
         except (OSError, tomllib.TOMLDecodeError):
             continue
+    try:
+        out = subprocess.run(["noctalia", "msg", "config-get", "desktop_widgets"], capture_output=True, text=True,
+                             timeout=5, check=True).stdout
+        merged["desktop_widgets"] = tomllib.loads(out)
+    except (OSError, subprocess.SubprocessError, tomllib.TOMLDecodeError):
+        pass
     return merged
 
 
@@ -98,7 +107,8 @@ class _Capture:
                 rel = Path("stickers") / src.name
             if not rel.parts or (src.is_dir() and INSTALLED not in src.parents):
                 return None  # a folder from elsewhere could be your whole home: never copied
-            if src.is_file() and src.suffix.lower() not in package.EXTENSIONS:
+            allowed = package.EXTENSIONS if INSTALLED in src.parents else IMAGES
+            if src.is_file() and src.suffix.lower() not in allowed:
                 return None
             dst, n = self.root / rel, 1
             while dst.exists():  # two stickers with one name, from different places
@@ -194,7 +204,7 @@ def _fragment(cap, cfg, folder):
 
 def create(name, author, description, license_id="GPL-3.0-or-later"):
     """Capture the desktop into a new imported theme. Returns (theme folder, notes on what was left out)."""
-    name, folder = name.strip(), slug(name)
+    name, folder, license_id = name.strip(), slug(name), " ".join(license_id.split()) or "GPL-3.0-or-later"
     if not name:
         raise ValueError(_("Give the theme a name."))
     if (LIBRARY / folder).exists() or (THEMES / folder).exists():

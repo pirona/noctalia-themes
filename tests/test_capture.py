@@ -26,6 +26,7 @@ pics = SANDBOX / "Pictures"
 pics.mkdir()
 (pics / "cat.png").write_bytes(b"\x89PNG not really a cat")
 (pics / "My Beach.jpg").write_bytes(b"\xff\xd8 sand everywhere")
+(pics / "diary.txt").write_text("dear diary, today I themed")  # private text: must never be copied
 frame = INSTALLED / "old-theme" / "stickers" / "frame"
 frame.mkdir(parents=True)
 (frame / "top.png").write_bytes(b"\x89PNG")
@@ -51,6 +52,10 @@ type = "billisdead/theme-widgets:player"
 output = "eDP-1"
 [desktop_widgets.widget.player.settings]
 frame = "{frame}"
+[desktop_widgets.widget.note]
+type = "sticker"
+[desktop_widgets.widget.note.settings]
+image_path = "{pics / "diary.txt"}"
 [desktop_widgets.widget.spy]
 type = "someone/keylogger:widget"
 ''')
@@ -86,6 +91,7 @@ assert w["cat"]["settings"]["image_path"] == "@THEME_DIR@/stickers/cat.png" and 
 assert w["player"]["settings"]["frame"] == "@THEME_DIR@/stickers/frame"
 copied = tdir / "stickers" / "frame"
 assert (copied / "top.png").is_file() and not (copied / "steal-cookies.sh").exists()  # only allowed types
+assert "image_path" not in w["note"].get("settings", {}) and not list(tdir.rglob("diary.txt"))
 assert "spy" not in w and frag["desktop_widgets"]["widget_order"] == ["cat", "player"]
 assert frag["bar"]["default"] == {"font_scale": 0.8}  # layout and command gone, looks kept
 assert frag["dock"] == {"icon_size": 48} and frag["wallpaper"] == {"transition": ["fade"]}
