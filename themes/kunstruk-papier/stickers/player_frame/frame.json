@@ -1,0 +1,20 @@
+{
+  "scale": 2,
+  "width": 760,
+  "height": 224,
+  "inset": [
+    24,
+    2,
+    2,
+    2
+  ],
+  "bands": {
+    "top": "top-30506d16.png",
+    "bottom": "bottom-ca890fa4.png",
+    "left": "left-b6963138.png",
+    "right": "right-a7345821.png"
+  },
+  "overlap": 2,
+  "tol": 12,
+  "fill": null
+}
