@@ -238,6 +238,14 @@ Gitea mirrors the tag to GitHub, where `.github/workflows/release.yml` checks th
 and the changelog agree, then publishes the release with `noctalia-themes-X.Y.Z.tar.gz` (`git archive` of the tag)
 and its SHA-256. A mismatch fails the workflow and publishes nothing: fix, delete the tag, tag again.
 
+Gitea does not mirror releases: create the Gitea one by hand with the same archive (`git archive --prefix=noctalia-themes-X.Y.Z/
+-o noctalia-themes-X.Y.Z.tar.gz vX.Y.Z`, its `sha256sum`, the changelog section as notes), through the web page or
+`POST /api/v1/repos/<owner>/noctalia-themes/releases` then `…/releases/<id>/assets`. Its checksum may differ from
+GitHub's (gzip depends on the git version); each release ships its own `.sha256`.
+
+A tag pushed together with a first workflow file does not start that workflow: if no run appears, delete the tag on
+GitHub only, and the next mirror sync pushes it again.
+
 ## Known limits
 
 - **One screen**: `@OUTPUT@` is fixed when the theme is applied, and positions are designed for 1536×864 logical
