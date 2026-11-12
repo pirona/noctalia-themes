@@ -1,0 +1,38 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Tags arrive from the Gitea push mirror; this publishes the GitHub release.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag matches the app version
+        run: |
+          v="${GITHUB_REF_NAME#v}"
+          grep -q "^VERSION = \"$v\"$" app/main.py || { echo "app/main.py VERSION is not $v"; exit 1; }
+          grep -q "<release version=\"$v\"" data/com.billisdead.NoctaliaThemes.metainfo.xml || { echo "metainfo has no release $v"; exit 1; }
+          grep -q "^## \[$v\]" CHANGELOG.md || { echo "CHANGELOG.md has no section $v"; exit 1; }
+          echo "VERSION=$v" >> "$GITHUB_ENV"
+
+      - name: Build the archive
+        run: |
+          name="noctalia-themes-$VERSION"
+          git archive --prefix="$name/" -o "$name.tar.gz" HEAD
+          sha256sum "$name.tar.gz" > "$name.tar.gz.sha256"
+          awk -v v="$VERSION" '$0 ~ "^## \\[" v "\\]" {f=1; next} /^## \[/ {f=0} f' CHANGELOG.md > notes.md
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" --title "Noctalia Themes $VERSION" --notes-file notes.md \
+            "noctalia-themes-$VERSION.tar.gz" "noctalia-themes-$VERSION.tar.gz.sha256"

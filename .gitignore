@@ -2,3 +2,6 @@ __pycache__/
 *.toml.tmp
 app/locale/
 *~
+# private, kept out of the public repository
+themes/batman*/
+docs/inspiration/

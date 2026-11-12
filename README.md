@@ -9,11 +9,18 @@ The app is in English, with a French translation picked from your locale.
 
 ## Install
 
+Download `noctalia-themes-<version>.tar.gz` from the [latest release](https://github.com/pirona/noctalia-themes/releases/latest),
+then:
+
 ```bash
-git clone <this repository> noctalia-themes
-cd noctalia-themes
+sha256sum -c noctalia-themes-*.tar.gz.sha256   # expected: OK
+tar xf noctalia-themes-*.tar.gz
+cd noctalia-themes-*/
 ./install.sh
 ```
+
+Or from a clone (`git clone https://github.com/pirona/noctalia-themes.git`), which follows `main` instead of releases.
+Changes per version: [CHANGELOG.md](CHANGELOG.md).
 
 `install.sh` checks that Python 3.11+, PyGObject, GTK 4.12+ and libadwaita 1.5+ are importable (it prints the
 package command for Fedora, Debian/Ubuntu and Arch otherwise). It then copies the app, its themes and plugin to
@@ -215,6 +222,21 @@ msgmerge -q --no-wrap -U po/fr.po po/noctalia-themes.pot   # then translate the 
 ```
 
 A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <lang> -o po/<lang>.po`).
+
+### Release
+
+Versions follow [SemVer](https://semver.org/) (see [CHANGELOG.md](CHANGELOG.md)). To release `X.Y.Z`, in one PR set
+`VERSION` in `app/main.py`, add `<release version="X.Y.Z" date="…"/>` on top of the metainfo `<releases>` and a
+`## [X.Y.Z] - date` section to `CHANGELOG.md`. Once merged, tag `main` and push the tag:
+
+```bash
+git switch main && git pull
+git tag -a vX.Y.Z -m "Noctalia Themes X.Y.Z" && git push origin vX.Y.Z
+```
+
+Gitea mirrors the tag to GitHub, where `.github/workflows/release.yml` checks that the tag, `VERSION`, the metainfo
+and the changelog agree, then publishes the release with `noctalia-themes-X.Y.Z.tar.gz` (`git archive` of the tag)
+and its SHA-256. A mismatch fails the workflow and publishes nothing: fix, delete the tag, tag again.
 
 ## Known limits
 
