@@ -1,11 +1,35 @@
 # noctalia-themes
 
-Decorative themes for [Noctalia](https://docs.noctalia.dev/noctalia/) v5 (tested on 5.3.0 with niri), with a small
-GTK 4 / libadwaita app to apply and remove them safely. Themes: **Vaporwave**,
-**Brume** (grey fog in fine pixel art, thin top bar), **Kunstruk** (Bauhaus in black and red, typographic clock,
-bar standing on the right edge) and **Kunstruk Papier** (the same on old yellowed paper, round dock at the top). License: GPL-3.0-or-later.
+**Whole-desktop themes for [Noctalia](https://docs.noctalia.dev/noctalia/) v5 — one click to dress your desktop,
+one click to get it back exactly as it was.**
 
-The app is in English, with a French translation picked from your locale.
+Not just a color scheme: each theme brings its own wallpapers, bar, dock, fonts, desktop widgets (a music player
+with cover art, a clock) and even the login screen. The app saves your setup before every change, so trying a theme
+costs nothing.
+
+[![Latest release](https://img.shields.io/github/v/release/pirona/noctalia-themes)](https://github.com/pirona/noctalia-themes/releases/latest)
+[![License: GPL v3](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
+[![Support on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/billisdead)
+
+| | |
+|:-:|:-:|
+| ![Vaporwave](themes/vaporwave/preview.webp) | ![Brume](themes/brume/preview.webp) |
+| **Vaporwave** — pink, cyan and violet neon, a fake loading window, a CD player straight out of 1998 | **Brume** — grey fog in fine pixel art, six shades of quiet, a thin bar on top |
+| ![Kunstruk](themes/kunstruk/preview.webp) | ![Kunstruk Papier](themes/kunstruk-papier/preview.webp) |
+| **Kunstruk** — Bauhaus in ink black and red: point, line and plane, a giant typographic clock, the bar standing on the right edge | **Kunstruk Papier** — the same on old yellowed paper, with a round dock at the top |
+
+<p align="center"><img src="docs/screenshots/app.webp" alt="The Noctalia Themes app: theme list with apply buttons, drop zone for theme packages, wallpaper picker" width="480"></p>
+
+- **Safe by design**: timestamped backup before each apply, rollback if anything fails, an “Undo” toast, and
+  “Remove the theme” puts your own desktop back.
+- **Share themes**: export any theme as a `.zip`, import one by drag and drop, or turn your current desktop into a
+  theme.
+- **Per-user, no `sudo`**: one `./install.sh`, one `./install.sh --uninstall`.
+- English interface, French translation picked from your locale. Tested on Noctalia 5.3.0 with niri.
+  License: GPL-3.0-or-later.
+
+If these themes brighten your desktop, you can buy me a coffee on **[Ko-fi](https://ko-fi.com/billisdead)** ☕
+— it keeps new themes coming.
 
 ## Install
 
@@ -227,21 +251,22 @@ A new language is a new `po/<lang>.po` (`msginit -i po/noctalia-themes.pot -l <l
 
 Versions follow [SemVer](https://semver.org/) (see [CHANGELOG.md](CHANGELOG.md)). To release `X.Y.Z`, in one PR set
 `VERSION` in `app/main.py`, add `<release version="X.Y.Z" date="…"/>` on top of the metainfo `<releases>` and a
-`## [X.Y.Z] - date` section to `CHANGELOG.md`. Once merged, tag `main` and push the tag:
+`## [X.Y.Z] - date` section to `CHANGELOG.md`. Once merged, from `main`:
 
 ```bash
 git switch main && git pull
-git tag -a vX.Y.Z -m "Noctalia Themes X.Y.Z" && git push origin vX.Y.Z
+tools/release.sh X.Y.Z
 ```
 
-Gitea mirrors the tag to GitHub, where `.github/workflows/release.yml` checks that the tag, `VERSION`, the metainfo
-and the changelog agree, then publishes the release with `noctalia-themes-X.Y.Z.tar.gz` (`git archive` of the tag)
-and its SHA-256. A mismatch fails the workflow and publishes nothing: fix, delete the tag, tag again.
+The script checks that `VERSION`, the metainfo and the changelog agree (and stops before pushing anything if not),
+tags `vX.Y.Z`, pushes the tag, then publishes the Gitea release (Gitea does not mirror releases) with
+`noctalia-themes-X.Y.Z.tar.gz` (`git archive` of the tag), its SHA-256 and the changelog section as notes. The Gitea
+token is read from `$GITEA_TOKEN_FILE`, else `~/.tokens/gitea_pat`, else `~/gitea-trucs/postiz-helm/.token`, and
+goes to `curl` through stdin. Rerun it after a failure: an existing tag is reused.
 
-Gitea does not mirror releases: create the Gitea one by hand with the same archive (`git archive --prefix=noctalia-themes-X.Y.Z/
--o noctalia-themes-X.Y.Z.tar.gz vX.Y.Z`, its `sha256sum`, the changelog section as notes), through the web page or
-`POST /api/v1/repos/<owner>/noctalia-themes/releases` then `…/releases/<id>/assets`. Its checksum may differ from
-GitHub's (gzip depends on the git version); each release ships its own `.sha256`.
+Gitea mirrors the tag to GitHub, where `.github/workflows/release.yml` runs the same checks and publishes the GitHub
+release with the same files. Its checksum may differ from Gitea's (gzip depends on the git version); each release
+ships its own `.sha256`. A mirror sync that pushes an already released tag again is skipped, not failed.
 
 A tag pushed together with a first workflow file does not start that workflow: if no run appears, delete the tag on
 GitHub only, and the next mirror sync pushes it again.

@@ -34,5 +34,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          # The mirror may push a released tag again.
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then echo "release exists, skipping"; exit 0; fi
           gh release create "$GITHUB_REF_NAME" --title "Noctalia Themes $VERSION" --notes-file notes.md \
             "noctalia-themes-$VERSION.tar.gz" "noctalia-themes-$VERSION.tar.gz.sha256"
