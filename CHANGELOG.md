@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 MAJOR breaks a theme package or the app's files, MINOR adds themes or features, PATCH fixes.
 
+## [Unreleased]
+
+- README: screenshots, feature tour, Ko-fi link.
+- `tools/release.sh`: one command tags and publishes the Gitea release; the GitHub workflow skips an existing release.
+
 ## [0.1.0] - 2026-11-12
 
 First public release.
