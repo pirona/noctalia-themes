@@ -2,7 +2,8 @@
 
 Decorative themes for [Noctalia](https://docs.noctalia.dev/noctalia/) v5 (tested on 5.3.0 with niri), with a small
 GTK 4 / libadwaita app to apply and remove them safely. Themes: **Vaporwave**,
-**Brume** (grey fog in fine pixel art, thin top bar). License: GPL-3.0-or-later.
+**Brume** (grey fog in fine pixel art, thin top bar), **Kunstruk** (Bauhaus in black and red, typographic clock,
+bar standing on the right edge) and **Kunstruk Papier** (the same on old yellowed paper, round dock at the top). License: GPL-3.0-or-later.
 
 The app is in English, with a French translation picked from your locale.
 

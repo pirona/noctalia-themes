@@ -1,0 +1,23 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+name = "Kunstruk Papier"
+description = "Kunstruk on old yellowed paper: point, line and plane in ink and red, a giant typographic clock set in Jost, a flat bar below and a round dock above. Abstract, typographic, original artwork."
+author = "billisdead"
+version = "1.0.0"
+license = "GPL-3.0-or-later"
+format = 1
+palette = "kunstruk-papier"
+preview = "preview.webp"
+login_wallpaper = "wall_punkt.webp"  # shown on the Noctalia Greeter login screen
+
+[widget_groups]
+"Clock" = ["kn-hours", "kn-minutes"]
+"Title" = ["kn-title"]
+"Player" = ["kn-player"]
+
+[locale.fr]
+description = "Kunstruk sur vieux papier jauni : point, ligne et plan à l'encre et au rouge, une horloge typographique géante en Jost, une barre plate en bas et un dock arrondi en haut. Abstrait, typographique, créations originales."
+
+[locale.fr.widget_groups]
+"Clock" = "Horloge"
+"Title" = "Titre"
+"Player" = "Lecteur"
