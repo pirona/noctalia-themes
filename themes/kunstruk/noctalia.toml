@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# Noctalia config fragment, installed as ~/.config/noctalia/zz-theme.toml.
+# The THEME_DIR and OUTPUT placeholders, between @ signs, are filled in at install. Coordinates are logical (designed on 1536x864).
+
+[theme]
+source = "custom"
+custom_palette = "kunstruk"
+mode = "dark"
+shell_mode = "dark"
+pure_black_dark = false  # keep the ink black, not pure black
+
+# Construction 01, the column: the bar stands on the right edge, a red rule facing the screen; the dock is a
+# square block on the bottom edge. Vertical tension meets horizontal rest in the corner, far from the clock.
+[bar.default]
+position = "right"
+thickness = 40
+radius = 0
+radius_top_left = 0
+radius_top_right = 0
+radius_bottom_left = 0
+radius_bottom_right = 0
+margin_ends = 0
+margin_edge = 0
+concave_edge_corners = false
+contact_shadow = false
+border = "primary"
+border_width = 2.0
+
+[dock]
+position = "bottom"
+radius = 0
+radius_top_left = 0
+radius_top_right = 0
+radius_bottom_left = 0
+radius_bottom_right = 0
+concave_edge_corners = false
+magnification = false
+
+[wallpaper]
+transition = ["wipe"]  # a plate slid over the last one
+transition_duration = 900
+edge_smoothness = 0.0
+
+# Every plate keeps its left third empty: the type lives there.
+[desktop_widgets]
+enabled = true
+widget_order = ["kn-title", "kn-hours", "kn-minutes", "kn-player"]
+
+# The spine: a thin upright title on the left edge, standing on a red square.
+[desktop_widgets.widget.kn-title]
+type = "sticker"
+output = "@OUTPUT@"
+cx = 64.0
+cy = 432.0
+box_width = 23.0
+box_height = 291.0
+rotation = 0.0
+
+[desktop_widgets.widget.kn-title.settings]
+image_path = "@THEME_DIR@/stickers/title.png"
+opacity = 1.0
+background = false
+
+# Hours in bone, minutes in red, stepped down and right: the time as a composition, not a readout.
+# Fixed colours: the plates do not change with the light/dark preference, so the type must not either.
+[desktop_widgets.widget.kn-hours]
+type = "billisdead/theme-widgets:clock"
+output = "@OUTPUT@"
+cx = 280.0
+cy = 205.0
+box_width = 340.0
+box_height = 230.0
+rotation = 0.0
+
+[desktop_widgets.widget.kn-hours.settings]
+background = false
+font_family = "Jost* Black"
+color = "#E9E2D4"
+format = "{:%H}"
+date_format = "{:%d . %m . %Y}"
+size = 190
+date_size = 16
+
+[desktop_widgets.widget.kn-minutes]
+type = "billisdead/theme-widgets:clock"
+output = "@OUTPUT@"
+cx = 400.0
+cy = 400.0
+box_width = 340.0
+box_height = 200.0
+rotation = 0.0
+
+[desktop_widgets.widget.kn-minutes.settings]
+background = false
+font_family = "Jost* Black"
+color = "#E5453A"
+format = "{:%M}"
+size = 190
+
+# Counterweight at the bottom: the player in a hairline box with one heavy red bar.
+[desktop_widgets.widget.kn-player]
+type = "billisdead/theme-widgets:player"
+output = "@OUTPUT@"
+cx = 320.0
+cy = 742.0
+box_width = 380.0
+box_height = 112.0
+rotation = 0.0
+
+[desktop_widgets.widget.kn-player.settings]
+background = false
+frame = "@THEME_DIR@/stickers/player_frame"
+fill = "#0E0E0E"
+color = "#E9E2D4"
+font_family = "Jost* Medium"
