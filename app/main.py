@@ -15,7 +15,7 @@ from i18n import _  # noqa: E402
 from window import Window  # noqa: E402
 
 APP_ID = "com.billisdead.NoctaliaThemes"
-VERSION = "0.1.1"
+VERSION = "0.1.2"
 DONATE_URL = "https://ko-fi.com/billisdead"
 
 
