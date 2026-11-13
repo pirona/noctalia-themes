@@ -4,7 +4,7 @@
 
 id = "billisdead/theme-widgets"
 name = "Theme Widgets"
-version = "0.4.0"
+version = "0.4.1"
 plugin_api = 43
 author = "billisdead"
 license = "GPL-3.0-or-later"

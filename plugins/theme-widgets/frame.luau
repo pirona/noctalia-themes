@@ -23,7 +23,7 @@ end
 function M.style(onFont)
   local st = { fill = noctalia.getConfig("fill"), color = noctalia.getConfig("color") }
   local font = noctalia.getConfig("font_family")
-  st.font = font ~= "" and font or nil
+  font = font ~= "" and font or nil
 
   local dir = noctalia.expandPath(noctalia.getConfig("frame") or "")
   local raw = dir ~= "" and noctalia.readFile(dir .. "/frame.json")
@@ -51,10 +51,14 @@ function M.style(onFont)
   end
 
   -- Plugin text only sees fonts it loads itself: find the theme font's file by family name.
-  if st.font then
-    noctalia.runAsync({ "fc-match", "-f", "%{family}\t%{file}", st.font }, function(r)
+  -- st.font only once loaded: an unchanged label keeps its layout, so a family named too early stays in fallback.
+  if font then
+    noctalia.runAsync({ "fc-match", "-f", "%{family}\t%{file}", font }, function(r)
       local family, file = string.match(r.stdout or "", "^([^\t]*)\t(.+)$")
-      if file and string.find(family, st.font, 1, true) and noctalia.loadFont(file) then onFont() end
+      if file and string.find(family, font, 1, true) and noctalia.loadFont(file) then
+        st.font = font
+        onFont()
+      end
     end)
   end
   return st
