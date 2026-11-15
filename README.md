@@ -28,6 +28,8 @@ costs nothing.
 - English interface, French translation picked from your locale. Tested on Noctalia 5.3.0 with niri.
   License: GPL-3.0-or-later.
 
+The story behind it: [noctalia-themes: dress your whole desktop in one click](https://billisdead.com/noctalia-themes-dress-your-whole-desktop-in-one-click/).
+
 If these themes brighten your desktop, you can buy me a coffee on **[Ko-fi](https://ko-fi.com/billisdead)** ☕
 — it keeps new themes coming.
 
