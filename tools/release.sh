@@ -30,6 +30,9 @@ grep -q "^## \[$v\]" CHANGELOG.md || { echo "CHANGELOG.md has no section $v" >&2
 if gitea "$api/releases/tags/$tag" >/dev/null; then echo "Gitea release $tag already exists" >&2; exit 1; fi
 git rev-parse -q --verify "refs/tags/$tag" >/dev/null || git tag -a "$tag" -m "Noctalia Themes $v"
 git push -q origin "$tag"
+# Gitea registers a pushed tag asynchronously; creating the release before that fails.
+for _ in {1..30}; do gitea "$api/tags/$tag" >/dev/null && break; sleep 1; done
+gitea "$api/tags/$tag" >/dev/null || { echo "Gitea has not registered $tag after 30 s; rerun later" >&2; exit 1; }
 
 out=$(mktemp -d); trap 'rm -rf "$out"' EXIT
 git archive --prefix="$name/" -o "$out/$name.tar.gz" "$tag"
