@@ -15,7 +15,7 @@ output="$(niri msg --json focused-output | python3 -c 'import json,sys; print(js
 # niri always keeps an empty workspace last: a huge index lands there, windows stay out of the shot.
 niri msg action focus-workspace 255
 trap 'niri msg action focus-workspace-previous; rm -f "$shot"' EXIT  # always bring the user back
-sleep 1.5  # let the workspace animation finish
+sleep 3  # let the workspace animation finish (1.5 s caught the old workspace)
 grim -o "$output" "$shot"
 
 # Drop the bar (network name, IPs…) on whichever edge it sits, then crop back to 16:9: the preview lives in the repo.
