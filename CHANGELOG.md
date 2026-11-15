@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 MAJOR breaks a theme package or the app's files, MINOR adds themes or features, PATCH fixes.
 
+## [0.1.4] - 2026-11-15
+
+- Kunstruk: new preview with the bar at the bottom.
+- `tools/preview.sh`: waits 3 s for the empty workspace; 1.5 s could capture the previous one.
+
 ## [0.1.3] - 2026-11-15
 
 - Kunstruk: the bar moves to the bottom edge and the square dock to the top; on the right edge the bar collided
