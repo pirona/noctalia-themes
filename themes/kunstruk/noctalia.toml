@@ -9,10 +9,10 @@ mode = "dark"
 shell_mode = "dark"
 pure_black_dark = false  # keep the ink black, not pure black
 
-# Construction 01, the column: the bar stands on the right edge, a red rule facing the screen; the dock is a
-# square block on the bottom edge. Vertical tension meets horizontal rest in the corner, far from the clock.
+# Construction 01, the ground line: the bar lies on the bottom edge, a red rule under the plate; the dock is a
+# square block hanging from the top. The side edges stay free for the type on the left.
 [bar.default]
-position = "right"
+position = "bottom"
 thickness = 40
 radius = 0
 radius_top_left = 0
@@ -27,7 +27,7 @@ border = "primary"
 border_width = 2.0
 
 [dock]
-position = "bottom"
+position = "top"
 radius = 0
 radius_top_left = 0
 radius_top_right = 0

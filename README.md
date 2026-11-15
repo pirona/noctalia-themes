@@ -16,7 +16,7 @@ costs nothing.
 | ![Vaporwave](themes/vaporwave/preview.webp) | ![Brume](themes/brume/preview.webp) |
 | **Vaporwave** — pink, cyan and violet neon, a fake loading window, a CD player straight out of 1998 | **Brume** — grey fog in fine pixel art, six shades of quiet, a thin bar on top |
 | ![Kunstruk](themes/kunstruk/preview.webp) | ![Kunstruk Papier](themes/kunstruk-papier/preview.webp) |
-| **Kunstruk** — Bauhaus in ink black and red: point, line and plane, a giant typographic clock, the bar standing on the right edge | **Kunstruk Papier** — the same on old yellowed paper, with a round dock at the top |
+| **Kunstruk** — Bauhaus in ink black and red: point, line and plane, a giant typographic clock, the bar on the bottom edge | **Kunstruk Papier** — the same on old yellowed paper, with a round dock at the top |
 
 <p align="center"><img src="docs/screenshots/app.webp" alt="The Noctalia Themes app: theme list with apply buttons, drop zone for theme packages, wallpaper picker" width="480"></p>
 
