@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 name = "Kunstruk"
-description = "Bauhaus in black and red: point, line and plane on ink-black plates, a giant typographic clock set in Jost, the bar standing on the right edge, a square dock below. Abstract, typographic, original artwork."
+description = "Bauhaus in black and red: point, line and plane on ink-black plates, a giant typographic clock set in Jost, the bar lying on the bottom edge, a square dock above. Abstract, typographic, original artwork."
 author = "billisdead"
-version = "1.0.0"
+version = "1.0.1"
 license = "GPL-3.0-or-later"
 format = 1
 palette = "kunstruk"
@@ -15,7 +15,7 @@ login_wallpaper = "wall_punkt.webp"  # shown on the Noctalia Greeter login scree
 "Player" = ["kn-player"]
 
 [locale.fr]
-description = "Le Bauhaus en noir et rouge : point, ligne et plan sur des planches noir d'encre, une horloge typographique géante en Jost, la barre dressée sur le bord droit, un dock carré en bas. Abstrait, typographique, créations originales."
+description = "Le Bauhaus en noir et rouge : point, ligne et plan sur des planches noir d'encre, une horloge typographique géante en Jost, la barre posée sur le bord inférieur, un dock carré en haut. Abstrait, typographique, créations originales."
 
 [locale.fr.widget_groups]
 "Clock" = "Horloge"

@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 MAJOR breaks a theme package or the app's files, MINOR adds themes or features, PATCH fixes.
 
+## [0.1.3] - 2026-11-15
+
+- Kunstruk: the bar moves to the bottom edge and the square dock to the top; on the right edge the bar collided
+  with the desktop widgets.
+
 ## [0.1.2] - 2026-11-13
 
 - `theme-widgets`: the clock and player now draw in the theme font right after login (Kunstruk); before, they kept
