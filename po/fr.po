@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: noctalia-themes\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 08:33+0100\n"
+"POT-Creation-Date: 2026-11-15 09:15+0100\n"
 "PO-Revision-Date: 2026-10-28 09:00+0100\n"
 "Last-Translator: billisdead\n"
 "Language-Team: French\n"
@@ -14,53 +14,53 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: app/capture.py:134
+#: app/capture.py:139
 #, python-brace-format
 msgid "{key}: can run a program, left out"
 msgstr "{key} : peut lancer un programme, laissé de côté"
 
-#: app/capture.py:147
+#: app/capture.py:152
 #, python-brace-format
 msgid "{key}: points to a file that cannot come along, left out"
 msgstr "{key} : pointe vers un fichier qui ne peut pas suivre, laissé de côté"
 
-#: app/capture.py:163
+#: app/capture.py:168
 #, python-brace-format
 msgid "Your palette ({source}) has no file to copy: the theme starts with Brume's colors. Edit palette.json to recolor it."
 msgstr "Ta palette ({source}) n’a pas de fichier à copier : le thème part des couleurs de Brume. Modifie palette.json pour le recolorer."
 
-#: app/capture.py:166
+#: app/capture.py:171
 #, python-brace-format
 msgid "Your palette ({name}) fails the app's checks ({errors}): the theme starts with Brume's colors. Edit palette.json to recolor it."
 msgstr "Ta palette ({name}) ne passe pas les contrôles de l’appli ({errors}) : le thème part des couleurs de Brume. Modifie palette.json pour le recolorer."
 
-#: app/capture.py:175
+#: app/capture.py:180
 msgid "The wallpaper on screen could not be copied (missing, or not WebP, PNG or JPEG)."
 msgstr "Le fond affiché n’a pas pu être copié (absent, ou ni WebP, ni PNG, ni JPEG)."
 
-#: app/capture.py:192
+#: app/capture.py:197
 msgid "Your pinned dock apps stay yours: not part of the theme."
 msgstr "Les applis épinglées au dock restent les tiennes : elles ne font pas partie du thème."
 
-#: app/capture.py:195
+#: app/capture.py:200
 msgid "The bar's widget layout is left out (widgets are set up outside the theme); its looks (size, font, colors) come along."
 msgstr "La disposition des widgets de la barre est laissée de côté (ils se règlent hors du thème) ; son apparence (taille, police, couleurs) suit."
 
-#: app/capture.py:203
+#: app/capture.py:208
 #, python-brace-format
 msgid "Widget {id} ({type}) comes from a third-party plugin: left out."
 msgstr "Le widget {id} ({type}) vient d’un plugin tiers : laissé de côté."
 
-#: app/capture.py:215
+#: app/capture.py:220
 msgid "Give the theme a name."
 msgstr "Donne un nom au thème."
 
-#: app/capture.py:217
+#: app/capture.py:222
 #, python-brace-format
 msgid "A theme already uses the folder “{folder}”: choose another name."
 msgstr "Un thème utilise déjà le dossier « {folder} » : choisis un autre nom."
 
-#: app/capture.py:231
+#: app/capture.py:236
 #, python-brace-format
 msgid "Captured from {author}'s desktop on {day}."
 msgstr "Capturé depuis le bureau de {author} le {day}."
@@ -73,30 +73,30 @@ msgstr "Aucun écran détecté (ni niri ni wlr-randr). Définis NOCTALIA_THEMES_
 msgid "(unreadable configuration: cannot check what would be lost)"
 msgstr "(configuration illisible : impossible de vérifier ce qui serait perdu)"
 
-#: app/installer.py:446
+#: app/installer.py:447
 msgid "This backup is the only way back from the active theme: remove the theme first."
 msgstr "Cette sauvegarde est le seul retour possible pour le thème actif : retire le thème d'abord."
 
-#: app/installer.py:557
+#: app/installer.py:558
 #, python-brace-format
 msgid "“{name}” is not the active theme: use apply."
 msgstr "« {name} » n'est pas le thème actif : utilise apply."
 
-#: app/installer.py:591
+#: app/installer.py:592
 #, python-brace-format
 msgid "Before “{name}”"
 msgstr "Avant « {name} »"
 
-#: app/installer.py:741
+#: app/installer.py:742
 msgid "Close Noctalia's widget editor, then try again."
 msgstr "Ferme l’éditeur de widgets de Noctalia, puis réessaie."
 
-#: app/installer.py:870
+#: app/installer.py:871
 #, python-brace-format
 msgid "My setup, with “{name}”"
 msgstr "Mon setup, avec « {name} »"
 
-#: app/installer.py:871
+#: app/installer.py:872
 msgid "My setup, without a theme"
 msgstr "Mon setup, sans thème"
 
@@ -357,8 +357,8 @@ msgid "Mode"
 msgstr "Mode"
 
 #: app/preferences.py:177
-msgid "Dark, light, or let Noctalia decide"
-msgstr "Sombre, clair, ou laisser Noctalia décider"
+msgid "For themes that do not set their own"
+msgstr "Pour les thèmes qui ne fixent pas le leur"
 
 #: app/preferences.py:182
 msgid "Clock"
@@ -945,3 +945,6 @@ msgstr "Elle ne pourra plus être restaurée. Les autres sauvegardes ne sont pas
 #: app/window.py:485
 msgid "Backup deleted"
 msgstr "Sauvegarde supprimée"
+
+#~ msgid "Dark, light, or let Noctalia decide"
+#~ msgstr "Sombre, clair, ou laisser Noctalia décider"

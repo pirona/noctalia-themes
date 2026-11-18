@@ -86,6 +86,11 @@ def greeter_installed():
     return shutil.which("noctalia-greeter") is not None
 
 
+def mode_override(fragment, opts):
+    """The mode the preference imposes, or None: a theme that declares its own mode keeps it (dark stays dark)."""
+    return None if opts["theme_mode"] == "theme" or "mode" in fragment.get("theme", {}) else opts["theme_mode"]
+
+
 def overrides(fragment, opts, greeter=False, login=False):
     """Nested dict of the config keys the preferences change, given the theme's parsed fragment.
 
@@ -99,8 +104,9 @@ def overrides(fragment, opts, greeter=False, login=False):
                               ("fill_mode", opts["fill_mode"])) if v is not None}
     if wall:
         out["wallpaper"] = wall
-    if opts["theme_mode"] != "theme":
-        out["theme"] = {"mode": opts["theme_mode"], "shell_mode": opts["theme_mode"]}
+    mode = mode_override(fragment, opts)
+    if mode:
+        out["theme"] = {"mode": mode, "shell_mode": mode}
 
     dw = fragment.get("desktop_widgets", {})
     widgets, settings = dw.get("widget", {}), {}
@@ -172,6 +178,7 @@ if __name__ == "__main__":
     assert back["desktop_widgets"]["widget"]["p"]["settings"]["hide_when_idle"] is True
     assert back["wallpaper"]["transition"] == ["melt"] and back["theme"]["mode"] == "dark"
     assert overrides(frag, DEFAULTS) == {}  # defaults change nothing
+    assert "theme" not in overrides({**frag, "theme": {"mode": "dark"}}, o)  # the theme's own mode wins
     assert tomllib.loads(dump(overrides(frag, DEFAULTS, greeter=True)))["shell"]["greeter_sync"]["auto_sync"]
     login = tomllib.loads(dump(overrides(frag, DEFAULTS, True, login=True)))
     assert login["shell"]["greeter_sync"]["auto_sync"] is False

@@ -358,9 +358,10 @@ def active_dir():
 
 def _stage_greeter(theme_dir, wall):
     """Write the greeter payload (palette, mode, the theme's login wallpaper) into the staging folder."""
-    mode = options.load()["theme_mode"]
-    if mode not in ("light", "dark"):  # "theme" or "auto": the theme's own mode, dark when it leaves it open
-        mode = tomllib.loads((theme_dir / "noctalia.toml").read_text()).get("theme", {}).get("mode", "dark")
+    fragment = tomllib.loads((theme_dir / "noctalia.toml").read_text())
+    mode = options.mode_override(fragment, options.load())
+    if mode not in ("light", "dark"):  # none or "auto": the theme's own mode, dark when it leaves it open
+        mode = fragment.get("theme", {}).get("mode", "dark")
     roles = json.loads((theme_dir / "palette.json").read_text())["light" if mode == "light" else "dark"]
     pal = {re.sub(r"(?<!^)([A-Z])", r"_\1", k[1:]).lower(): v  # mOnSurface -> on_surface
            for k, v in roles.items() if k.startswith("m") and isinstance(v, str)}

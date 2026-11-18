@@ -174,7 +174,7 @@ class Preferences(Adw.PreferencesDialog):
         look = Adw.PreferencesGroup(title=_("Appearance"))
         modes = options.THEME_MODES
         mode = _combo(_("Mode"), [MODE_LABELS[m] for m in modes], modes.index(self.opts["theme_mode"]),
-                      _("Dark, light, or let Noctalia decide"))
+                      _("For themes that do not set their own"))
         mode.connect("notify::selected", lambda r, _p: self._set("theme_mode", modes[r.get_selected()]))
         look.add(mode)
         page.add(look)
