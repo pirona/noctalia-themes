@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. Versions follow [Semantic Versioning](https://semver.org/):
 MAJOR breaks a theme package or the app's files, MINOR adds themes or features, PATCH fixes.
 
+## [0.1.5] - 2026-11-18
+
+- A theme that sets its own mode keeps it: the app's Mode preference no longer turns Kunstruk light system-wide
+  (bar, GTK apps, login screen). The preference now only applies to themes that leave the mode open.
+- `tools/release.sh`: waits for Gitea to register the tag before creating the release.
+- README: link to the launch blog post.
+
 ## [0.1.4] - 2026-11-15
 
 - Kunstruk: new preview with the bar at the bottom.

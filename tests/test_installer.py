@@ -244,15 +244,24 @@ def test_refresh_keeps_user_changes():
     installer.rollback(bid)
 
 
+def _modeless():
+    """Vaporwave without its own mode: the only kind of theme the mode preference applies to."""
+    d = SANDBOX / "modeless"
+    if not d.exists():
+        shutil.copytree(ROOT / "themes/vaporwave", d)
+        frag = d / "noctalia.toml"
+        lines = frag.read_text().splitlines(True)
+        frag.write_text("".join(ln for ln in lines if not ln.startswith(("mode", "shell_mode"))))
+    return d
+
+
 def test_preferences_fragment():
     options.save({**options.DEFAULTS, "hidden_widgets": ["vw-dialog"], "clock_seconds": True, "theme_mode": "light"})
-    bid = installer.apply(ROOT / "themes/vaporwave")
+    bid = installer.apply(_modeless())
     opts = tomllib.loads(installer.OPTIONS.read_text())
     assert "vw-dialog" not in opts["desktop_widgets"]["widget_order"]
     assert opts["desktop_widgets"]["widget"]["vw-clock"]["settings"]["format"] == "{:%H:%M:%S}"
-    installer.STATE.write_text(installer.STATE.read_text() + '\n[theme]\nmode = "auto"\n'
-                               if "[theme]" not in installer.STATE.read_text()
-                               else installer.STATE.read_text().replace("[theme]", '[theme]\nmode = "auto"', 1))
+    installer.STATE.write_text(installer.STATE.read_text().replace('mode = "light"', 'mode = "auto"', 1))
     assert "theme.mode" in installer.overridden_by_state()
     options.save(dict(options.DEFAULTS))
     installer.write_options()
@@ -264,11 +273,21 @@ def test_preferences_fragment():
     options.save(dict(options.DEFAULTS))
 
 
+def test_theme_mode_beats_preference():
+    options.save({**options.DEFAULTS, "theme_mode": "light"})
+    bid = installer.apply(ROOT / "themes/kunstruk")  # declares mode = "dark": stays dark system-wide
+    assert not installer.OPTIONS.exists() or "theme" not in tomllib.loads(installer.OPTIONS.read_text())
+    installer.rollback(bid)
+    options.save(dict(options.DEFAULTS))
+
+
 def test_echoed_preference_is_not_a_user_change():
     options.save({**options.DEFAULTS, "theme_mode": "light"})
-    bid = installer.apply(ROOT / "themes/vaporwave")
-    echoed = installer.STATE.read_text().replace("[theme]", '[theme]\nmode = "light"', 1)
-    installer.STATE.write_text(echoed)  # Noctalia writing the preference back
+    bid = installer.apply(_modeless())
+    echoed = installer.STATE.read_text()
+    if 'mode = "light"' not in echoed:  # Noctalia writing the preference back
+        echoed = echoed.replace("[theme]", '[theme]\nmode = "light"', 1)
+    installer.STATE.write_text(echoed)
     assert "theme.mode" not in installer.changes_since_apply()
     installer.rollback(bid)
     options.save(dict(options.DEFAULTS))
@@ -542,6 +561,7 @@ if __name__ == "__main__":
     test_setup_backup_restores_everything()
     test_refresh_keeps_user_changes()
     test_preferences_fragment()
+    test_theme_mode_beats_preference()
     test_echoed_preference_is_not_a_user_change()
     test_excess_backups_spare_active()
     test_fonts_installed_and_removed()

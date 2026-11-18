@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: noctalia-themes\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-11-10 08:33+0100\n"
+"POT-Creation-Date: 2026-11-15 09:15+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,53 +18,53 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 
-#: app/capture.py:134
+#: app/capture.py:139
 #, python-brace-format
 msgid "{key}: can run a program, left out"
 msgstr ""
 
-#: app/capture.py:147
+#: app/capture.py:152
 #, python-brace-format
 msgid "{key}: points to a file that cannot come along, left out"
 msgstr ""
 
-#: app/capture.py:163
+#: app/capture.py:168
 #, python-brace-format
 msgid "Your palette ({source}) has no file to copy: the theme starts with Brume's colors. Edit palette.json to recolor it."
 msgstr ""
 
-#: app/capture.py:166
+#: app/capture.py:171
 #, python-brace-format
 msgid "Your palette ({name}) fails the app's checks ({errors}): the theme starts with Brume's colors. Edit palette.json to recolor it."
 msgstr ""
 
-#: app/capture.py:175
+#: app/capture.py:180
 msgid "The wallpaper on screen could not be copied (missing, or not WebP, PNG or JPEG)."
 msgstr ""
 
-#: app/capture.py:192
+#: app/capture.py:197
 msgid "Your pinned dock apps stay yours: not part of the theme."
 msgstr ""
 
-#: app/capture.py:195
+#: app/capture.py:200
 msgid "The bar's widget layout is left out (widgets are set up outside the theme); its looks (size, font, colors) come along."
 msgstr ""
 
-#: app/capture.py:203
+#: app/capture.py:208
 #, python-brace-format
 msgid "Widget {id} ({type}) comes from a third-party plugin: left out."
 msgstr ""
 
-#: app/capture.py:215
+#: app/capture.py:220
 msgid "Give the theme a name."
 msgstr ""
 
-#: app/capture.py:217
+#: app/capture.py:222
 #, python-brace-format
 msgid "A theme already uses the folder “{folder}”: choose another name."
 msgstr ""
 
-#: app/capture.py:231
+#: app/capture.py:236
 #, python-brace-format
 msgid "Captured from {author}'s desktop on {day}."
 msgstr ""
@@ -77,30 +77,30 @@ msgstr ""
 msgid "(unreadable configuration: cannot check what would be lost)"
 msgstr ""
 
-#: app/installer.py:446
+#: app/installer.py:447
 msgid "This backup is the only way back from the active theme: remove the theme first."
 msgstr ""
 
-#: app/installer.py:557
+#: app/installer.py:558
 #, python-brace-format
 msgid "“{name}” is not the active theme: use apply."
 msgstr ""
 
-#: app/installer.py:591
+#: app/installer.py:592
 #, python-brace-format
 msgid "Before “{name}”"
 msgstr ""
 
-#: app/installer.py:741
+#: app/installer.py:742
 msgid "Close Noctalia's widget editor, then try again."
 msgstr ""
 
-#: app/installer.py:870
+#: app/installer.py:871
 #, python-brace-format
 msgid "My setup, with “{name}”"
 msgstr ""
 
-#: app/installer.py:871
+#: app/installer.py:872
 msgid "My setup, without a theme"
 msgstr ""
 
@@ -361,7 +361,7 @@ msgid "Mode"
 msgstr ""
 
 #: app/preferences.py:177
-msgid "Dark, light, or let Noctalia decide"
+msgid "For themes that do not set their own"
 msgstr ""
 
 #: app/preferences.py:182
